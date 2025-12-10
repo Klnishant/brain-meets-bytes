@@ -1,0 +1,138 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { NAV_LINKS, COLORS } from "@/lib/constants";
+
+const linkToHref = (label: string) => {
+  if (label === "Home") return "/";
+  if (label === "About Us") return "/about";
+  const slug = label.toLowerCase().replace(/\s+/g, "-");
+  return `/${slug}`;
+};
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  return (
+    <header className="w-full">
+      <div className=" mx-auto flex items-center px-4 sm:px-6 lg:px-16 py-4 lg:py-6 gap-4 md:gap-8">
+        {/* Logo - fixed on the left */}
+        <Link href="/" className="shrink-0">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="h-10 md:h-14 w-auto object-contain"
+          />
+        </Link>
+
+        {/* Middle + Right content group */}
+        <div className="flex-1 flex items-center justify-between">
+          {/* Nav Links */}
+          <nav
+            className={`md:flex items-center md:gap-6 ${
+              isOpen ? "flex" : "hidden"
+            } static shadow-md md:shadow-none z-10`}
+          >
+            {NAV_LINKS.map((link) => {
+              const href = linkToHref(link);
+              const isActive =
+                (href === "/" && pathname === "/") ||
+                (href !== "/" && pathname.startsWith(href));
+
+              return (
+                <Link
+                  key={link}
+                  href={href}
+                  onClick={() => setIsOpen(false)}
+                  className={`transition-colors ${
+                    isActive
+                      ? "text-[#D62828] font-semibold"
+                      : "text-[#1E293B] opacity-50 hover:opacity-100 hover:text-[#D62828]"
+                  }`}
+                >
+                  {link}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* RIGHT SIDE — Search + Membership + Login (desktop) */}
+          <div className="hidden md:flex items-center gap-3 lg:gap-6 shrink-0">
+            {/* Search with hover expand animation */}
+            <button
+              className="group flex items-center gap-2 rounded-full text-xs md:text-sm lg:text-base overflow-hidden transition-all duration-300 ease-out w-12 px-3.5 py-3 hover:w-40"
+              style={{ backgroundColor: COLORS.badgeBg, color: COLORS.brandMutedText }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4 shrink-0"
+                style={{ color: COLORS.brandMutedText }}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"
+                />
+              </svg>
+              <span className="whitespace-nowrap opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-left">
+                Search
+              </span>
+            </button>
+
+            {/* Membership */}
+            <button
+              className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5"
+              style={{ backgroundColor: COLORS.brandRed }}
+            >
+              Become a member
+            </button>
+
+            {/* Login */}
+            <button
+              className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
+              style={{
+                borderColor: COLORS.brandNavy,
+                color: COLORS.brandNavy,
+              }}
+            >
+              Login
+            </button>
+          </div>
+        </div>
+
+        {/* Hamburger Menu Button (mobile) */}
+        <button
+          className="md:hidden text-slate-800 focus:outline-none"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={
+                isOpen
+                  ? "M6 18L18 6M6 6l12 12"
+                  : "M4 6h16M4 12h16M4 18h16"
+              }
+            />
+          </svg>
+        </button>
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;
