@@ -3,7 +3,7 @@ import { sanityClient } from "@/lib/sanityClient";
 
 export const revalidate = 60;
 
-const query = `*[_type == "article"] | order(date desc)[0...3]{
+const query = `*[_type == "article"] | order(date desc)[0...100]{
   _id,
   title,
   author,

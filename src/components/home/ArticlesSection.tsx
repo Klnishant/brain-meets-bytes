@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
 
@@ -25,7 +26,7 @@ const formatDate = (iso: string) => {
 };
 
 const ArticleCard = ({ article }: { article: Article }) => {
-  const { title = "Untitled", author, date, imageUrl, tags = [], excerpt } = article;
+  const { title = "Untitled", author, date, imageUrl, tags = [], excerpt, slug } = article;
 
   return (
     <article className="flex flex-col border border-[#E2E8F0] rounded-2xl bg-[#FAF9F8] overflow-hidden h-full">
@@ -71,11 +72,20 @@ const ArticleCard = ({ article }: { article: Article }) => {
         </p>
 
         <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
-          <button
-            className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
-          >
-            Read More
-          </button>
+          {slug ? (
+            <Link
+              href={`/articles/${slug}`}
+              className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
+            >
+              Read More
+            </Link>
+          ) : (
+            <button
+              className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
+            >
+              Read More
+            </button>
+          )}
         </div>
       </div>
     </article>

@@ -22,9 +22,32 @@ export const article = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "author",
-      title: "Author",
-      type: "string",
+      name: "authorDetails",
+      title: "Author Details",
+      type: "object",
+      fields: [
+        defineField({
+          name: "name",
+          title: "Name",
+          type: "string",
+        }),
+        defineField({
+          name: "role",
+          title: "Role / Title",
+          type: "string",
+        }),
+        defineField({
+          name: "bio",
+          title: "Short Bio",
+          type: "text",
+        }),
+        defineField({
+          name: "image",
+          title: "Author Image",
+          type: "image",
+          options: { hotspot: true },
+        }),
+      ],
     }),
     defineField({
       name: "date",

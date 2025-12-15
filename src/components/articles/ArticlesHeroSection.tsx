@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { COLORS } from "@/lib/constants";
 
@@ -164,9 +165,18 @@ const ArticlesHeroSection = () => {
             </div>
 
             {/* Read more button */}
-            <button className="inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-[16px] font-normal text-[#023047] w-fit">
-              Read More
-            </button>
+            {featured?.slug ? (
+              <Link
+                href={`/articles/${featured.slug}`}
+                className="inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-[16px] font-normal text-[#023047] w-fit"
+              >
+                Read More
+              </Link>
+            ) : (
+              <button className="inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-[16px] font-normal text-[#023047] w-fit">
+                Read More
+              </button>
+            )}
           </div>
         </div>
       </div>

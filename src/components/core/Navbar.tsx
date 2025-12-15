@@ -15,14 +15,19 @@ const linkToHref = (label: string) => {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const isForumsPage = pathname.startsWith("/forums");
 
   return (
-    <header className="w-full">
-      <div className=" mx-auto flex items-center px-4 sm:px-6 lg:px-16 py-4 lg:py-6 gap-4 md:gap-8">
+    <header
+      className={`w-full ${
+        isForumsPage ? "absolute left-0 top-0 z-20" : "relative"
+      }`}
+    >
+      <div className="mx-auto flex items-center gap-4 px-4 py-4 sm:px-6 lg:gap-8 lg:px-16 lg:py-6">
         {/* Logo - fixed on the left */}
         <Link href="/" className="shrink-0">
           <img
-            src="/logo.png"
+            src={isForumsPage ? "/logo-white.png" : "/logo.png"}
             alt="Logo"
             className="h-10 md:h-14 w-auto object-contain"
           />
@@ -50,7 +55,9 @@ const Navbar = () => {
                   className={`transition-colors ${
                     isActive
                       ? "text-[#D62828] font-semibold"
-                      : "text-[#1E293B] opacity-50 hover:opacity-100 hover:text-[#D62828]"
+                      : isForumsPage
+                        ? "text-white opacity-70 hover:opacity-100 hover:text-[#D62828]"
+                        : "text-[#1E293B] opacity-50 hover:opacity-100 hover:text-[#D62828]"
                   }`}
                 >
                   {link}
@@ -97,10 +104,13 @@ const Navbar = () => {
             {/* Login */}
             <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
-              style={{
+              style={isForumsPage? {
+                borderColor: COLORS.white,
+                color: COLORS.white,
+              } :{
                 borderColor: COLORS.brandNavy,
                 color: COLORS.brandNavy,
-              }}
+              } }
             >
               Login
             </button>
@@ -109,7 +119,9 @@ const Navbar = () => {
 
         {/* Hamburger Menu Button (mobile) */}
         <button
-          className="md:hidden text-slate-800 focus:outline-none"
+          className={`md:hidden focus:outline-none ${
+            isForumsPage ? "text-white" : "text-slate-800"
+          }`}
           onClick={() => setIsOpen(!isOpen)}
         >
           <svg

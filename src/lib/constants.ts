@@ -8,6 +8,7 @@ export const NAV_LINKS: string[] = [
 ];
 
 export const COLORS = {
+  white: "#FFFFFF",
   brandRed: "#D62828",
   brandNavy: "#023047",
   brandSlate: "#1E293B",
