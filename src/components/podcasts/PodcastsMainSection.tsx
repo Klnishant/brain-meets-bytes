@@ -1,0 +1,350 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { COLORS } from "@/lib/constants";
+import Pagination from "./Pagination";
+import Link from "next/link";
+
+type Podcast = {
+  _id: string;
+  title?: string;
+  author?: string;
+  date?: string;
+  imageUrl?: string;
+  tags?: string[];
+  podcastCount?: number;
+};
+
+const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
+  const { title, author, date, imageUrl, tags = [], podcastCount } = podcast;
+
+  const formattedDate = useMemo(() => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    });
+  }, [date]);
+
+  return (
+    <article className="flex flex-col border border-[#E2E8F0] rounded-2xl bg-[#FAF9F8] overflow-hidden h-full">
+      <div className="pt-3 pr-3 pl-3">
+        <div className="relative w-full pt-[56%] bg-[#CDCDCD] overflow-hidden rounded-lg">
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 p-3 flex-1">
+        <div className="flex items-center gap-3 text-xs text-[#505050]">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#E2E8F0] text-[11px] text-[#64748B]">
+            {author || "Unknown"}
+          </span>
+          {formattedDate && (
+            <span className="text-[11px]">{formattedDate}</span>
+          )}
+        </div>
+
+        <h3 className="font-sora text-[16px] md:text-[18px] font-semibold leading-normal text-[#1E293B]">
+          {title}
+        </h3>
+
+        {Array.isArray(tags) && tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 text-[11px]">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center px-3 py-1 rounded-full border border-[#64748B] text-[#64748B]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="h-px w-full bg-[#E2E8F0] rounded-full" />
+
+        <div className="flex items-center justify-between gap-4 mt-1">
+          {/* When only one episode (or unknown), button takes full width and no count label */}
+          {(!podcastCount || podcastCount <= 1) && (
+            <button className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap w-full">
+              <span>Listen</span>
+              <span className="inline-flex items-center justify-center w-4 h-4">
+                <span className="inline-block w-0 h-0 border-y-[6px] border-y-transparent border-l-10 border-l-[#D62828]" />
+              </span>
+            </button>
+          )}
+
+          {/* When multiple episodes, keep compact button and show episode count label */}
+          {podcastCount && podcastCount > 1 && (
+            <>
+              <Link href={`/podcasts/title`}>
+                <button className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
+                  <span>Listen</span>
+                  <span className="inline-flex items-center justify-center w-4 h-4">
+                    <span className="inline-block w-0 h-0 border-y-[6px] border-y-transparent border-l-10 border-l-[#D62828]" />
+                  </span>
+                </button>
+              </Link>
+
+              <span className="text-[14px] text-[#D62828] ml-auto whitespace-nowrap">
+                {podcastCount} Episodes
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const PodcastsMainSection = () => {
+  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "oldest">("recent");
+  const [activeTag, setActiveTag] = useState<string | "all">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch("/api/featured-podcasts");
+        if (!res.ok) {
+          throw new Error("Failed to load podcasts");
+        }
+
+        const data = (await res.json()) as Podcast[];
+        if (!mounted) return;
+        setPodcasts(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        if (!mounted) return;
+        setError(e?.message ?? "Failed to load podcasts");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredAndSorted = useMemo(() => {
+    let base = podcasts;
+
+    // Filter by search text
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      base = base.filter((podcast) => {
+        const title = (podcast.title || "").toLowerCase();
+        const tagsText = Array.isArray(podcast.tags)
+          ? podcast.tags.join(" ").toLowerCase()
+          : "";
+        const author = (podcast.author || "").toLowerCase();
+
+        return title.includes(q) || tagsText.includes(q) || author.includes(q);
+      });
+    }
+
+    // Filter by active tag
+    if (activeTag !== "all") {
+      base = base.filter(
+        (article) =>
+          Array.isArray(article.tags) && article.tags.includes(activeTag)
+      );
+    }
+
+    // Sort by date
+    const sorted = [...base].sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return sortBy === "recent" ? db - da : da - db;
+    });
+
+    return sorted;
+  }, [podcasts, search, activeTag, sortBy]);
+
+  const totalItems = filteredAndSorted.length;
+  const pageSize =
+    totalItems >= 9 ? 9 : totalItems >= 6 ? 6 : totalItems > 0 ? 3 : 9;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginated = filteredAndSorted.slice(startIndex, endIndex);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return podcasts;
+    const q = search.toLowerCase();
+    return podcasts.filter((p) => {
+      const title = (p.title || "").toLowerCase();
+      const author = (p.author || "").toLowerCase();
+      const tagsText = Array.isArray(p.tags)
+        ? p.tags.join(" ").toLowerCase()
+        : "";
+      return title.includes(q) || author.includes(q) || tagsText.includes(q);
+    });
+  }, [podcasts, search]);
+
+  return (
+    <section className="w-full py-16 md:py-20 lg:py-[100px]">
+      <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col items-center gap-16">
+        <div className="flex flex-col items-center gap-8 w-full text-center">
+          <div className="flex flex-col gap-3">
+            <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold">
+              <span className="text-[#1E293B]">All</span>{" "}
+              <span style={{ color: COLORS.brandRed }}>Podcasts</span>
+            </h2>
+            <p className="font-inter text-sm md:text-base text-[#505050]">
+              Nam vulputate faucibus urna non mollis. Vivamus a vulputate
+              turpis. Aenean efficitur aliquam dui a elementum.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1 justify-between w-full px-5 py-3">
+            <div>
+              <div className=" md:w-[700px] flex items-center gap-3 rounded-full bg-[#E2E8F0] px-5 py-3">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search episodes, topics, guests…"
+                  className="flex-1 bg-transparent outline-none text-sm md:text-base text-[#1E293B] placeholder-[#64748B]"
+                />
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-9 h-9 rounded-full"
+                  style={{ backgroundColor: COLORS.brandRed }}
+                >
+                  <span className="relative block w-3.5 h-3.5 border-2 border-white rounded-full" />
+                  <span className="block w-2 h-0.5 bg-white -ml-1 rotate-45 origin-left" />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                className="flex items-center justify-between px-4 md:px-8 h-[45px] md:w-[232px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+              >
+                <div className="flex items-center justify-center gap-0">
+                  <div className="flex items-center justify-center">
+                    <span className=" relative block w-0.5 h-3.5 ml-1 bg-[#023047]" />
+                    <span className="block w-2 h-0.5 bg-[#023047] -ml-px mb-3 rotate-135 origin-left" />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <span className=" relative block w-0.5 h-3.5 -ml-1 bg-[#023047]" />
+                    <span className="block w-2 h-0.5 bg-[#023047] mt-3.25 -ml-2.25 rotate-135 origin-right" />
+                  </div>
+                </div>
+                <span className="hidden md:block">SOrt by: recent</span>
+              </button>
+              <button
+                type="button"
+                className="flex items-center justify-between px-4 md:px-8 w-[45px] md:w-[149px] h-[45px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+              >
+                <span>
+                  <img src="/filter 1.png" className="invert h-full w-full" />
+                </span>
+                <span className="hidden md:block">Filters</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full">
+          {loading && (
+            <p className="text-center text-sm text-[#64748B]">
+              Loading featured podcasts...
+            </p>
+          )}
+          {error && !loading && (
+            <div>
+              <p className="text-center text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((podcast) => (
+                <PodcastCard key={podcast._id} podcast={podcast} />
+              ))}
+              {filtered.length === 0 && (
+                <p className="col-span-full text-center text-sm text-[#64748B]">
+                  No podcasts match your search.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex w-full max-w-[905px] flex-col items-center gap-6 md:flex-row md:justify-between">
+            {/* Previous */}
+            <button
+              className="flex h-[50px] w-[146px] items-center justify-center gap-3 rounded-[47px] bg-[#023047]/40 px-4 text-[16px] text-[#F7F9FC] disabled:opacity-40"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safeCurrentPage === 1}
+            >
+              <span className="inline-flex rotate-180">
+                <span className="block h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#F7F9FC]" />
+              </span>
+              <span className="font-inter">Previous</span>
+            </button>
+
+            {/* Page numbers */}
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    className={`flex h-8 w-8 items-center justify-center rounded text-[18px] ${
+                      page === safeCurrentPage
+                        ? "bg-[#D62828] font-semibold text-[#EBE6DC]"
+                        : "font-normal text-[#1E293B]"
+                    }`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* Next */}
+            <button
+              className="flex h-[50px] w-[146px] items-center justify-center gap-3 rounded-[47px] bg-[#023047] px-4 text-[16px] text-[#F7F9FC] disabled:opacity-40"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
+            >
+              <span className="font-inter">Next</span>
+              <span className="inline-flex">
+                <span className="block h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#F7F9FC]" />
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default PodcastsMainSection;
