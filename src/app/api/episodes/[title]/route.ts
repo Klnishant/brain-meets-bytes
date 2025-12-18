@@ -1,32 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { sanityClient } from "@/lib/sanityClient";
 
 export const revalidate = 60; // ISR-style caching
 
-interface ArticlePageProps {
-  params: Promise<{
+// interface ArticlePageProps {
+//   params: Promise<{
+//     title: string;
+//   }>;
+// }
+interface Context{
+  params: {
     title: string;
-  }>;
+  }
 }
 export async function GET(
-  req: Request,
-  { params }: { params: { title: string } },
+  req: NextRequest,
+  context : Context,
   res: NextResponse
 ) {
-  const title = await params?.title;
-  const query = `*[_type == "episode" && references(*[_type == "podcast" _id == $title])] | order(date desc){
+  const {title} = await context.params;
+
+  const query = `*[_type == "episode" && podcast->title == "${title}" ] {
   _id,
-  title,
-  author,
-  slug,
-  kind,
-  podcast,
-  date,
-  "imageUrl": image.asset->url,
-  tags,
-  description,
-  mediafile,
-  duration,
+    title,
+    slug,
+    kind,
+    podcast -> {
+      title,
+      author,
+      image,
+      description,
+      "slug":slug.current
+    },
+    date,
+    "imageUrl": image.asset->url,
+    tags,
+    description,
+    "media":mediaFile.asset->url,
+    duration,
 }`;
 
   try {
@@ -34,6 +45,6 @@ export async function GET(
     return NextResponse.json(data ?? []);
   } catch (err) {
     console.error("Error fetching featured podcasts from Sanity", err);
-    return NextResponse.json({ message: `Failed to load podcasts ${title}` });
+    return NextResponse.json({ message: `Failed to load podcasts` });
   }
 }

@@ -8,8 +8,6 @@ interface PodcastPageProps {
   }>;
 }
 
-
-
 const PlayListPage = () => {
     return (
         <main className="min-h-screen bg-[#FAF9F8]">

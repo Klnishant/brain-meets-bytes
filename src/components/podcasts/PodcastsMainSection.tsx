@@ -86,7 +86,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
           {/* When multiple episodes, keep compact button and show episode count label */}
           {podcastCount && podcastCount > 1 && (
             <>
-              <Link href={`/podcasts/title`}>
+              <Link href={`/podcasts/${title}`}>
                 <button className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
                   <span>Listen</span>
                   <span className="inline-flex items-center justify-center w-4 h-4">
