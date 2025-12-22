@@ -106,21 +106,21 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
 const ForumsSection = () => {
   return (
     <section className="w-full py-16 md:py-20 lg:py-24">
-      <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+      <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col lg:flex-row items-center gap-50 lg:gap-20">
         {/* Left: stacked forum cards */}
         <div className="relative w-full max-w-2xl h-[360px] md:h-[420px]">
           {/* Back top card */}
-          <ForumCard faded className="absolute left-4 right-4 -top-20 md:-top-20 scale-95" />
+          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 -top-22 md:-top-20 scale-95" />
 
           {/* Back bottom card */}
-          <ForumCard faded className="absolute left-4 right-4 top-16 md:top-16 scale-95" />
+          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 top-20 md:top-16 scale-95" />
 
           {/* Front main card */}
           <ForumCard className="relative z-10" />
         </div>
 
         {/* Right: text + CTA */}
-        <div className="w-full max-w-md flex flex-col items-start gap-8">
+        <div className="w-full max-w-md flex flex-col md:items-start gap-8">
           <div className="flex flex-col gap-4">
             <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold text-[#1E293B]">
               Join the Brain Meets Bytes <span style={{ color: COLORS.brandRed }}>Community</span>

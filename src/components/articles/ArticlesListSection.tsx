@@ -81,16 +81,16 @@ const ArticleCard = ({ article }: { article: Article }) => {
         <div className="mt-2 h-[2px] w-full rounded-full bg-[#E2E8F0]" />
 
         {/* Footer CTA (Read more) */}
-        <div className="mt-2 flex items-center justify-between">
+        <div className="w-fullmt-2 flex items-center justify-between">
           {slug ? (
             <Link
               href={`/articles/${slug}`}
-              className="inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] px-6 py-2 text-[14px] font-normal text-[#D62828]"
+              className="w-full md:w-auto justify-center inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] md:px-6 py-2 text-[14px] font-normal text-[#D62828]"
             >
               Read More
             </Link>
           ) : (
-            <button className="inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] px-6 py-2 text-[14px] font-normal text-[#D62828]">
+            <button className=" w-full md:w-auto inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] px-6 py-2 text-[14px] font-normal text-[#D62828]">
               Read More
             </button>
           )}
@@ -212,7 +212,7 @@ const ArticlesListSection = () => {
           </div>
 
           {/* Search + filter row */}
-          <div className="flex w-full max-w-[1601px] flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex w-full max-w-[1601px] gap-4 md:gap-6 md:items-center md:justify-between">
             {/* Search bar */}
             <div className="flex w-full max-w-[700px] items-center justify-between gap-4 rounded-[42px] bg-[#E2E8F0] px-6 py-3">
               <input
@@ -223,11 +223,11 @@ const ArticlesListSection = () => {
                   setCurrentPage(1);
                 }}
                 placeholder="Search articles, topics, authors…"
-                className="flex-1 bg-transparent font-sora text-[16px] md:text-[18px] text-[#1E293B] placeholder:text-[#64748B] outline-none"
+                className="flex-1 bg-transparent font-sora text-[12px] md:text-[18px] text-[#1E293B] placeholder:text-[#64748B] outline-none"
               />
               <button
                 type="button"
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full"
+                className="flex h-7 w-7 md:h-[34px] md:w-[34px] items-center justify-center rounded-full"
                 style={{ backgroundColor: COLORS.brandRed }}
               >
                 <span className="relative block h-4 w-4">
@@ -241,7 +241,7 @@ const ArticlesListSection = () => {
             <div className="flex w-full max-w-[401px] flex-row items-center gap-4 md:justify-end">
               {/* Sort button */}
               <button
-                className="flex h-[50px] flex-1 items-center justify-center gap-3 rounded-full border border-[#023047] px-8 text-[16px] text-[#023047]"
+                className="flex h-9 w-9 md:w-fit md:h-[50px] md:flex-1 items-center justify-center gap-3 rounded-full border border-[#023047] md:px-8 text-[16px] text-[#023047]"
                 onClick={() => {
                   setSortBy((prev) => (prev === "recent" ? "oldest" : "recent"));
                   setCurrentPage(1);
@@ -250,22 +250,23 @@ const ArticlesListSection = () => {
                 <img
                   src="/sort 1.png"
                   alt="Sort"
-                  className="h-[18px] w-[18px] object-contain"
+                  className="
+                 h-3 w-3 md:h-[18px] md:w-[18px] object-contain"
                 />
-                <span className="font-sora">Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}</span>
+                <span className="font-sora hidden md:block">Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}</span>
               </button>
 
               {/* Filter button */}
               <button
-                className="flex h-[50px] w-[149px] items-center justify-center gap-3 rounded-full bg-[#023047] px-8 text-[16px] text-white"
+                className="flex h-9 w-9 md:h-[50px] md:w-[149px] items-center justify-center gap-3 rounded-full bg-[#023047] md:px-8 text-[16px] text-white"
                 onClick={() => setFilterOpen(true)}
               >
                 <img
                   src="/filter 1.png"
                   alt="Filters"
-                  className="h-[18px] w-[18px] object-contain"
+                  className="h-3 w-3 md:h-[18px] md:w-[18px] object-contain"
                 />
-                <span className="font-sora">Filters</span>
+                <span className="font-sora hidden md:block">Filters</span>
               </button>
             </div>
           </div>

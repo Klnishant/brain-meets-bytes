@@ -167,8 +167,8 @@ const PodcastsMainSection = () => {
     // Filter by active tag
     if (activeTag !== "all") {
       base = base.filter(
-        (article) =>
-          Array.isArray(article.tags) && article.tags.includes(activeTag)
+        (podcast) =>
+          Array.isArray(podcast?.tags) && podcast?.tags.includes(activeTag)
       );
     }
 
@@ -182,6 +182,7 @@ const PodcastsMainSection = () => {
     return sorted;
   }, [podcasts, search, activeTag, sortBy]);
 
+  // Determine page size based on available items (9 / 6 / 3)
   const totalItems = filteredAndSorted.length;
   const pageSize =
     totalItems >= 9 ? 9 : totalItems >= 6 ? 6 : totalItems > 0 ? 3 : 9;
@@ -192,19 +193,16 @@ const PodcastsMainSection = () => {
   const endIndex = startIndex + pageSize;
   const paginated = filteredAndSorted.slice(startIndex, endIndex);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return podcasts;
-    const q = search.toLowerCase();
-    return podcasts.filter((p) => {
-      const title = (p.title || "").toLowerCase();
-      const author = (p.author || "").toLowerCase();
-      const tagsText = Array.isArray(p.tags)
-        ? p.tags.join(" ").toLowerCase()
-        : "";
-      return title.includes(q) || author.includes(q) || tagsText.includes(q);
-    });
-  }, [podcasts, search]);
+  
 
+  // Unique tags for filter chips
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    podcasts.forEach((podcast) => {
+      (podcast.tags || []).forEach((tag) => set.add(tag));
+    });
+    return Array.from(set);
+  }, [podcasts]);
   return (
     <section className="w-full py-16 md:py-20 lg:py-[100px]">
       <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col items-center gap-16">
@@ -226,7 +224,10 @@ const PodcastsMainSection = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   placeholder="Search episodes, topics, guests…"
                   className="flex-1 bg-transparent outline-none text-sm md:text-base text-[#1E293B] placeholder-[#64748B]"
                 />
@@ -243,23 +244,21 @@ const PodcastsMainSection = () => {
             <div className="flex items-center justify-center gap-1">
               <button
                 type="button"
-                className="flex items-center justify-between px-4 md:px-8 h-[45px] md:w-[232px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+                className="flex items-center justify-center gap-2.5 px-4 md:px-8 h-[45px] md:w-[232px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+                onClick={() => {
+                  setSortBy((prev) => (prev === "recent" ? "oldest" : "recent"));
+                  setCurrentPage(1);
+                }}
               >
                 <div className="flex items-center justify-center gap-0">
-                  <div className="flex items-center justify-center">
-                    <span className=" relative block w-0.5 h-3.5 ml-1 bg-[#023047]" />
-                    <span className="block w-2 h-0.5 bg-[#023047] -ml-px mb-3 rotate-135 origin-left" />
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <span className=" relative block w-0.5 h-3.5 -ml-1 bg-[#023047]" />
-                    <span className="block w-2 h-0.5 bg-[#023047] mt-3.25 -ml-2.25 rotate-135 origin-right" />
-                  </div>
+                  <img src="/sort 1.png" alt="" />
                 </div>
-                <span className="hidden md:block">SOrt by: recent</span>
+                <span className="hidden md:block">Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}</span>
               </button>
               <button
                 type="button"
-                className="flex items-center justify-between px-4 md:px-8 w-[45px] md:w-[149px] h-[45px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+                className="flex items-center justify-center gap-2.5 px-4 md:px-8 w-[45px] md:w-[149px] h-[45px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+                onClick={() => setFilterOpen(true)}
               >
                 <span>
                   <img src="/filter 1.png" className="invert h-full w-full" />
@@ -269,7 +268,77 @@ const PodcastsMainSection = () => {
             </div>
           </div>
         </div>
+          
+          {filterOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-lg">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-sora text-lg font-semibold text-[#1E293B]">Filter by topic</h3>
+                <button
+                  className="text-sm text-[#64748B] hover:text-[#1E293B]"
+                  onClick={() => setFilterOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
 
+              {allTags.length === 0 ? (
+                <p className="text-sm text-[#64748B]">No topics available yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    className={`inline-flex items-center rounded-full border px-4 py-1 text-sm ${
+                      activeTag === "all"
+                        ? "border-[#D62828] bg-[#D62828]/10 text-[#D62828]"
+                        : "border-[#E2E8F0] bg-white text-[#64748B]"
+                    }`}
+                    onClick={() => {
+                      setActiveTag("all");
+                      setCurrentPage(1);
+                    }}
+                  >
+                    All topics
+                  </button>
+                  {allTags.map((tag) => (
+                    <button
+                      key={tag}
+                      className={`inline-flex items-center rounded-full border px-4 py-1 text-sm ${
+                        activeTag === tag
+                          ? "border-[#D62828] bg-[#D62828]/10 text-[#D62828]"
+                          : "border-[#E2E8F0] bg-white text-[#64748B]"
+                      }`}
+                      onClick={() => {
+                        setActiveTag(tag);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  className="rounded-full border border-[#E2E8F0] px-5 py-2 text-sm text-[#64748B]"
+                  onClick={() => {
+                    setActiveTag("all");
+                    setCurrentPage(1);
+                    setFilterOpen(false);
+                  }}
+                >
+                  Reset
+                </button>
+                <button
+                  className="rounded-full bg-[#023047] px-6 py-2 text-sm text-white"
+                  onClick={() => setFilterOpen(false)}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="w-full">
           {loading && (
             <p className="text-center text-sm text-[#64748B]">
@@ -284,14 +353,14 @@ const PodcastsMainSection = () => {
 
           {!loading && !error && (
             <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((podcast) => (
+              {paginated.map((podcast) => (
                 <PodcastCard key={podcast._id} podcast={podcast} />
               ))}
-              {filtered.length === 0 && (
-                <p className="col-span-full text-center text-sm text-[#64748B]">
-                  No podcasts match your search.
-                </p>
-              )}
+              {!loading && !error && totalItems === 0 && (
+              <p className="col-span-full text-center text-sm text-[#64748B]">
+                No podcasts match your search.
+              </p>
+            )}
             </div>
           )}
         </div>

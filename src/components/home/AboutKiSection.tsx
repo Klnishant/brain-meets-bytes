@@ -130,7 +130,7 @@ const AboutKiSection = () => {
 
           {/* CTA */}
           <button
-            className="mt-2 inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
+            className="w-full md:w-auto mt-2 inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandNavy }}
           >
             {ctaLabel}

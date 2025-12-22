@@ -154,11 +154,11 @@ const ArticlesSection = () => {
         {/* Header + Search */}
         <div className="w-full flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-3 max-w-3xl">
-            <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold text-black">
+            <h2 className="font-sora text-xl md:text-3xl lg:text-4xl font-bold text-black text-center md:text-start">
               <span>Most recent </span>
               <span style={{ color: COLORS.brandRed }}>Articles &amp; Interviews</span>
             </h2>
-            <p className="font-inter text-sm md:text-base text-[#505050]">
+            <p className="font-inter text-[12px] md:text-base text-[#505050] text-center md:text-start">
               Quick, digestible breakdowns of the most important research and trends in brain
               health and longevity.
             </p>
@@ -210,7 +210,7 @@ const ArticlesSection = () => {
           </div>
 
           <button
-            className="inline-flex items-center justify-center px-10 py-3 rounded-full text-sm md:text-base text-white"
+            className="w-full md:w-auto inline-flex items-center justify-center px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandNavy }}
           >
             Discover all 200+

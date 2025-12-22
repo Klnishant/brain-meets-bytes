@@ -155,11 +155,11 @@ const FeaturedPodcastsSection = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col items-center gap-16">
         <div className="flex flex-col items-center gap-8 max-w-3xl text-center">
           <div className="flex flex-col gap-3">
-            <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold">
+            <h2 className="font-sora text-xl md:text-3xl lg:text-4xl font-bold">
               <span style={{ color: COLORS.brandRed }}>Featured</span>{" "}
               <span className="text-[#1E293B]">Podcasts</span>
             </h2>
-            <p className="font-inter text-sm md:text-base text-[#505050]">
+            <p className="font-inter text-[12px] md:text-base text-[#505050]">
               Dive into handpicked podcasts that explore the most exciting breakthroughs in brain
               health and longevity.
             </p>
@@ -207,7 +207,7 @@ const FeaturedPodcastsSection = () => {
         </div>
 
         <button
-          className="inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
+          className="w-full md:w-auto inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
           style={{ backgroundColor: COLORS.brandNavy }}
         >
           Discover all 200+

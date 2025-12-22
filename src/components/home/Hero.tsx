@@ -4,16 +4,19 @@ import { COLORS } from "@/lib/constants";
 const Hero = () => {
   return (
     <section
-      className="py-20  bg-no-repeat"
-      style={{
-        backgroundImage: "url(/hero-bg-wave.png)",
-        backgroundSize: "auto 120%",
-        backgroundPosition: "102% center",
-      }}
+      className="py-20  bg-[url('/hero-bg-wave.png')]
+    bg-no-repeat
+    bg-absolute
+    bg-[length:auto_78.5%]
+    md:bg-[length:auto_120%]
+    bg-[position:71%_-70%]
+    md:bg-[position:102%_center]
+    "
+      
     >
-      <div className="mx-auto flex grid-cols-[3fr_2fr] gap-5 md:gap-16 items-center px-4 sm:px-6 lg:px-16">
+      <div className="mx-auto flex flex-col-reverse md:flex-row md:grid-cols-[3fr_2fr] gap-[150px] md:gap-16 items-center px-4 sm:px-6 lg:px-16">
         {/* LEFT CONTENT: Text + Buttons */}
-        <div className="flex flex-col items-start gap-10 max-w-3xl">
+        <div className="flex flex-col items-start gap-6 md:gap-10 max-w-3xl">
           {/* BADGE */}
           <button
             className="inline-flex items-center justify-center px-7 py-2.5 rounded-full text-sm md:text-base font-light"
@@ -24,7 +27,7 @@ const Hero = () => {
 
           {/* HEADING */}
           <div className="flex-col gap-3">
-            <h1 className="font-sora font-bold  text-2xl md:text-2xl lg:text-5xl leading-snug md:leading-[3.2rem] lg:leading-tight text-[#1E293B]">
+            <h1 className="font-sora font-bold  text-[32px] md:text-2xl lg:text-5xl leading-snug md:leading-[3.2rem] lg:leading-tight text-[#1E293B]">
               <span className="block">Exploring the Breakthroughs</span>
               <span className="block">
                 Advancing <span className="text-[#D62828]">Brain Health</span>
@@ -40,10 +43,10 @@ const Hero = () => {
           </div>
 
           {/* CTA BUTTONS */}
-          <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-5">
+          <div className="flex md:flex-col sm:flex-row items-start gap-3 md:gap-5">
             {/* PRIMARY CTA BUTTON */}
             <button
-              className="inline-flex items-center justify-between gap-3 text-white rounded-full pl-6 pr-2 py-2 shadow-sm hover:shadow-md transition-shadow"
+              className="inline-flex items-center justify-between gap-3 text-white rounded-full pl-4 md:pl-6 pr-1.5 md:pr-2 py-2 shadow-sm hover:shadow-md transition-shadow"
               style={{ backgroundColor: COLORS.brandRed }}
             >
               <span className="text-sm md:text-base font-medium whitespace-nowrap">
@@ -61,14 +64,14 @@ const Hero = () => {
 
             {/* SECONDARY BUTTON */}
             <button
-              className="relative inline-flex items-center justify-center px-6 py-3.5 rounded-full border-2 text-sm md:text-base font-medium overflow-hidden transition duration-200 ease-out hover:text-white hover:-translate-y-0.5"
+              className="relative inline-flex items-center justify-center px-2 md:px-6 py-4 md:py-3.5 rounded-full border-2 text-sm md:text-base font-medium overflow-hidden transition duration-200 ease-out hover:text-white hover:-translate-y-0.5"
               style={{
                 borderColor: COLORS.brandNavy,
                 color: COLORS.brandNavy,
                 backgroundColor: "transparent",
               }}
             >
-              <span className="relative z-10">Become a member</span>
+              <span className="relative z-10 ">Become a member</span>
             </button>
           </div>
 

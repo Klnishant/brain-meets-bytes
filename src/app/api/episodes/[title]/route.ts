@@ -28,15 +28,17 @@ export async function GET(
     podcast -> {
       title,
       author,
-      image,
+      "imageUrl": image.asset->url,
       description,
-      "slug":slug.current
+      "slug":slug.current,
+      "authorImageUrl":authorImage.asset->url
     },
     date,
     "imageUrl": image.asset->url,
     tags,
     description,
     "media":mediaFile.asset->url,
+    "mimeType": mediaFile.asset->mimeType,
     duration,
 }`;
 

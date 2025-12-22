@@ -39,7 +39,7 @@ const AboutNewsletterSection = () => {
                 </div>
                 <button
                   type="submit"
-                  className="flex h-[44px] min-w-[136px] items-center justify-center gap-2 rounded-[34px] px-5"
+                  className="flex h-[44px] w-full md:w-auto min-w-[136px] items-center justify-center gap-2 rounded-[34px] px-5"
                   style={{ backgroundColor: COLORS.brandRed }}
                 >
                   <span className="font-sora text-[18px] font-semibold text-white">Send</span>

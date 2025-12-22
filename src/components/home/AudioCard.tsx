@@ -10,8 +10,8 @@ const AudioCard = () => {
       >
         <div
           style={{
-            width: "1404px",
-            height: "850px",
+            width: "651px md:1404px",
+            height: "393px md:850px",
             opacity: 0.8,
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
@@ -23,8 +23,9 @@ const AudioCard = () => {
       {/* CARD */}
       <div
         className="
-          w-[480px]
-          h-[320px]
+          w-full
+          md:w-[480px]
+          md:h-[320px]
           flex flex-col
           p-6
           bg-white
@@ -50,7 +51,7 @@ const AudioCard = () => {
           <img
             src="/ki.png"
             alt="Speaker"
-            className="w-[110px] h-[110px] rounded-full object-cover border border-[#E2E8F0]"
+            className="w-[70px] h-[70px] md:w-[110px] md:h-[110px] rounded-full object-cover border border-[#E2E8F0]"
           />
 
           <div className="flex flex-col justify-center items-start gap-2 w-[260px]">

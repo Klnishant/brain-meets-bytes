@@ -32,33 +32,33 @@ type Episode = {
   podcast: {
     title?: string;
     author?: string;
-    image?: {
-      asset: {
-        url: string;
-      };
-    };
+    imageUrl?: string;
     description?: Text;
+    authorImageUrl?: string;
   };
   imageUrl?: string;
+  mimeType?: string;
 };
 
 type EpisodeCardProps = {
   episode: Episode;
   podcast: Podcast;
   index: number;
+  isPlaying: boolean;
   onSelect: (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     episode: Episode,
-    index: number
+    index: number,
+    isPlaying: boolean
   ) => void;
 };
 
 type PlayerCardProps = {
   episode: Episode;
   index: number;
-  onNext?: () => void;
-  onPrev?: () => void;
-  onShuffle?: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+  onShuffle: () => void;
 };
 
 const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
@@ -165,12 +165,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
   // Load new episode when changed
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.load();
-      setIsPlaying(false);
-      setCurrentTime(0);
-    }
-  }, [episode]);
+    if (!audioRef?.current) return;
+    audioRef.current?.load();
+    audioRef.current.currentTime = 0;
+    setCurrentTime(0);
+    audioRef.current?.play();
+  }, [episode, index]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -192,7 +192,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
   const onLoadedMetadata = () => {
     if (audioRef.current) {
-      setDuration(audioRef.current.duration);
+      setDuration(audioRef?.current?.duration || 0);
     }
   };
 
@@ -203,23 +203,23 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
   return (
-    <div>
-      <div className="w-full flex items-center mt-4 justify-center">
+    <div className="w-full flex items-center mt-4 justify-center px-8 md:px-16">
+      <div className="w-full flex items-center mt-4 justify-center px-8 md:px-16">
         <div
-          className=" md:h-[496px] rounded-3xl opacity-100 p-4 md:gap-8 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-center bg-white
+          className=" md:h-[496px] rounded-3xl opacity-100 p-4 gap-4 md:gap-8 md:p-8 flex flex-col md:flex-row items-start  justify-start md:justify-center bg-white
                           shadow-[0px_0px_4px_rgba(0,0,0,0.2)]
                           rounded-2xl
 "
         >
-          <div className="flex md:flex-col gap-4 md:gap-9 items-center">
+          <div className="flex md:flex-col gap-4 md:gap-9 items-center md:items-start">
             <div className="w-[80px] h-[80px] md:w-[308px] md:h-[319px] border-4 rounded-2xl">
               <img
-                src="/ki.png"
+                src={episode?.podcast?.authorImageUrl || "/ki.png"}
                 alt=""
                 className=" w-[80px] h-[80px] md:w-[308px] md:h-[319px] rounded-3xl object-cover"
               />
             </div>
-            <div className=" flex flex-col gap-1">
+            <div className=" flex flex-col gap-1 justify-start">
               <h1
                 className="font-sora font-bold text-[20px] md:text-[36px] text-[#1E293B] leading-[100%] tracking-[0%]
 "
@@ -237,25 +237,25 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
           <div className="h-[2px] w-full md:h-[432px] md:w-0.5 bg-[#E2E8F0] mt-2 md:mt-0"></div>
           <div>
             <div
-              className="w-full md:h-[432px] justify-end opacity-100
+              className="w-full opacity-100
  flex  overflow-hidden"
             >
               {/* CARD */}
               <div
                 className="
                           flex flex-col
-                          md:p-6
+                          justify-between
                         "
               >
                 {/* PROFILE + TEXT */}
-                <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-4">
                   <img
-                    src="/ki.png"
+                    src={episode?.imageUrl || "/ki.png"}
                     alt="Speaker"
-                    className="h-[70px] w-[70px] md:w-[110px] md:h-[110px] rounded-full object-cover border border-[#E2E8F0]"
+                    className="h-[70px] w-[70px] md:w-[120px] md:h-[115px] rounded-full object-cover border border-[#E2E8F0]"
                   />
 
-                  <div className="flex flex-col justify-center items-start gap-3 md:w-[930px] md:h-[211px]">
+                  <div className="flex flex-col justify-center items-start gap-3 md:w-[900px] md:h-[211px]">
                     <span
                       className="font-sora font-bold text-[12px] md:text-[24px] text-[#D62828] leading-[100%] tracking-[0%]
 "
@@ -281,8 +281,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     ref={audioRef}
                     onTimeUpdate={onTimeUpdate}
                     onLoadedMetadata={onLoadedMetadata}
+                    onPlay={() => {
+                      setIsPlaying(true);
+                    }}
+                    onPause={() => {
+                      setIsPlaying(false);
+                    }}
                   >
-                    <source src={episode?.media || ""} type="video/mp4" />
+                    <source
+                      src={episode?.media || ""}
+                      type={episode?.mimeType}
+                    />
                   </audio>
                 </div>
                 {/* SLIDER WITH TIME */}
@@ -300,8 +309,16 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                   />
 
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>{currentTime}</span>
-                    <span>{episode?.duration}</span>
+                    <span>
+                      {Math.floor(currentTime / 3600)} :{" "}
+                      {Math.floor((currentTime % 3600) / 60)} :{" "}
+                      {Math.floor(currentTime % 60)}
+                    </span>
+                    <span>
+                      {Math.floor(duration / 3600)} :{" "}
+                      {Math.floor((duration % 3600) / 60)} :{" "}
+                      {Math.floor(duration % 60)}
+                    </span>
                   </div>
                 </div>
 
@@ -344,7 +361,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     transition
                   "
                       onClick={() => {
-                        onPrev && onPrev();
+                        onPrev();
                       }}
                     >
                       <svg
@@ -382,10 +399,11 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     text-black 
                     rounded-md 
                     flex items-center justify-center
+                    hover:bg-gray-100
                     transition
                   "
                       onClick={() => {
-                        onNext && onNext();
+                        onNext();
                       }}
                     >
                       <svg
@@ -428,7 +446,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                       <img
                         src="/comment.png"
                         alt=""
-                        className="h-3 w-3 md:h-6 md:w-6"
+                        className="h-3 w-3 md:h-5 md:w-5"
                       />
                       <span className="text-[12px] md:text-[16px]">245</span>
                     </button>
@@ -446,7 +464,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                       <img
                         src="/save.png"
                         alt=""
-                        className="h-3 w-3 md:h-6 md:w-6"
+                        className="h-3 w-3 md:h-5 md:w-4"
                       />
                       <span className="text-[12px] md:text-[16px]">Save</span>
                     </button>
@@ -465,12 +483,13 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   episode,
   podcast,
   index,
+  isPlaying,
   onSelect,
 }) => {
   const handleClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
-    onSelect(event, episode, index);
+    onSelect(event, episode, index, isPlaying);
   };
   return (
     <div className="w-full">
@@ -538,7 +557,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
               </div>
             </div>
 
-            <div className="w-full h-0.5 border border-[#E2E8F0] mt-5"></div>
+            <div className="w-full h-0.5 border bg-[#E2E8F0] mt-5"></div>
 
             {/*BTNS*/}
             <div className="">
@@ -567,13 +586,13 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
                 {/* Save */}
                 <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                      <img
-                        src="/save.png"
-                        alt=""
-                        className="h-3 w-3 md:h-3.5 md:w-3.5"
-                      />
-                      <span className="text-[12px] md:text-[14px]">Save</span>
-                    </button>
+                  <img
+                    src="/save.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
+                  <span className="text-[12px] md:text-[14px]">Save</span>
+                </button>
               </div>
             </div>
           </div>
@@ -588,10 +607,12 @@ const PlayListHeroPage = () => {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [episode, setEpisode] = useState<Episode[]>([]);
   const [episodeNumber, setEpisodeNumber] = useState<number>(1);
-  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
   const params = useParams<{ title: string }>();
   const title = params.title;
+
+  let currentEpisode = episode[episodeNumber - 1];
 
   useEffect(() => {
     let mounted = true;
@@ -625,7 +646,7 @@ const PlayListHeroPage = () => {
         const data = (await res.json()) as Episode[];
         if (!mounted) return;
         setEpisode(Array.isArray(data) ? data : []);
-        setCurrentEpisode(data[0] || null);
+        currentEpisode = episode[episodeNumber - 1] || null;
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message ?? "Failed to load podcasts");
@@ -642,17 +663,15 @@ const PlayListHeroPage = () => {
   }, []);
 
   const handleNext = () => {
-    setEpisodeNumber((prev) => (prev < episode.length ? prev + 1 : 1));
-    setCurrentEpisode(episode[episodeNumber - 1]);
+    setEpisodeNumber((prev)=> prev < episode.length ? prev + 1 : 1);
   };
 
   const handlePrev = () => {
-    setEpisodeNumber((prev) => (prev > 1 ? prev - 1 : episode.length - 1));
-    setCurrentEpisode(episode[episodeNumber - 1]);
+    setEpisodeNumber((prev) => prev > 1 ? prev - 1 : episode.length);
   };
 
   const handleShuffle = () => {
-    setEpisodeNumber(Math.floor(Math.random() * episode.length) + 1);
+    setEpisodeNumber(Math.floor(Math.random() * episode.length));
   };
 
   return (
@@ -694,15 +713,19 @@ const PlayListHeroPage = () => {
         <PlayerCard
           episode={currentEpisode}
           index={episodeNumber}
-          onNext={handleNext}
-          onPrev={handlePrev}
+          onNext={() => {
+            handleNext();
+          }}
+          onPrev={() => {
+            handlePrev();
+          }}
           onShuffle={handleShuffle}
         />
       )}
 
       {/* Episodes */}
       {!loading && !error && (
-        <div >
+        <div className="flex flex-col gap-4">
           <div
             className="font-sora h-11 p-4 md:py-16 font-semibold text-[20px] md:text-[36px] leading-[100%] tracking-[0%] 
 "
@@ -715,9 +738,9 @@ const PlayListHeroPage = () => {
               episode={ep}
               podcast={podcasts[0]}
               index={index + 1}
+              isPlaying={isPlaying}
               onSelect={(e, ep, ind) => {
-                setCurrentEpisode(ep);
-                setEpisodeNumber(ind + 1);
+                setEpisodeNumber(ind);
               }}
             />
           ))}
@@ -776,7 +799,7 @@ const PlayListHeroPage = () => {
                 className="inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
                 style={{ backgroundColor: COLORS.brandNavy }}
               >
-                Discover all 200+
+                Discover all {`${podcasts.length}`}+
               </button>
             </div>
           </div>

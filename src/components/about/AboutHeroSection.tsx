@@ -61,26 +61,26 @@ const AboutHeroSection = () => {
         <img
           src="/about-wave.svg"
           alt="Decorative wave background"
-          className="w-[802px] h-[759px] opacity-90 max-w-none motion-safe:wave-float"
+          className="w-[400px] h-[390px] md:w-[802px] md:h-[759px] opacity-90 max-w-none motion-safe:wave-float"
         />
       </div>
 
-      <div className="relative mx-auto flex flex-col items-center justify-center px-4 sm:px-6 lg:px-16 py-24 lg:py-32 gap-10 max-w-5xl text-center">
+      <div className="relative mx-auto flex flex-col items-center justify-center px-4 sm:px-6 lg:px-16 py-24 lg:py-32 gap-6 md:gap-10 max-w-5xl text-center">
         <div className="flex flex-col gap-6">
-          <h1 className="font-sora text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-[#1E293B]">
+          <h1 className="font-sora text-[32px] md:text-5xl lg:text-6xl font-bold leading-tight text-[#1E293B]">
             {beforeHighlight}
             {highlightText && <span className="text-[#D62828]">{highlightText}</span>}
             {afterHighlight}
           </h1>
-          <p className="font-inter text-sm sm:text-base md:text-lg leading-7 md:leading-8 text-[#505050] mx-auto max-w-3xl">
+          <p className="font-inter text-[12px] sm:text-base md:text-lg sm:leading-7 md:leading-8 text-[#505050] mx-auto max-w-3xl">
             {body}
           </p>
         </div>
 
-        <div className="flex justify-center">
-          <button className="inline-flex items-center gap-4 px-10 py-4 rounded-full bg-[#D62828] text-white font-sora text-base md:text-lg shadow-md hover:bg-[#b81f1f] transition-colors">
+        <div className="w-full md:w-autoflex justify-center">
+          <button className="w-full md:w-auto inline-flex items-center justify-between  md:gap-4 px-6 md:px-10 py-2 md:py-4 rounded-full bg-[#D62828] text-white font-sora text-[12px] md:text-lg shadow-md hover:bg-[#b81f1f] transition-colors">
             <span>{primaryCtaLabel}</span>
-            <span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white">
+            <span className="inline-flex items-center justify-center w-6 h-6 md:w-11 md:h-11 rounded-full bg-white">
               <span className="inline-block w-0 h-0 border-y-[6px] border-y-transparent border-l-8 border-l-[#D62828] ml-[2px]" />
             </span>
           </button>

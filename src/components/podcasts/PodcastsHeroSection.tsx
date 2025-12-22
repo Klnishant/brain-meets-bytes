@@ -13,6 +13,17 @@ type Podcast = {
   podcastCount?: number;
 };
 
+type PodcastHeroContent = {
+  heading: string;
+  description: string;
+  newReleasePodcastTitle: string;
+  author: string;
+  imageUrl: string;
+  date: string;
+  tags: string[];
+  podcastCount: number;
+};
+
 const formatDate = (iso?: string) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -25,24 +36,24 @@ const formatDate = (iso?: string) => {
 };
 
 const PodcastsHeroSection = () => {
-  const [featured, setFeatured] = useState<Podcast | null>(null);
+  const[content,setContent]=useState<PodcastHeroContent | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       try {
-        const res = await fetch("/api/featured-podcasts");
-        if (!res.ok) {
-          throw new Error("Failed to load podcasts");
+        const contentRes = await fetch("/api/podcast-hero");
+        if (!contentRes.ok) {
+          throw new Error("Failed to load podcast hero content");
         }
 
-        const data = (await res.json()) as Podcast[];
+        const contentData = (await contentRes.json()) as PodcastHeroContent;
         if (!mounted) return;
-        setFeatured(Array.isArray(data) && data.length > 0 ? data[0] : null);
+        setContent(contentData);
       } catch (e: any) {
         if (!mounted) return;
-        setFeatured(null);
+        setContent(null);
       }
     };
 
@@ -53,14 +64,7 @@ const PodcastsHeroSection = () => {
     };
   }, []);
 
-  const title =
-    featured?.title ||
-    "The New Light Frontier: How Photonic Computing Could Transform Brain Health and the Future of Care";
-  const author = featured?.author || "Ki Siadatan";
-  const date = formatDate(featured?.date) || "Nov 14, 2025";
-  const imageUrl = featured?.imageUrl || "/podcast-hero-image.png";
-  const tags = featured?.tags || ["Neuroscience", "Longetivity", "Psychology"];
-  const podcastCount = featured?.podcastCount || 0;
+  
 
   const newLocal = "flex items-center gap-3";
   return (
@@ -76,16 +80,14 @@ const PodcastsHeroSection = () => {
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-16">
           <div className=" w-full max-w-[1259px] max-h-[213px]">
             <h2 className="font-sora z-1 text-3xl md:text-4xl lg:text-[56px] font-bold text-start text-[#1E293B]">
-              Explore{" "}
-              <span style={{ color: COLORS.brandRed }}>Breakthroughs</span> in
-              Brain Health & Longevity
+              {content?.heading.split(" ").map((word,i) => (<span key={i} className={i === 1 ? "text-[#D62828]" : ""}>{word} </span>)) ||
+                "Where Brain Science Meets a Healthier Future for Everyone"}
             </h2>
           </div>
           <div className="h-[213px] flex flex-col gap-8 ">
             <p className="font-inter md:w-[600px] z-1 text-sm md:text-base lg:text-[18px] leading-relaxed text-start text-[#505050] max-w-[951px] font-400">
-              Explore conversations with leading experts advancing brain health,
-              neuroscience, and human longevity. Listen, learn, and discover the
-              ideas shaping the future of how we think, age, and thrive.
+              {content?.description ||
+                "Brain Meets Bytes explores breakthroughs in neuroscience, healthy aging, and human longevity—translating emerging science into insights that help us all live longer, healthier, and sharper lives."}
             </p>
             <button
               className="inline-flex items-center w-[295px] h-[50px] justify-center gap-3 rounded-full px-10 py-3 text-sm md:text-base font-normal text-white"
@@ -99,7 +101,7 @@ const PodcastsHeroSection = () => {
                   className="h-4 w-4 object-contain"
                 />
 
-                <span>Discover all 200+</span>
+                <span>Discover all {String(content?.podcastCount) || "200"}+</span>
 
                 {/* Right dropdown arrow icon */}
                 <img
@@ -116,8 +118,8 @@ const PodcastsHeroSection = () => {
           {/* Background image */}
           <div className="absolute inset-0 w-full h-[470px]">
             <img
-              src="/podcast-demo.png"
-              alt={title}
+              src={content?.imageUrl || "/podcast-hero-image.png"}
+              alt={"Podcast Hero"}
               className="h-full w-full rounded-2xl"
             />
             <div />
@@ -134,7 +136,7 @@ const PodcastsHeroSection = () => {
               </div>
               <div className="inline-flex items-center gap-2 rounded-full bg-[#E2E8F0] px-3 py-1">
                 <span className="font-inter text-[14px] text-[#1E293B]">
-                  {author}
+                  {content?.author || "Unknown"}
                 </span>
               </div>
             </div>
@@ -142,13 +144,13 @@ const PodcastsHeroSection = () => {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-center w-full mb-2">
                   <span className="font-inter text-[14px] text-[#FAF9F8]">
-                    {date}
+                    {content?.date ? formatDate(content.date) : "Nov 14, 2025"}
                   </span>
                 </div>
                 {/* Meta chips row 2: tags */}
-                {tags.length > 0 && (
+                {content?.tags && content?.tags?.length > 0 && (
                   <div className="flex flex-wrap items-center gap-3 w-full justify-center">
-                    {tags.map((tag) => (
+                    {content?.tags.map((tag) => (
                       <span
                         key={tag}
                         className="inline-flex items-center rounded-full border border-[#FAF9F8] px-3 py-1 font-inter text-[14px] text-[#FAF9F8]"
@@ -161,7 +163,7 @@ const PodcastsHeroSection = () => {
                 {/* Title */}
                 <div className="flex flex-col gap-4">
                   <h2 className="font-sora text-[28px] md:text-[32px] lg:text-[36px] font-semibold leading-[1.25] text-[#FAF9F8] text-center">
-                    {title}
+                    {content?.newReleasePodcastTitle || "Healthier Future"}
                   </h2>
                 </div>
               </div>

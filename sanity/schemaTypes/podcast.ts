@@ -50,5 +50,13 @@ export const podcast = defineType({
       title: "Description",
       type: "text",
     }),
+    defineField({
+      name: "authorImage",
+      title: "Author Image",
+      type: "image",
+      options: {
+        hotspot: true,
+      },
+    }),
   ],
 });
