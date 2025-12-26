@@ -4,6 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { NAV_LINKS, COLORS } from "@/lib/constants";
+import { Sign } from "crypto";
+import SignupCard from "../authentication/SignupCard";
+import SignInCard from "../authentication/SignInCard";
+import MembershipCard from "../authentication/MembershipCard";
 
 const linkToHref = (label: string) => {
   if (label === "Home") return "/";
@@ -16,6 +20,16 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const isForumsPage = pathname.startsWith("/forums");
+  const [openLogIn, setOpenLogIn] = useState(false);
+  const [openSignUp, setOpenSignUp] = useState(false);
+  const [openMembership, setOpenMembership] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleLogout = async() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    setIsLoggedIn(false);
+  };
 
   return (
     <header
@@ -97,13 +111,17 @@ const Navbar = () => {
             <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5"
               style={{ backgroundColor: COLORS.brandRed }}
+              onClick={()=> setOpenMembership(true)}
             >
               Become a member
             </button>
 
             {/* Login */}
-            <button
+            {
+              !isLoggedIn ? (
+                <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
+              onClick={() => setOpenLogIn(true)}
               style={isForumsPage? {
                 borderColor: COLORS.white,
                 color: COLORS.white,
@@ -114,6 +132,22 @@ const Navbar = () => {
             >
               Login
             </button>
+              ) : (
+                <button
+              className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
+              style={isForumsPage? {
+                borderColor: COLORS.white,
+                color: COLORS.white,
+              } :{
+                borderColor: COLORS.brandNavy,
+                color: COLORS.brandNavy,
+              } }
+              onClick={()=>(setIsLoggedIn(false))}
+            >
+              Logout
+            </button>
+              )
+            }
           </div>
         </div>
 
@@ -143,6 +177,31 @@ const Navbar = () => {
           </svg>
         </button>
       </div>
+
+      {/* SignIn Modal */}
+      {openLogIn && (
+        <SignInCard 
+        onClose={() => setOpenLogIn(false)} handleSignup={() => {
+          setOpenLogIn(false);
+          setOpenSignUp(true);
+        }} 
+        handleIsLoggedIn={() => setIsLoggedIn(true)}
+        />
+      )}
+
+      {/* SignUp Modal */}
+      {openSignUp && (
+        <SignupCard onClose={() => setOpenSignUp(false)} 
+        handleSignIn={() => {setOpenSignUp(false); setOpenLogIn(true);}}
+        handleIsLoggedIn={() => setIsLoggedIn(true)}
+        />
+      )}
+
+      {/* Membership Modal */}
+      {openMembership && (
+        <MembershipCard onClose={() => (setOpenMembership(false))} />
+      )}
+      
     </header>
   );
 };

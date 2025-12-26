@@ -1,5 +1,56 @@
+'use client';
+
 import { COLORS } from "@/lib/constants";
 import ForumsSection from "@/components/home/ForumsSection";
+import ThreadsCard from "./ThreadsCard";
+import CategoryCard from "./CategoryCard";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import UsersCard from "./UsersCard";
+
+type Category = {
+  _id: string;
+  CategoryId: number;
+  title: string;
+  route: string;
+  color: string;
+};
+type Thread = {
+  _id: string;
+  title: string;
+  content: string;
+  CategoryId: Array<Number>;
+  images: Array<string>;
+  userId: Number;
+  likesCount: Number;
+  commentsCount: Number;
+  createdAt: string;
+  updatedAt: string;
+  ThreadId: Number;
+  user: {
+    userId: Number;
+    name: string;
+    email: string;
+    ProfilePic: string;
+  };
+  categories: Array<Category>;
+};
+
+type Topic = {
+  _id: string;
+  title: string;
+  route: string;
+  isActive: boolean;
+  topicId: number;
+}
+
+type User = {
+  _id: string;
+  name: string;
+  role: string;
+  userId: number;
+  ProfilePic: string;
+}
 
 const ForumsHeroSection = () => {
   return (
@@ -94,6 +145,155 @@ const ForumsHeroSection = () => {
 };
 
 const ForumsMainSection = () => {
+  const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [threads, setThreads] = useState<Thread[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [topics, setTopics] = useState<Topic[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+
+    const token: string = localStorage.getItem("token") ?? "";
+  
+    useEffect(() => {
+      let mounted = true;
+  
+      const load = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+  
+          const res = await fetch(
+            `http://54.172.93.35:7000/api/threads/FulldetailsofThreads`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (!res.ok) {
+            throw new Error("Failed to load threads");
+          }
+  
+          const data = (await res.json())?.data as Thread[];
+          if (!mounted) return;
+          setThreads(Array.isArray(data) ? data : []);
+        } catch (e: any) {
+          if (!mounted) return;
+          setError(e?.message ?? "Failed to load threads");
+        } finally {
+          if (mounted) setLoading(false);
+        }
+
+        try{
+          setLoading(true);
+          setError(null);
+  
+          const res = await fetch(
+            `http://54.172.93.35:7000/api/category`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (!res.ok) {
+            throw new Error("Failed to load categories");
+          }
+  
+          const categoryData = (await res.json())?.data as Category[];
+          if (!mounted) return;
+          setCategories(Array.isArray(categoryData) ? categoryData : []);
+          console.log(categoryData);
+        }
+        catch(e: any){
+          if(!mounted) return;
+          setError(e?.message ?? "Failed to load categories");
+        }
+        finally{
+          if(mounted) setLoading(false);
+        }
+
+        try{
+          setLoading(true);
+          setError(null);
+  
+          const res = await fetch(
+            `http://54.172.93.35:7000/api/topics`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (!res.ok) {
+            throw new Error("Failed to load topics");
+          }
+  
+          const topicData = (await res.json())?.meta?.data as Topic[];
+          if (!mounted) return;
+          setTopics(Array.isArray(topicData) ? topicData : []);
+          console.log(topicData);
+        }
+        catch(e: any){
+          if(!mounted) return;
+          setError(e?.message ?? "Failed to load topics");
+        }
+        finally{
+          if(mounted) setLoading(false);
+        }
+
+        try{
+          setLoading(true);
+          setError(null);
+  
+          const res = await fetch(
+            `http://54.172.93.35:7000/api/users`,
+            {
+              method: "GET",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (!res.ok) {
+            throw new Error("Failed to load users");
+          }
+  
+          const userData = (await res.json())?.meta?.data as User[];
+          if (!mounted) return;
+          setUsers(Array.isArray(userData) ? userData : []);
+          console.log(userData);
+        }
+        catch(e: any){
+          if(!mounted) return;
+          setError(e?.message ?? "Failed to load users");
+        }
+        finally{
+          if(mounted) setLoading(false);
+        }
+      };
+
+      
+  
+      void load();
+  
+      return () => {
+        mounted = false;
+      };
+    }, []);
   return (
     <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
@@ -104,24 +304,24 @@ const ForumsMainSection = () => {
               <img
                 src="/home.png"
                 alt="Home icon"
-                className="h-12 w-12 object-contain"
+                className="h-6 w-6 md:h-12 md:w-12 object-contain"
               />
             </div>
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="font-inter text-[36px] font-bold text-[#1E293B]">
+              <span className="font-inter text-[20px] md:text-[36px] font-bold text-[#1E293B]">
                 Welcome to our
               </span>
-              <span className="font-inter text-[36px] font-bold text-[#D62828]">community.</span>
+              <span className="font-inter text-[20px] md:text-[36px] font-bold text-[#D62828]">community.</span>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-[14px] font-normal font-sora">
-            <button className="flex h-[50px] w-[140px] items-center justify-center rounded-[36px] bg-[#023047] text-white">
+          <div className="flex items-center gap-3 text-[12px] md:text-[14px] font-normal font-sora">
+            <button className="flex h-[36px] w-[104px] py-5 md:h-[50px] md:w-[140px] items-center justify-center rounded-[36px] bg-[#023047] text-white">
               Most Popular
             </button>
-            <button className="flex h-[50px] w-[150px] items-center justify-center rounded-[36px] bg-white text-[#023047] opacity-70">
+            <button className="flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] bg-white text-[#023047] opacity-70">
               Highest Voted
             </button>
-            <button className="flex h-[50px] w-[150px] items-center justify-center rounded-[36px] bg-white text-[#023047] opacity-70">
+            <button className="flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] bg-white text-[#023047] opacity-70">
               Latest Tread
             </button>
           </div>
@@ -131,7 +331,7 @@ const ForumsMainSection = () => {
           {/* Left: search, composer, posts */}
           <div className="flex w-full max-w-[1059px] flex-col gap-6">
             {/* Search bar */}
-            <div className="flex items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3">
+            <div className="hidden md:block md:flex items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3">
               <span className="font-sora text-[16px] text-[#64748B]">Search for a tread....</span>
               <button
                 className="flex h-[44px] w-[136px] items-center justify-center gap-2 rounded-[34px] bg-[#D62828] text-[16px] text-white"
@@ -146,7 +346,7 @@ const ForumsMainSection = () => {
             </div>
 
             {/* Composer */}
-            <div className="flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="hidden  md:flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <div className="flex items-center gap-4">
                 <div className="h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-[#D62828]">
                   <img
@@ -187,9 +387,13 @@ const ForumsMainSection = () => {
                 </button>
               </div>
             </div>
-
-            {/* Example main post using existing ForumCard styles */}
-            <ForumsSection />
+            {/* Threads cards */}
+            {
+              threads && threads.map((thread) => (
+                <ThreadsCard key={thread._id} thread={thread} />
+              ))
+            }
+            
           </div>
 
           {/* Right: sidebars placeholder column */}
@@ -199,14 +403,54 @@ const ForumsMainSection = () => {
               <p className="font-inter text-[14px] text-[#505050]">
                 Episode discussions, cognitive health, longevity, and more.
               </p>
+              {/* categories list */}
+              <div className="flex flex-col gap-2">
+                {
+                  categories && categories.map((category) => (
+                    <CategoryCard key={category._id}
+                      title={category.title}
+                      imageUrl="./forum-user-1.jpg"
+                      route={category.route}
+                      color={category.color}
+                      content="dfgrtttfggfgtrtr"
+                      threadCount={0}
+                      />
+                  ))
+                }
+              </div>
             </div>
 
             <div className="flex h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">Recommended Topics</h3>
+              <div>
+                {/* topics list */}
+                {
+                  topics && topics.map((topic) => (
+                    <Link href={topic.route} className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]">
+                      <p className="font-inter font-normal text-[#505050] text-sm leading-none"
+>{topic.title}</p>
+                    </Link>
+                  ))
+                }
+              </div>
             </div>
 
             <div className="flex h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">You may know</h3>
+                {/* users list */}
+              <div className="flex flex-col gap-2">
+                {
+                  users && users.map((user) => (
+                    <UsersCard key={user._id}
+                      _id={user._id}
+                      name={user.name}
+                      role={user.role}
+                      userId={user.userId}
+                      ProfilePic={user.ProfilePic}
+                      />
+                  ))
+                }
+              </div>
             </div>
 
             <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
