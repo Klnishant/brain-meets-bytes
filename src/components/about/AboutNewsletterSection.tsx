@@ -1,6 +1,40 @@
+'use client';
 import { COLORS } from "@/lib/constants";
+import { NextResponse } from "next/server";
+import { useState } from "react";
 
 const AboutNewsletterSection = () => {
+const [email, setEmail] = useState({
+  email: "",
+});
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.preventDefault();
+      const { name, value } = e.target;
+      setEmail((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+    const handleSubsription = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      try {
+        const res = await fetch('/api/subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(email),
+        });
+        if (res.ok) {
+          setEmail({ email: "" });
+          alert('Subscribed successfully!');
+        }
+      } catch (error: any) {
+        console.log(error?.message,"Subscription failed");
+        alert("Subscription failed");
+      }
+    }
   return (
     <section className="w-full bg-[#FAF9F8] py-20 md:py-24 lg:py-28">
       <div className="relative mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-16" style={{ height: 730 }}>
@@ -29,10 +63,18 @@ const AboutNewsletterSection = () => {
               </div>
 
               {/* Email input + send button (stacked) */}
-              <form className="flex w-full max-w-[547px] flex-col items-center gap-4">
+              <form
+               className="flex w-full max-w-[547px] flex-col items-center gap-4"
+               method="post"
+               noValidate
+               onSubmit={handleSubsription}
+               >
                 <div className="w-full rounded-[42px] bg-[#E2E8F0] px-6 py-4">
                   <input
                     type="email"
+                    name="email"
+                    value={email.email}
+                    onChange={handleInputChange}
                     placeholder="Enter your Email address"
                     className="w-full border-none bg-transparent font-sora text-base text-[#64748B] placeholder:text-[#64748B] outline-none"
                   />

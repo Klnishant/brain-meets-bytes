@@ -208,19 +208,19 @@ const PodcastsMainSection = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col items-center gap-16">
         <div className="flex flex-col items-center gap-8 w-full text-center">
           <div className="flex flex-col gap-3">
-            <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold">
+            <h2 className="font-sora text-[20px] md:text-3xl lg:text-4xl font-bold">
               <span className="text-[#1E293B]">All</span>{" "}
               <span style={{ color: COLORS.brandRed }}>Podcasts</span>
             </h2>
-            <p className="font-inter text-sm md:text-base text-[#505050]">
+            <p className="font-inter text-[12px] md:text-base text-[#505050]">
               Nam vulputate faucibus urna non mollis. Vivamus a vulputate
               turpis. Aenean efficitur aliquam dui a elementum.
             </p>
           </div>
 
-          <div className="flex items-center gap-1 justify-between w-full px-5 py-3">
-            <div>
-              <div className=" md:w-[700px] flex items-center gap-3 rounded-full bg-[#E2E8F0] px-5 py-3">
+          <div className="flex items-center gap-1 justify-between w-full  md:px-5 py-2 md:py-3">
+            <div className="w-full">
+              <div className=" md:max-w-[700px] flex items-center md:gap-3 rounded-full bg-[#E2E8F0] md:px-5 pl-4 pr-1 py-[9px] md:py-3">
                 <input
                   type="text"
                   value={search}
@@ -229,22 +229,22 @@ const PodcastsMainSection = () => {
                     setCurrentPage(1);
                   }}
                   placeholder="Search episodes, topics, guests…"
-                  className="flex-1 bg-transparent outline-none text-sm md:text-base text-[#1E293B] placeholder-[#64748B]"
+                  className="flex-1 bg-transparent outline-none text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
                 />
                 <button
                   type="button"
-                  className="flex items-center justify-center w-9 h-9 rounded-full"
+                  className="flex items-center justify-center w-7 h-7 md:w-9 md:h-9 rounded-full"
                   style={{ backgroundColor: COLORS.brandRed }}
                 >
-                  <span className="relative block w-3.5 h-3.5 border-2 border-white rounded-full" />
-                  <span className="block w-2 h-0.5 bg-white -ml-1 rotate-45 origin-left" />
+                  <span className="relative block w-3 h-3 md:w-3.5 md:h-3.5 border-2 border-white rounded-full" />
+                  <span className="block w-1.75 h-0.5 md:w-2 md:h-0.5 bg-white -ml-1 rotate-45 origin-left" />
                 </button>
               </div>
             </div>
             <div className="flex items-center justify-center gap-1">
               <button
                 type="button"
-                className="flex items-center justify-center gap-2.5 px-4 md:px-8 h-[45px] md:w-[232px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+                className="flex items-center justify-center gap-2.5 px-3 lg:px-8 h-[36px] lg:w-[232px] lg:h-[50px] md:h-[50px] md:w-[50px] text-[#023047] border border-[#023047] rounded-full"
                 onClick={() => {
                   setSortBy((prev) => (prev === "recent" ? "oldest" : "recent"));
                   setCurrentPage(1);
@@ -253,17 +253,17 @@ const PodcastsMainSection = () => {
                 <div className="flex items-center justify-center gap-0">
                   <img src="/sort 1.png" alt="" />
                 </div>
-                <span className="hidden md:block">Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}</span>
+                <span className="hidden lg:block">Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}</span>
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center gap-2.5 px-4 md:px-8 w-[45px] md:w-[149px] h-[45px] md:h-[50px] text-[#023047] border border-[#023047] rounded-full"
+                className="flex items-center justify-center gap-2.5 px-3 lg:px-8 w-[45px] lg:w-[149px] h-[36px] lg:h-[50px] md:h-[50px] md:w-[50px] text-[#023047] border border-[#023047] rounded-full"
                 onClick={() => setFilterOpen(true)}
               >
                 <span>
                   <img src="/filter 1.png" className="invert h-full w-full" />
                 </span>
-                <span className="hidden md:block">Filters</span>
+                <span className="hidden lg:block">Filters</span>
               </button>
             </div>
           </div>
@@ -366,10 +366,10 @@ const PodcastsMainSection = () => {
         </div>
 
         <div>
-          <div className="flex w-full max-w-[905px] flex-col items-center gap-6 md:flex-row md:justify-between">
+          <div className="flex w-full max-w-[905px] items-center gap-6 justify-between">
             {/* Previous */}
             <button
-              className="flex h-[50px] w-[146px] items-center justify-center gap-3 rounded-[47px] bg-[#023047]/40 px-4 text-[16px] text-[#F7F9FC] disabled:opacity-40"
+              className="flex h-[26px] w-[80px] md:h-[50px] md:w-[146px] items-center justify-center gap-1 md:gap-3 rounded-[47px] bg-[#023047]/40 px-4 py-3 text-[10px] md:text-[16px] text-[#F7F9FC] disabled:opacity-40"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safeCurrentPage === 1}
             >
@@ -385,7 +385,7 @@ const PodcastsMainSection = () => {
                 (page) => (
                   <button
                     key={page}
-                    className={`flex h-8 w-8 items-center justify-center rounded text-[18px] ${
+                    className={`flex h-5 w-5 md:h-8 md:w-8 items-center justify-center rounded text-[12px] md:text-[18px] ${
                       page === safeCurrentPage
                         ? "bg-[#D62828] font-semibold text-[#EBE6DC]"
                         : "font-normal text-[#1E293B]"
@@ -400,7 +400,7 @@ const PodcastsMainSection = () => {
 
             {/* Next */}
             <button
-              className="flex h-[50px] w-[146px] items-center justify-center gap-3 rounded-[47px] bg-[#023047] px-4 text-[16px] text-[#F7F9FC] disabled:opacity-40"
+              className="flex h-[26px] w-[80px] md:h-[50px] md:w-[146px] items-center justify-center gap-1 md:gap-3 rounded-[47px] bg-[#023047] px-4 py-3 text-[10px] md:text-[16px] text-[#F7F9FC] disabled:opacity-40"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={safeCurrentPage === totalPages}
             >

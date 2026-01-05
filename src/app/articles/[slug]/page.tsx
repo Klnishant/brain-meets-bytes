@@ -1,13 +1,26 @@
+"use client";
 import Navbar from "@/components/core/Navbar";
 import Footer from "@/components/core/Footer";
 import Link from "next/link";
 import { sanityClient } from "@/lib/sanityClient";
+import { useEffect, useState } from "react";
+import { set } from "sanity";
+import CommentsCard from "@/components/forums/CommentsCard";
 
 interface ArticlePageProps {
   params: Promise<{
     slug: string;
   }>;
 }
+
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
 
 type Article = {
   _id: string;
@@ -183,10 +196,209 @@ const RelatedArticleCard = ({ article }: { article: any }) => {
   );
 };
 
-const ArticlePage = async ({ params }: ArticlePageProps) => {
-  const { slug } = await params;
-  const article = (await sanityClient.fetch(articleQuery, { slug })) as Article | null;
-  const related = (await sanityClient.fetch(relatedQuery, { slug })) as any[];
+const ArticlePage = ({ params }: ArticlePageProps) => {
+  const [article, setArticle] = useState<Article | null>(null);
+  const [related, setRelated] = useState<Article[]>([]);
+  const [isLiked, setIsLiked] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [likedCount, setLikedCount] = useState(0);
+  const [commentData, setCommentData] = useState({ comment: "" });
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const { slug } = await params;
+        const res = await fetch(`/api/articles/${slug}`);
+        if (!res.ok) {
+          throw new Error("Failed to load podcasts");
+        }
+
+        const data = await res.json();
+        if (!mounted) return;
+        console.log(data);
+        setArticle(data?.article || null);
+        setRelated(Array.isArray(data?.related) ? data?.related : []);
+      } catch (e: any) {
+        if (!mounted) return;
+        setError(e?.message ?? "Failed to load podcasts");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const data = {
+      sanityArticleId: article?._id,
+      articleName: article?.title,
+      reaction: isLiked ? "dislike" : "like",
+    };
+    let Res;
+    try {
+      const res = await fetch(`http://54.172.93.35:7000/api/articles/like`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(res);
+      if (!res?.ok) {
+        throw new Error("Failed to like or dislike");
+      }
+      Res = await res.json();
+      if (res.ok) {
+        alert("like or dislike sent successfully!");
+        if (isLiked) {
+          setIsLiked(false);
+          setLikedCount((prev) => prev - 1);
+        } else {
+          setIsLiked(true);
+          setLikedCount((prev) => prev + 1);
+        }
+      } else {
+        alert("Failed like or dislike. Please try again later.");
+      }
+    } catch (error: any) {
+      setError(error?.message ?? "Failed to send like or dislike");
+    }
+  };
+
+  useEffect(() => {
+    const fetchLikedCount = async () => {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/articles/like?sanityArticleId=${article?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        console.log("liked Count", data);
+
+        setLikedCount(data?.data?.likeCount);
+      }
+    };
+    if (article?._id) {
+      fetchLikedCount();
+    }
+  }, [isLiked]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setCommentData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = {
+      "sanityArticleId": article?._id,
+      "comment": commentData.comment,
+    };
+    console.log(localStorage.getItem("userId"));
+
+    try {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/articles/comments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      console.log(res);
+      if (!res?.ok) {
+        throw new Error("Failed to send comments");
+      }
+      if (res.ok) {
+        setCommentData({
+          comment: "",
+        });
+        alert("Message sent successfully!");
+      } else {
+        alert("Failed to send message. Please try again later.");
+      }
+    } catch (error: any) {
+      setError(error?.message ?? "Failed to send comments");
+    }
+  };
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/articles/comments?sanityArticleId=${article?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        console.log("liked Count", data);
+
+        setComments(data?.data);
+      }
+    };
+    if (article?._id) {
+      fetchComments();
+    }
+  }, [commentData]);
+
+  const fallbackShare = (url: string) => {
+  navigator.clipboard.writeText(url);
+  alert("Link copied to clipboard");
+};
+
+
+  const handleShare = async () => {
+    const shareData = {
+      title: article?.title,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        fallbackShare(shareData.url!);
+      }
+    } catch (err) {
+      console.error("Share cancelled", err);
+    }
+  };
 
   if (!article) {
     return (
@@ -200,7 +412,16 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
     );
   }
 
-  const { title, author, date, imageUrl, tags = [], excerpt, authorDetails, content } = article;
+  const {
+    title,
+    author,
+    date,
+    imageUrl,
+    tags = [],
+    excerpt,
+    authorDetails,
+    content,
+  } = article;
 
   const displayAuthorName = authorDetails?.name || author || "Unknown";
   const displayAuthorRole = authorDetails?.role;
@@ -218,9 +439,13 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-16">
           <div className="flex items-center justify-between rounded-[20px] border border-[#E2E8F0] bg-white px-5 py-4 text-sm text-[#1E293B]">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-inter text-[14px] text-[#1E293B]">Home</span>
+              <span className="font-inter text-[14px] text-[#1E293B]">
+                Home
+              </span>
               <span className="text-[#1E293B]">/</span>
-              <span className="font-inter text-[14px] text-[#1E293B]">Articles</span>
+              <span className="font-inter text-[14px] text-[#1E293B]">
+                Articles
+              </span>
               <span className="text-[#1E293B]">/</span>
               <span className="font-inter text-[14px] text-[#1E293B]">
                 {title}
@@ -242,12 +467,18 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
 
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div className="inline-flex items-center gap-3 rounded-full bg-[#E2E8F0] px-4 py-2">
-                  <span className="font-inter text-[14px] text-[#64748B]">{displayAuthorName}</span>
+                  <span className="font-inter text-[14px] text-[#64748B]">
+                    {displayAuthorName}
+                  </span>
                   {displayAuthorRole && (
-                    <span className="font-inter text-[12px] text-[#94A3B8]">{displayAuthorRole}</span>
+                    <span className="font-inter text-[12px] text-[#94A3B8]">
+                      {displayAuthorRole}
+                    </span>
                   )}
                 </div>
-                <span className="font-inter text-[14px] text-[#505050]">{formatDate(date)}</span>
+                <span className="font-inter text-[14px] text-[#505050]">
+                  {formatDate(date)}
+                </span>
               </div>
 
               {tags.length > 0 && (
@@ -283,9 +514,7 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
             )}
 
             {/* Main body blocks */}
-            <div className="flex flex-col">
-              {renderBlocks(content)}
-            </div>
+            <div className="flex flex-col">{renderBlocks(content)}</div>
 
             {/* Author card */}
             <div className="flex flex-col gap-6 rounded-[32px] bg-[#E2E8F0] p-6 md:flex-row md:items-center md:p-8">
@@ -293,18 +522,125 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
                 <div className="relative h-[221px] w-[221px] flex-shrink-0">
                   <div className="absolute left-0.5 top-3 h-[221px] w-[221px] rounded-[32px] bg-[#023047]" />
                   <div className="absolute left-0.5 top-0 h-[221px] w-[221px] overflow-hidden rounded-[32px] border-4 border-[#FAF9F8]">
-                    <img src={authorImageUrl} alt={displayAuthorName} className="h-full w-full object-cover " />
+                    <img
+                      src={authorImageUrl}
+                      alt={displayAuthorName}
+                      className="h-full w-full object-cover "
+                    />
                   </div>
                 </div>
               )}
 
               <div className="flex flex-1 flex-col gap-4">
-                <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">{displayAuthorName}</h3>
+                <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+                  {displayAuthorName}
+                </h3>
                 <p className="font-inter text-[16px] md:text-[18px] leading-[32px] text-[#505050]">
                   {displayAuthorBio}
                 </p>
               </div>
             </div>
+            {/*BTNS*/}
+            <div className="">
+              <div className="flex items-center gap-3 md:gap-6 py-5">
+                {/* Like */}
+                <button
+                  onClick={handleLike}
+                  className={`hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
+                >
+                  <img
+                    src="/like.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
+                  <span className="text-[12px] md:text-[14px]">
+                    {likedCount}
+                  </span>
+                </button>
+
+                {/* Comments */}
+                <button
+                  onClick={() => setIsCommentOpen(!isCommentOpen)}
+                  className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
+                >
+                  <img
+                    src="/comment.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
+                  <span className="text-[12px] md:text-[14px]">
+                    {comments?.length}
+                  </span>
+                </button>
+
+                {/* Share */}
+                <button 
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                  <img
+                    src="/share 1.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
+                  <span className="text-[12px] md:text-[14px]">Share</span>
+                </button>
+
+                {/* Save */}
+                <button className="hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                  <img
+                    src="/save.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
+                  <span className="text-[12px] md:text-[14px]">Save</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Comments bar */}
+            <div
+              className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}
+            >
+              <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
+                <img
+                  src="/forum-user-1.jpg"
+                  alt="Current user"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="w-full ">
+                <form
+                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
+                  method="post"
+                  noValidate
+                  onSubmit={handleComment}
+                >
+                  <textarea
+                    name="comment"
+                    rows={1}
+                    value={commentData.comment}
+                    onChange={handleInputChange}
+                    placeholder="Make a comment…"
+                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+                  />
+                  <button
+                    type="submit"
+                    className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
+                  >
+                    Comment
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Comments */}
+            {comments && comments.length > 0 && (
+              <div className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8`}>
+                {comments.map((c) => (
+                  <CommentsCard key={c?._id} comment={c} addReply={()=>{}} isActiveReply={false}  />
+                ))}
+              </div>
+            )}
 
             {/* Related articles */}
             {related && related.length > 0 && (
@@ -314,8 +650,8 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
                     Related Articles &amp; Interviews
                   </h2>
                   <p className="max-w-[700px] font-inter text-[16px] md:text-[18px] leading-[22px] text-[#505050]">
-                    Nam vulputate faucibus urna non mollis. Vivamus a vulputate turpis. Aenean
-                    efficitur aliquam dui a elementum.
+                    Nam vulputate faucibus urna non mollis. Vivamus a vulputate
+                    turpis. Aenean efficitur aliquam dui a elementum.
                   </p>
                 </div>
 
@@ -325,9 +661,7 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
                   ))}
                 </div>
 
-                <button
-                  className="inline-flex items-center justify-center gap-3 rounded-[36px] bg-[#023047] px-10 py-3 text-[16px] text-white"
-                >
+                <button className="inline-flex items-center justify-center gap-3 rounded-[36px] bg-[#023047] px-10 py-3 text-[16px] text-white">
                   Discover all 200+
                 </button>
               </div>

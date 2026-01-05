@@ -15,10 +15,10 @@ const FeatureCard =({
   align: "left" | "right";
 }) => {
   const colorMap = {
-    red: "border-red-500 bg-red-50 text-red-600",
-    green: "border-green-600 bg-green-50 text-green-700",
-    cyan: "border-cyan-500 bg-cyan-50 text-cyan-600",
-    purple: "border-purple-600 bg-purple-50 text-purple-600",
+    red: "border border-[#D62828] bg-gradient-to-r from-[#FFDEDE] to-[#FAF9F8] text-[#D62828]",
+    green: "border border-[#00692C] bg-gradient-to-r from-[#E0FFED] to-[#FAF9F8] text-[#00692C]",
+    cyan: "border border-[#0099A4] bg-gradient-to-r from-[#D8FCFF] to-[#FAF9F8]  text-[#0099A4]",
+    purple: "border border-[#4F00A4] bg-gradient-to-r from-[#E7D0FF] to-[#FAF9F8] text-[#4F00A4]",
   };
 
   return (
@@ -53,7 +53,7 @@ const MembershipCard = ({
           <X size={18} className="text-[#023047]" />
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-50">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-50">
 
           {/* LEFT CONTENT */}
           <div className="w-[511px]">
@@ -85,34 +85,34 @@ const MembershipCard = ({
 
           {/* RIGHT FEATURES */}
           <div className="relative">
-            <div className=" absolute z-0 w-[740px] h-[750px] -top-30 -left-10">
-                <img src="./article-bg.png" alt="" className="w-full h-full object-cover" />
+            <div className=" absolute z-0 w-[790px] h-[800px] -top-45 -left-12">
+                <img src="/article-bg.png" alt="" className="w-full h-full object-cover" />
             </div>
             <div className="relative space-y-5">
 
             <FeatureCard
-              icon={<Mic />}
+              icon={<img src="/podcast-bold.png" alt=""  />}
               title="Member Exclusive Episodes"
               color="red"
               align="left"
             />
 
             <FeatureCard
-              icon={<FileText />}
+              icon={<img src="/articles-rtl.png" alt="" />}
               title="Member Exclusive Articles"
               color="green"
               align="right"
             />
 
             <FeatureCard
-              icon={<MessageCircle />}
+              icon={<img src="/healthicons_forum.png" alt="" />}
               title="Private Forum Access"
               color="cyan"
               align="left"
             />
 
             <FeatureCard
-              icon={<Star />}
+              icon={<img src="/feature-highlight.png" alt="" />}
               title="Early Access to New Features"
               color="purple"
               align="right"

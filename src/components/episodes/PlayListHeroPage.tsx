@@ -7,6 +7,7 @@ import { sanityClient } from "@/lib/sanityClient";
 import { podcast } from "../../../sanity/schemaTypes/podcast";
 import { useParams } from "next/navigation";
 import { set } from "sanity";
+import CommentsCard from "../forums/CommentsCard";
 
 type Podcast = {
   _id: string;
@@ -40,6 +41,16 @@ type Episode = {
   mimeType?: string;
 };
 
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
+
+
 type EpisodeCardProps = {
   episode: Episode;
   podcast: Podcast;
@@ -56,6 +67,7 @@ type EpisodeCardProps = {
 type PlayerCardProps = {
   episode: Episode;
   index: number;
+  isLike: boolean;
   onNext: () => void;
   onPrev: () => void;
   onShuffle: () => void;
@@ -153,6 +165,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
 const PlayerCard: React.FC<PlayerCardProps> = ({
   episode,
   index,
+  isLike,
   onNext,
   onPrev,
   onShuffle,
@@ -162,6 +175,154 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   const [duration, setDuration] = useState(0);
   const podcast = episode?.podcast;
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [error,setError] = useState('');
+  const [likedCount, setLikedCount] = useState(0);
+  const [commentData, setCommentData] = useState({comment: ""});
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+
+  const token = localStorage.getItem("token");
+
+
+  const handleLike = async(e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      const data = {
+        "sanityPodcastId": episode?._id,
+    "podcastName": podcast?.title,
+    "reaction": isLiked ? "dislike" : "like",
+      };
+      let Res;
+      try {
+        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        console.log(res);
+        if (!res?.ok) {
+          throw new Error("Failed to like or dislike");
+        }
+        Res = await res.json();
+        if(res.ok) {
+        alert('like or dislike sent successfully!');
+        if (isLiked) {
+          setIsLiked(false);
+          setLikedCount(prev => prev - 1);
+        } else {
+          setIsLiked(true);
+          setLikedCount(prev => prev + 1);
+        }
+      } else {
+        alert('Failed like or dislike. Please try again later.');
+      }
+      } catch (error: any) {
+        setError(error?.message ?? "Failed to send like or dislike");
+      }
+    }
+
+    useEffect(() => {
+      const fetchLikedCount = async () => {
+        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLikedCount(data.count);
+        }
+      };
+      if (episode?._id) {
+        fetchLikedCount();
+      }
+    },[]);
+
+     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+          const { name, value } = e.target;
+          setCommentData((prev)=>({
+            ...prev,
+            [name]: value
+          }));
+        }
+
+    const handleComment = async(e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const data = {
+          "sanityPodcastId": episode?._id,
+          "comment": commentData.comment,
+        };
+        console.log(localStorage.getItem("userId"));
+        
+        try {
+          const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+          console.log(res);
+          if (!res?.ok) {
+            throw new Error("Failed to send comments");
+          }
+          if(res.ok) {
+          setCommentData({
+            comment: "",
+          });
+          alert('Message sent successfully!');
+        } else {
+          alert('Failed to send message. Please try again later.');
+        }
+        } catch (error: any) {
+          setError(error?.message ?? "Failed to send comments");
+        } 
+      };
+
+      useEffect(() => {
+        const fetchComments = async () => {
+        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("liked Count",data);
+          
+          setComments(data?.data);
+        }
+      };
+      if (episode?._id) {
+        fetchComments();
+      }
+      },[])
+
+      const fallbackShare = (url: string) => {
+  navigator.clipboard.writeText(url);
+  alert("Link copied to clipboard");
+};
+
+
+  const handleShare = async () => {
+    const shareData = {
+      title: episode?.title,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        fallbackShare(shareData.url!);
+      }
+    } catch (err) {
+      console.error("Share cancelled", err);
+    }
+  };
+
 
   // Load new episode when changed
   useEffect(() => {
@@ -203,25 +364,25 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
   return (
-    <div className="w-full flex items-center mt-4 justify-center px-8 md:px-16">
-      <div className="w-full flex items-center mt-4 justify-center px-8 md:px-16">
+    <div className="w-full flex items-center mt-8 justify-center">
+      <div className="w-full flex items-center justify-center">
         <div
-          className=" md:h-[496px] rounded-3xl opacity-100 p-4 gap-4 md:gap-8 md:p-8 flex flex-col md:flex-row items-start  justify-start md:justify-center bg-white
+          className=" md:h-[496px] rounded-3xl opacity-100 p-8 gap-4 md:gap-6 w-full flex flex-col md:flex-row items-start  justify-start md:justify-center bg-white
                           shadow-[0px_0px_4px_rgba(0,0,0,0.2)]
                           rounded-2xl
 "
         >
-          <div className="flex md:flex-col gap-4 md:gap-9 items-center md:items-start">
-            <div className="w-[80px] h-[80px] md:w-[308px] md:h-[319px] border-4 rounded-2xl">
+          <div className="flex md:flex-col gap-4 md:gap-6 items-center  h-full md:items-start">
+            <div className="w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[290px] lg:h-[319px] border-4 rounded-2xl">
               <img
                 src={episode?.podcast?.authorImageUrl || "/ki.png"}
                 alt=""
-                className=" w-[80px] h-[80px] md:w-[308px] md:h-[319px] rounded-3xl object-cover"
+                className=" w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[308px] lg:h-[319px] rounded-3xl object-cover"
               />
             </div>
             <div className=" flex flex-col gap-1 justify-start">
               <h1
-                className="font-sora font-bold text-[20px] md:text-[36px] text-[#1E293B] leading-[100%] tracking-[0%]
+                className="font-sora font-bold text-[20px] md:text-[36px] text-[#1E293B] leading-[100%] tracking-[0%] shrink-0
 "
               >
                 {podcast?.author || "Unknown Author"}
@@ -235,7 +396,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
             </div>
           </div>
           <div className="h-[2px] w-full md:h-[432px] md:w-0.5 bg-[#E2E8F0] mt-2 md:mt-0"></div>
-          <div>
+          <div className="w-full">
             <div
               className="w-full opacity-100
  flex  overflow-hidden"
@@ -244,7 +405,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
               <div
                 className="
                           flex flex-col
-                          justify-between
+                          justify-between w-full
                         "
               >
                 {/* PROFILE + TEXT */}
@@ -252,17 +413,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                   <img
                     src={episode?.imageUrl || "/ki.png"}
                     alt="Speaker"
-                    className="h-[70px] w-[70px] md:w-[120px] md:h-[115px] rounded-full object-cover border border-[#E2E8F0]"
+                    className="h-[70px] w-[70px] md:w-[90px] md:h-[90px] lg:w-[120px] lg:h-[115px] rounded-full object-cover border border-[#E2E8F0]"
                   />
 
-                  <div className="flex flex-col justify-center items-start gap-3 md:w-[900px] md:h-[211px]">
+                  <div className="flex flex-col justify-center items-start gap-3 md:max-w-[600px] lg:w-[900px] md:h-[211px]">
                     <span
-                      className="font-sora font-bold text-[12px] md:text-[24px] text-[#D62828] leading-[100%] tracking-[0%]
+                      className="font-sora font-bold text-[12px] md:text-[20px] lg:text-[24px] text-[#D62828] leading-[100%] tracking-[0%]
 "
                     >
                       Episode {index}
                     </span>
-                    <h3 className="font-sora text-[14px] md:text-[36px] font-semibold leading-8 text-gray-900">
+                    <h3 className="font-sora text-[14px] md:text-[24px] lg:text-[36px] font-semibold leading-8 text-gray-900">
                       {episode?.title ||
                         "The New Light Frontier: How Photonic Computing Could Transform Brain Health and the Future of Care"}
                     </h3>
@@ -434,42 +595,86 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                 </div>
                 {/*BTNS*/}
                 <div>
-                  <div className="flex items-center justify-between gap-3 md:gap-6 py-5">
+                  <div className="flex items-center justify-between gap-1 lg:gap-6 py-5">
                     {/* Like */}
-                    <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                      <ThumbsUp className="h-3 w-3 md:h-6 md:w-6" />
-                      <span className="text-[12px] md:text-[16px]">6</span>
+                    <button
+                    onClick={handleLike} 
+                    className={`hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}>
+                      <img src="/like.png" alt="" className="h-3 w-3 lg:h-6 lg:w-6" />
+                      <span className="text-[12px] md:text-[16px]">{likedCount}</span>
                     </button>
 
                     {/* Comments */}
-                    <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                    <button 
+                    onClick={()=>(setIsCommentOpen(!isCommentOpen))}
+                    className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
                       <img
                         src="/comment.png"
                         alt=""
-                        className="h-3 w-3 md:h-5 md:w-5"
+                        className="h-3 w-3 lg:h-5 lg:w-5"
                       />
-                      <span className="text-[12px] md:text-[16px]">245</span>
+                      <span className="text-[12px] md:text-[16px]">{comments?.length}</span>
                     </button>
 
                     <div className="flex-1" />
 
                     {/* Share */}
-                    <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                      <Share2 className="h-3 w-3 md:h-6 md:w-6" />
+                    <button 
+                    onClick={handleShare}
+                    className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                      <img src="/share 1.png" alt="" className="h-3 w-3 lg:h-6 lg:w-6" />
                       <span className="text-[12px] md:text-[16px]">Share</span>
                     </button>
 
                     {/* Save */}
-                    <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                    <button className="hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
                       <img
                         src="/save.png"
                         alt=""
-                        className="h-3 w-3 md:h-5 md:w-4"
+                        className="h-3 w-3 lg:h-5 lg:w-4"
                       />
                       <span className="text-[12px] md:text-[16px]">Save</span>
                     </button>
                   </div>
                 </div>
+                {/* Comments bar */}
+              <div className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}>
+                <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828] shrink-0">
+                  <img
+                    src="/forum-user-1.jpg"
+                    alt="Current user"
+                    className="h-full w-full shrink-0 object-cover"
+                  />
+                </div>
+                <div className="w-full ">
+                  <form 
+                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
+                  method="post"
+                  noValidate
+                  onSubmit={handleComment} 
+                  >
+                    <textarea
+                    name="comment"
+                    rows={1}
+                    value={commentData.comment}
+                    onChange={handleInputChange}
+                    placeholder="Make a comment…"
+                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+                  />
+                  <button type="submit" className="flex h-[30px] w-[100px]  md:h-11 md:w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
+                    Comment
+                  </button>
+                  </form>
+                </div>
+              </div>
+              {/* Comments */}
+            {comments && comments.length > 0 && (
+              <div className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}>
+                {comments.map((c) => (
+                  <CommentsCard key={c?._id} comment={c} addReply={()=>{}} isActiveReply={false}  />
+                ))}
+              </div>
+            )}
               </div>
             </div>
           </div>
@@ -486,6 +691,162 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   isPlaying,
   onSelect,
 }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [error,setError] = useState('');
+  const [likedCount, setLikedCount] = useState(0);
+  const [commentData, setCommentData] = useState({comment: ""});
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+
+  const token = localStorage.getItem("token");
+
+  const handleLike = async(e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      const data = {
+        "sanityPodcastId": episode?._id,
+    "podcastName": podcast?.title,
+    "reaction": isLiked ? "dislike" : "like",
+      };
+      let Res;
+      try {
+        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        console.log(res);
+        if (!res?.ok) {
+          throw new Error("Failed to like or dislike");
+        }
+        Res = await res.json();
+        if(res.ok) {
+        alert('like or dislike sent successfully!');
+        if (isLiked) {
+          setIsLiked(false);
+          setLikedCount(prev => prev - 1);
+        } else {
+          setIsLiked(true);
+          setLikedCount(prev => prev + 1);
+        }
+      } else {
+        alert('Failed like or dislike. Please try again later.');
+      }
+      } catch (error: any) {
+        setError(error?.message ?? "Failed to send like or dislike");
+      }
+    }
+
+    useEffect(() => {
+      const fetchLikedCount = async () => {
+        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("liked Count",data);
+          
+          setLikedCount(data?.data?.likeCount);
+        }
+      };
+      if (episode?._id) {
+        fetchLikedCount();
+      }
+    },[]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+          const { name, value } = e.target;
+          setCommentData((prev)=>({
+            ...prev,
+            [name]: value
+          }));
+        }
+
+    const handleComment = async(e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const data = {
+          "sanityPodcastId": episode?._id,
+          "comment": commentData.comment,
+        };
+        console.log(localStorage.getItem("userId"));
+        
+        try {
+          const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+          console.log(res);
+          if (!res?.ok) {
+            throw new Error("Failed to send comments");
+          }
+          if(res.ok) {
+          setCommentData({
+            comment: "",
+          });
+          alert('Message sent successfully!');
+        } else {
+          alert('Failed to send message. Please try again later.');
+        }
+        } catch (error: any) {
+          setError(error?.message ?? "Failed to send comments");
+        } 
+      };
+
+      useEffect(() => {
+        const fetchComments = async () => {
+        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("liked Count",data);
+          
+          setComments(data?.data);
+        }
+      };
+      if (episode?._id) {
+        fetchComments();
+      }
+      },[])
+
+      const fallbackShare = (url: string) => {
+  navigator.clipboard.writeText(url);
+  alert("Link copied to clipboard");
+};
+
+
+  const handleShare = async () => {
+    const shareData = {
+      title: episode?.title,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        fallbackShare(shareData.url!);
+      }
+    } catch (err) {
+      console.error("Share cancelled", err);
+    }
+  };
+
+
   const handleClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
@@ -516,7 +877,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
                   className="w-12 h-12 md:w-20 md:h-20 rounded-full object-cover border border-[#E2E8F0]"
                 />
 
-                <div className="flex flex-col justify-start items-start gap-1 md:w-[947px] md:h-[70px]">
+                <div className="flex flex-col justify-start items-start gap-1 lg:max-w-[947px] md:h-[70px]">
                   <span
                     className="font-sora font-bold text-[10px] md:text-[16px] text-[#D62828] leading-[100%] tracking-[0%]
 "
@@ -563,29 +924,35 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
             <div className="">
               <div className="flex items-center gap-3 md:gap-6 py-5">
                 {/* Like */}
-                <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                  <ThumbsUp className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  <span className="text-[12px] md:text-[14px]">6</span>
+                <button 
+                onClick={handleLike}
+                className={`hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? 'bg-[#1A2A38]' : ''} transition`}>
+                  <img src="/like.png" alt="" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <span className="text-[12px] md:text-[14px]">{likedCount}</span>
                 </button>
 
                 {/* Comments */}
-                <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button 
+                onClick={()=>(setIsCommentOpen(!isCommentOpen))}
+                className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
                   <img
                     src="/comment.png"
                     alt=""
                     className="h-3 w-3 md:h-3.5 md:w-3.5"
                   />
-                  <span className="text-[12px] md:text-[14px]">245</span>
+                  <span className="text-[12px] md:text-[14px]">{comments?.length}</span>
                 </button>
 
                 {/* Share */}
-                <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                  <Share2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                <button 
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                  <img src="/share 1.png" alt="" className="h-3 w-3 md:h-3.5 md:w-3.5" />
                   <span className="text-[12px] md:text-[14px]">Share</span>
                 </button>
 
                 {/* Save */}
-                <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button className="hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
                   <img
                     src="/save.png"
                     alt=""
@@ -598,6 +965,44 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
           </div>
         </div>
       </div>
+      {/* Comments bar */}
+              <div className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}>
+                <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
+                  <img
+                    src="/forum-user-1.jpg"
+                    alt="Current user"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="w-full ">
+                  <form 
+                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
+                  method="post"
+                  noValidate
+                  onSubmit={handleComment} 
+                  >
+                    <textarea
+                    name="comment"
+                    rows={1}
+                    value={commentData.comment}
+                    onChange={handleInputChange}
+                    placeholder="Make a comment…"
+                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+                  />
+                  <button type="submit" className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
+                    Comment
+                  </button>
+                  </form>
+                </div>
+              </div>
+              {/* Comments */}
+            {comments && comments.length > 0 && (
+              <div className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}>
+                {comments.map((c) => (
+                  <CommentsCard key={c?._id} comment={c} addReply={()=>{}} isActiveReply={false}  />
+                ))}
+              </div>
+            )}
     </div>
   );
 };
@@ -713,6 +1118,7 @@ const PlayListHeroPage = () => {
         <PlayerCard
           episode={currentEpisode}
           index={episodeNumber}
+          isLike={false}
           onNext={() => {
             handleNext();
           }}

@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
 import { COLORS } from "@/lib/constants";
 import ForumsSection from "@/components/home/ForumsSection";
 import ThreadsCard from "./ThreadsCard";
 import CategoryCard from "./CategoryCard";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import UsersCard from "./UsersCard";
+import CreateThread, { CreatThreadFormRef } from "./CreateThread";
+import CreateCategory from "./CreateCategory";
+import CreateTopic from "./CreateTopic";
+import CreatePoll from "./CreatePoll";
+import PollCard from "./PollCard";
+import MobileViewBar from "./MobileViewBar";
 
 type Category = {
   _id: string;
@@ -14,6 +20,14 @@ type Category = {
   title: string;
   route: string;
   color: string;
+  description: string;
+  threadCount: number;
+  imageUrl: string;
+};
+
+type Like = {
+  userId: number;
+  ThreadId: number;
 };
 type Thread = {
   _id: string;
@@ -22,7 +36,7 @@ type Thread = {
   CategoryId: Array<Number>;
   images: Array<string>;
   userId: Number;
-  likesCount: Number;
+  likesCount: number;
   commentsCount: Number;
   createdAt: string;
   updatedAt: string;
@@ -34,6 +48,7 @@ type Thread = {
     ProfilePic: string;
   };
   categories: Array<Category>;
+  likes: Array<Like>;
 };
 
 type Topic = {
@@ -42,7 +57,7 @@ type Topic = {
   route: string;
   isActive: boolean;
   topicId: number;
-}
+};
 
 type User = {
   _id: string;
@@ -50,7 +65,7 @@ type User = {
   role: string;
   userId: number;
   ProfilePic: string;
-}
+};
 
 const ForumsHeroSection = () => {
   return (
@@ -66,25 +81,27 @@ const ForumsHeroSection = () => {
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto flex max-w-[1600px] flex-col gap-10 px-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-16">
+      <div className=" relative z-10 mx-auto flex max-w-[1600px] flex-col-reverse gap-10 px-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-16">
         {/* Left: Heading + copy + CTA */}
         <div className="flex w-full max-w-[875px] flex-col gap-8">
           <div className="flex flex-col gap-4">
             <h1 className="font-sora text-[34px] leading-[44px] text-[#FAF9F8] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
-              Brain Meets Bytes <span style={{ color: COLORS.brandRed }}>Community</span>
+              Brain Meets Bytes{" "}
+              <span style={{ color: COLORS.brandRed }}>Community</span>
             </h1>
             <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#E2E8F0] md:text-[18px] md:leading-[28px]">
-              Breakthroughs don&apos;t happen alone. Connect with fellow listeners, researchers, and
-              health enthusiasts exploring smarter brain health and longevity together.
+              Breakthroughs don&apos;t happen alone. Connect with fellow
+              listeners, researchers, and health enthusiasts exploring smarter
+              brain health and longevity together.
             </p>
           </div>
 
-          <button className="inline-flex h-[50px] w-fit items-center justify-center gap-3 rounded-[36px] bg-[#FAF9F8] px-8 text-[18px] font-normal text-[#023047]">
+          <button className="inline-flex h-[50px] w-full md:w-fit items-center justify-center gap-3 rounded-[36px] bg-[#FAF9F8] px-8 text-[18px] font-normal text-[#023047]">
             <span className="font-sora">Discover all Treads</span>
             <img
-              src="/dropdown-arrow.png"
+              src="./dropdown-arrow.png"
               alt="More"
-              className="h-5 w-5 rotate-180 object-contain"
+              className="h-5 w-5 object-contain invert "
             />
           </button>
         </div>
@@ -94,7 +111,11 @@ const ForumsHeroSection = () => {
           {/* Card 1 */}
           <div className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
             <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
-              <img src="/forum-hero-1.png" alt="Forum hero" className="h-full w-full object-cover" />
+              <img
+                src="/forum-hero-1.png"
+                alt="Forum hero"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
             <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
@@ -110,7 +131,11 @@ const ForumsHeroSection = () => {
           {/* Card 2 */}
           <div className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
             <div className="absolute -left-28 -top-8 h-[409px] w-[716px]">
-              <img src="/forum-hero-2.png" alt="Forum hero" className="h-full w-full object-cover" />
+              <img
+                src="/forum-hero-2.png"
+                alt="Forum hero"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
             <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
@@ -126,7 +151,11 @@ const ForumsHeroSection = () => {
           {/* Card 3 */}
           <div className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
             <div className="absolute -left-40 -top-1 h-[321px] w-[482px]">
-              <img src="/forum-hero-3.jpg" alt="Forum hero" className="h-full w-full object-cover" />
+              <img
+                src="/forum-hero-3.jpg"
+                alt="Forum hero"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
             <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
@@ -146,159 +175,144 @@ const ForumsHeroSection = () => {
 
 const ForumsMainSection = () => {
   const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [threads, setThreads] = useState<Thread[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [topics, setTopics] = useState<Topic[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
+  const [limit, setLimit] = useState(10);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [topicsCount, setTopicsCount] = useState(5);
 
-    const token: string = localStorage.getItem("token") ?? "";
-  
-    useEffect(() => {
-      let mounted = true;
-  
-      const load = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-  
-          const res = await fetch(
-            `http://54.172.93.35:7000/api/threads/FulldetailsofThreads`,
-            {
-              method: "GET",
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          if (!res.ok) {
-            throw new Error("Failed to load threads");
+  const token: string = localStorage.getItem("token") ?? "";
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(
+          `http://54.172.93.35:7000/api/threads/FulldetailsofThreads`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
-  
-          const data = (await res.json())?.data as Thread[];
-          if (!mounted) return;
-          setThreads(Array.isArray(data) ? data : []);
-        } catch (e: any) {
-          if (!mounted) return;
-          setError(e?.message ?? "Failed to load threads");
-        } finally {
-          if (mounted) setLoading(false);
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load threads");
         }
 
-        try{
-          setLoading(true);
-          setError(null);
-  
-          const res = await fetch(
-            `http://54.172.93.35:7000/api/category`,
-            {
-              method: "GET",
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          if (!res.ok) {
-            throw new Error("Failed to load categories");
-          }
-  
-          const categoryData = (await res.json())?.data as Category[];
-          if (!mounted) return;
-          setCategories(Array.isArray(categoryData) ? categoryData : []);
-          console.log(categoryData);
-        }
-        catch(e: any){
-          if(!mounted) return;
-          setError(e?.message ?? "Failed to load categories");
-        }
-        finally{
-          if(mounted) setLoading(false);
+        const data = (await res.json())?.data as Thread[];
+        if (!mounted) return;
+        setThreads(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        if (!mounted) return;
+        setError(e?.message ?? "Failed to load threads");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(`http://54.172.93.35:7000/api/topics`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!res.ok) {
+          throw new Error("Failed to load topics");
         }
 
-        try{
-          setLoading(true);
-          setError(null);
-  
-          const res = await fetch(
-            `http://54.172.93.35:7000/api/topics`,
-            {
-              method: "GET",
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          if (!res.ok) {
-            throw new Error("Failed to load topics");
-          }
-  
-          const topicData = (await res.json())?.meta?.data as Topic[];
-          if (!mounted) return;
-          setTopics(Array.isArray(topicData) ? topicData : []);
-          console.log(topicData);
-        }
-        catch(e: any){
-          if(!mounted) return;
-          setError(e?.message ?? "Failed to load topics");
-        }
-        finally{
-          if(mounted) setLoading(false);
-        }
+        const topicData = (await res.json())?.meta?.data as Topic[];
+        if (!mounted) return;
+        setTopics(Array.isArray(topicData) ? topicData : []);
+        console.log(topicData);
+      } catch (e: any) {
+        if (!mounted) return;
+        setError(e?.message ?? "Failed to load topics");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
 
-        try{
-          setLoading(true);
-          setError(null);
-  
-          const res = await fetch(
-            `http://54.172.93.35:7000/api/users`,
-            {
-              method: "GET",
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          if (!res.ok) {
-            throw new Error("Failed to load users");
-          }
-  
-          const userData = (await res.json())?.meta?.data as User[];
-          if (!mounted) return;
-          setUsers(Array.isArray(userData) ? userData : []);
-          console.log(userData);
-        }
-        catch(e: any){
-          if(!mounted) return;
-          setError(e?.message ?? "Failed to load users");
-        }
-        finally{
-          if(mounted) setLoading(false);
-        }
-      };
+    void load();
 
-      
+    return () => {
+      mounted = false;
+    };
+  }, []);
+  const visibleTopics = topics.slice(0, topicsCount);
+
+  const handleTopic = () => {
+    setTopicsCount(topicsCount + 5);
+  };
+
+/* handle search */
+  const [search, setSearch] = useState("");
+
+  const searchThreads = () => {
+  if (!search.trim()) return threads;
+
+  const q = search.toLowerCase();
+
+  return threads.filter((thread) =>
+    thread?.title.toLowerCase().includes(q) ||
+    thread?.user?.name.toLowerCase().includes(q) ||
+    thread?.categories?.some((category) =>
+      category?.title.toLowerCase().includes(q)
+    )
+  );
+};
+
+const filteredThreads = useMemo(
+    () => searchThreads(),
+    [threads, search]
+  );
+
+
+  /* Handle composer */
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+
+  const formRef = useRef<CreatThreadFormRef>(null);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const selectedFiles = Array.from(e.target.files);
+
+    setImages((prev) => [...prev, ...selectedFiles]);
+
+    // Reset input so same image can be re-selected
+    e.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    formRef.current?.submit(e);
+  };
   
-      void load();
-  
-      return () => {
-        mounted = false;
-      };
-    }, []);
+  /* handle poll */
+  const [isPollOpen, setIsPollOpen] = useState(false);
+
   return (
     <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
         {/* Welcome + tabs */}
-        <div className="flex w-full flex-col items-center gap-6 rounded-[20px] border border-[#E2E8F0] bg-white px-6 py-5 md:flex-row md:justify-between">
+        <div className="flex w-full flex-col items-center gap-6 rounded-[20px] border border-[#E2E8F0] bg-white px-6 py-5 xl:flex-row md:justify-between">
           <div className="flex flex-wrap items-center gap-3 text-[#1E293B]">
             <div>
               <img
@@ -311,7 +325,9 @@ const ForumsMainSection = () => {
               <span className="font-inter text-[20px] md:text-[36px] font-bold text-[#1E293B]">
                 Welcome to our
               </span>
-              <span className="font-inter text-[20px] md:text-[36px] font-bold text-[#D62828]">community.</span>
+              <span className="font-inter text-[20px] md:text-[36px] font-bold text-[#D62828]">
+                community.
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px] md:text-[14px] font-normal font-sora">
@@ -332,10 +348,14 @@ const ForumsMainSection = () => {
           <div className="flex w-full max-w-[1059px] flex-col gap-6">
             {/* Search bar */}
             <div className="hidden md:block md:flex items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3">
-              <span className="font-sora text-[16px] text-[#64748B]">Search for a tread....</span>
-              <button
-                className="flex h-[44px] w-[136px] items-center justify-center gap-2 rounded-[34px] bg-[#D62828] text-[16px] text-white"
-              >
+              <input
+               type="text"
+               placeholder="Search for a tread...."
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
+               className="flex-1 bg-transparent outline-none text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]" 
+               />
+              <button className="flex h-[44px] w-[136px] items-center justify-center gap-2 rounded-[34px] bg-[#D62828] text-[16px] text-white">
                 <span>Search</span>
                 <img
                   src="/search.png"
@@ -348,113 +368,202 @@ const ForumsMainSection = () => {
             {/* Composer */}
             <div className="hidden  md:flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <div className="flex items-center gap-4">
-                <div className="h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-[#D62828]">
+                <div className="h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-[#D62828] shrink-0">
                   <img
                     src="/forum-user-1.jpg"
                     alt="Current user"
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] px-6 py-3">
-                  <span className="font-sora text-[16px] text-[#64748B]">What&apos;s on your mind?</span>
+                <div
+                  className={`${isComposerOpen ? "block" : "hidden"} flex justify-end w-full`}
+                >
+                  <button
+                    onClick={() => setIsComposerOpen(false)}
+                    className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div
+                  onClick={() => setIsComposerOpen(true)}
+                  className={`${isComposerOpen ? "hidden" : "block"} flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] px-6 py-3`}
+                >
+                  <span className="font-sora text-[16px] text-[#64748B]">
+                    What&apos;s on your mind?
+                  </span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
+              {/* Composer form */}
+
+              <div className={`${isComposerOpen ? "block" : "hidden"}`}>
+                <CreateThread images={images} ref={formRef} />
+              </div>
+
+              {/* Polls */}
+                  <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
+                  <CreatePoll handleClick={()=> setIsPollOpen(!isPollOpen)} />
+              </div>
+              <form noValidate onSubmit={handleParentSubmit}>
+                <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
-                  <button className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                    <span className=" items-center justify-center ">
-                      <img src="/image.png" alt="Images" className="h-4 w-4 object-contain" />
-                    </span>
-                    <span className="font-sora text-[14px] text-[#023047]">Images</span>
-                  </button>
+                  {/* Image Upload */}
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="image-upload"
+                      className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                    >
+                      <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                        <span className=" items-center justify-center ">
+                          <img
+                            src="/image.png"
+                            alt="Images"
+                            className="h-4 w-4 object-contain"
+                          />
+                        </span>
+                        <span className="font-sora text-[14px] text-[#023047]">
+                          Images
+                        </span>
+                      </div>
+                      <input
+                        id="image-upload"
+                        name="image-upload"
+                        type="file"
+                        multiple
+                        hidden
+                        disabled={!isComposerOpen}
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  </div>
                   <button className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
                     <span className=" items-center justify-center">
-                      <img src="/video.png" alt="Videos" className="h-4 w-4 object-contain" />
+                      <img
+                        src="/video.png"
+                        alt="Videos"
+                        className="h-4 w-4 object-contain"
+                      />
                     </span>
-                    <span className="font-sora text-[14px] text-[#023047]">Videos</span>
+                    <span className="font-sora text-[14px] text-[#023047]">
+                      Videos
+                    </span>
                   </button>
-                  <button className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                  <button
+                   onClick={()=> setIsPollOpen(!isPollOpen)}
+                   className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
                     <span className=" items-center justify-center ">
-                      <img src="/poll.png" alt="Polls" className="h-4 w-4 object-contain" />
+                      <img
+                        src="/poll.png"
+                        alt="Polls"
+                        className="h-4 w-4 object-contain"
+                      />
                     </span>
-                    <span className="font-sora text-[14px] text-[#023047]">Polls</span>
+                    <span className="font-sora text-[14px] text-[#023047]">
+                      Polls
+                    </span>
                   </button>
                 </div>
 
-                <button className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0">
+                <button
+                  type="submit"
+                  className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
+                >
                   Publish
                 </button>
               </div>
+              </form>
+              {/* Image Preview */}
+                  <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
+                    {images.map((file, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="preview"
+                          className="h-24 w-full rounded-lg object-cover"
+                        />
+
+                        {/* Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
             </div>
             {/* Threads cards */}
-            {
-              threads && threads.map((thread) => (
+            {filteredThreads &&
+              filteredThreads.map((thread) => (
                 <ThreadsCard key={thread._id} thread={thread} />
-              ))
-            }
-            
+              ))}
           </div>
 
           {/* Right: sidebars placeholder column */}
           <div className="mt-6 flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
             <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">Top Categories</h3>
-              <p className="font-inter text-[14px] text-[#505050]">
-                Episode discussions, cognitive health, longevity, and more.
-              </p>
+              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+                Top Categories
+              </h3>
+
               {/* categories list */}
-              <div className="flex flex-col gap-2">
-                {
-                  categories && categories.map((category) => (
-                    <CategoryCard key={category._id}
-                      title={category.title}
-                      imageUrl="./forum-user-1.jpg"
-                      route={category.route}
-                      color={category.color}
-                      content="dfgrtttfggfgtrtr"
-                      threadCount={0}
-                      />
-                  ))
-                }
+              <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
+                <div className="flex flex-col gap-2 h-full">
+                  <CategoryCard />
+                </div>
               </div>
             </div>
 
             <div className="flex h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">Recommended Topics</h3>
-              <div>
-                {/* topics list */}
-                {
-                  topics && topics.map((topic) => (
-                    <Link href={topic.route} className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]">
-                      <p className="font-inter font-normal text-[#505050] text-sm leading-none"
->{topic.title}</p>
-                    </Link>
-                  ))
-                }
+              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+                Recommended Topics
+              </h3>
+              <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2.5">
+                  {/* topics list */}
+                  {visibleTopics &&
+                    visibleTopics.map((topic) => (
+                      <Link
+                        href={topic.route}
+                        className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
+                      >
+                        <p className="font-inter font-normal text-[#505050] text-sm leading-none">
+                          {topic.title}
+                        </p>
+                      </Link>
+                    ))}
+                </div>
+                <button
+                  onClick={handleTopic}
+                  className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"
+                >
+                  See all Topics
+                </button>
               </div>
             </div>
 
             <div className="flex h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">You may know</h3>
-                {/* users list */}
-              <div className="flex flex-col gap-2">
-                {
-                  users && users.map((user) => (
-                    <UsersCard key={user._id}
-                      _id={user._id}
-                      name={user.name}
-                      role={user.role}
-                      userId={user.userId}
-                      ProfilePic={user.ProfilePic}
-                      />
-                  ))
-                }
+              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+                You may know
+              </h3>
+              {/* users list */}
+              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+                <UsersCard />
               </div>
             </div>
 
             <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">Latest Poll</h3>
+              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+                Latest Poll
+              </h3>
+              {/* poll card */}
+              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+                <PollCard />
+              </div>
             </div>
           </div>
         </div>

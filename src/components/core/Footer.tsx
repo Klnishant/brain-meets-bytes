@@ -5,7 +5,7 @@ const Footer = () => {
     <footer className="w-full bg-white shadow-md">
       <div className=" mx-auto px-4 sm:px-6 lg:px-16 py-12 md:py-16 flex flex-col gap-10 md:gap-14">
         {/* Top section: columns */}
-        <div className="flex flex-col gap-10 md:gap-0 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-10 lg:gap-0 md:flex-row md:items-start md:justify-between">
           {/* About / logo */}
           <div className="w-full md:max-w-sm flex flex-col gap-8">
             <div className="flex flex-col gap-6">
@@ -23,7 +23,7 @@ const Footer = () => {
           </div>
 
           {/* Menu */}
-          <div className="w-full md:w-auto flex flex-col gap-6">
+          <div className="w-full md:w-auto flex flex-col gap-6 ml-5">
             <h3 className="font-sora text-lg md:text-xl font-bold text-[#1E293B]">
               Menu
             </h3>
@@ -44,7 +44,7 @@ const Footer = () => {
           </div>
 
           {/* Important */}
-          <div className="w-full md:w-auto flex flex-col gap-6">
+          <div className="w-full md:w-auto flex flex-col gap-6 ml-5">
             <h3 className="font-sora text-lg md:text-xl font-bold text-[#1E293B]">
               Important
             </h3>
@@ -57,7 +57,7 @@ const Footer = () => {
           </div>
 
           {/* Contact */}
-          <div className="w-full md:w-auto flex flex-col gap-6">
+          <div className="w-full md:w-auto flex flex-col gap-6 ml-5">
             <h3 className="font-sora text-lg md:text-xl font-bold text-[#1E293B]">
               Contact
             </h3>
@@ -102,12 +102,12 @@ const Footer = () => {
         <div className="h-px w-full" style={{ backgroundColor: "#D62828" }} />
 
         {/* Bottom: Follow us + socials */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-row items-center justify-between gap-6">
           <h3 className="font-sora text-lg md:text-xl font-bold text-[#1E293B]">
             Follow us
           </h3>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             {["instagram", "facebook", "x", "linkedin"].map((name) => (
               <button
                 key={name}

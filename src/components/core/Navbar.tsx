@@ -19,11 +19,12 @@ const linkToHref = (label: string) => {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const isForumsPage = pathname.startsWith("/forums");
+  const isForumsPage = pathname === "/forums";
   const [openLogIn, setOpenLogIn] = useState(false);
   const [openSignUp, setOpenSignUp] = useState(false);
   const [openMembership, setOpenMembership] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isForumSubPage = pathname.startsWith("/forum/");
 
   const handleLogout = async() => {
     localStorage.removeItem("token");
@@ -37,7 +38,7 @@ const Navbar = () => {
         isForumsPage ? "absolute left-0 top-0 z-20" : "relative"
       }`}
     >
-      <div className="mx-auto flex items-center gap-4 px-4 py-4 sm:px-6 lg:gap-8 lg:px-16 lg:py-6">
+      <div className="mx-auto flex md:items-center gap-4 px-4 py-4 sm:px-6 lg:gap-8  lg:py-6">
         {/* Logo - fixed on the left */}
         <Link href="/" className="shrink-0">
           <img
@@ -48,12 +49,10 @@ const Navbar = () => {
         </Link>
 
         {/* Middle + Right content group */}
-        <div className="flex-1 flex items-center justify-between">
+        <div className="hidden flex-1 lg:flex items-center justify-between">
           {/* Nav Links */}
           <nav
-            className={`md:flex items-center md:gap-6 ${
-              isOpen ? "flex" : "hidden"
-            } static shadow-md md:shadow-none z-10`}
+            className={`flex items-center lg:gap-4 static shadow-md md:shadow-none z-10`}
           >
             {NAV_LINKS.map((link) => {
               const href = linkToHref(link);
@@ -81,7 +80,7 @@ const Navbar = () => {
           </nav>
 
           {/* RIGHT SIDE — Search + Membership + Login (desktop) */}
-          <div className="hidden md:flex items-center gap-3 lg:gap-6 shrink-0">
+          <div className="flex items-center gap-3 lg:gap-6 shrink-0">
             {/* Search with hover expand animation */}
             <button
               className="group flex items-center gap-2 rounded-full text-xs md:text-sm lg:text-base overflow-hidden transition-all duration-300 ease-out w-12 px-3.5 py-3 hover:w-40"
@@ -107,6 +106,138 @@ const Navbar = () => {
               </span>
             </button>
 
+            {/* Membership */}
+            <button
+              className=" flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5"
+              style={{ backgroundColor: COLORS.brandRed }}
+              onClick={()=> setOpenMembership(true)}
+            >
+              Become a member
+            </button>
+
+            {/* Login */}
+            {
+              !isLoggedIn ? (
+                <button
+              className="hidden md:flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
+              onClick={() => setOpenLogIn(true)}
+              style={isForumsPage? {
+                borderColor: COLORS.white,
+                color: COLORS.white,
+              } :{
+                borderColor: COLORS.brandNavy,
+                color: COLORS.brandNavy,
+              } }
+            >
+              Login
+            </button>
+              ) : (
+                <button
+              className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
+              style={isForumsPage? {
+                borderColor: COLORS.white,
+                color: COLORS.white,
+              } :{
+                borderColor: COLORS.brandNavy,
+                color: COLORS.brandNavy,
+              } }
+              onClick={()=>(setIsLoggedIn(false))}
+            >
+              Logout
+            </button>
+              )
+            }
+          </div>
+        </div>
+            
+        {/* Hamburger Menu Button (mobile) */}
+        <div className="flex lg:hidden items-start justify-end w-full h-1/2">
+        <div className="w-full flex justify-end mr-1">
+          {/* Search with hover expand animation */}
+            <button
+              className="group flex items-center px-2.5 gap-2 rounded-full text-xs md:text-sm lg:text-base overflow-hidden transition-all duration-300 ease-out w-9 h-9 lg:h-auto lg:w-12 hover:w-40"
+              style={{ backgroundColor: COLORS.badgeBg, color: COLORS.brandMutedText }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4 shrink-0"
+                style={{ color: COLORS.brandMutedText }}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"
+                />
+              </svg>
+              <span className="whitespace-nowrap opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-left">
+                Search
+              </span>
+            </button>
+        </div>
+          <div className={`${isOpen ? "bg-zinc-500 rounded-xl" : "bg-none"}  px-4 py-2`}>
+            <button
+          className={`lg:hidden focus:outline-none w-full flex justify-end ${
+            isForumsPage ? "text-white" : "text-slate-800"
+          }`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={
+                isOpen
+                  ? "M6 18L18 6M6 6l12 12"
+                  : "M4 6h16M4 12h16M4 18h16"
+              }
+            />
+          </svg>
+        </button>
+        {/* Middle + Right content group */}
+        <div className={`flex-1 flex flex-col items-center justify-between ${isOpen ? "block" : "hidden"}`}>
+          {/* Nav Links */}
+          <nav
+            className={`flex flex-col items-center gap-5 md:gap-6 ${
+              isOpen ? "flex" : "hidden"
+            }  z-10`}
+          >
+            {NAV_LINKS.map((link) => {
+              const href = linkToHref(link);
+              const isActive =
+                (href === "/" && pathname === "/") ||
+                (href !== "/" && pathname.startsWith(href));
+
+              return (
+                <Link
+                  key={link}
+                  href={href}
+                  onClick={() => setIsOpen(false)}
+                  className={`transition-colors ${
+                    isActive
+                      ? "text-[#D62828] font-semibold"
+                      : isForumsPage
+                        ? "text-white opacity-70 hover:opacity-100 hover:text-[#D62828]"
+                        : "text-[#1E293B] opacity-50 hover:opacity-100 hover:text-[#D62828]"
+                  }`}
+                >
+                  {link}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* RIGHT SIDE — Search + Membership + Login (desktop) */}
+          <div className="flex flex-col items-center gap-3 lg:gap-6 shrink-0 mt-5">
             {/* Membership */}
             <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5"
@@ -149,33 +280,9 @@ const Navbar = () => {
               )
             }
           </div>
+          </div>
+          </div>
         </div>
-
-        {/* Hamburger Menu Button (mobile) */}
-        <button
-          className={`md:hidden focus:outline-none ${
-            isForumsPage ? "text-white" : "text-slate-800"
-          }`}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d={
-                isOpen
-                  ? "M6 18L18 6M6 6l12 12"
-                  : "M4 6h16M4 12h16M4 18h16"
-              }
-            />
-          </svg>
-        </button>
       </div>
 
       {/* SignIn Modal */}

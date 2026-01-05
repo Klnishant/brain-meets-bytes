@@ -38,6 +38,8 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
   const [users, setUsers] = useState<User | null>(null);
 
   const token = localStorage.getItem("token") ?? "";
+  console.log(comment?.userId);
+  
   const user = async () => {
     const res = await fetch(`http://54.172.93.35:7000/api/users/one?userId=${comment?.userId}`,
       {
@@ -182,9 +184,9 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
               ))}
             </div>
               {
-                <div className="w-full mt-2">
+                <div className="w-full mt-2 pl-4">
                   <form 
-                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-6 pr-2 py-3"
+                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-6 pr-2 py-1 md:py-3"
                   method="post"
                   noValidate
                   onSubmit={handleReply}
@@ -195,9 +197,9 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
                     onChange={handleInputChange}
                     rows={1}
                     placeholder="Make a comment…"
-                    className="flex-1 bg-transparent outline-none items-center text-sm md:text-base text-[#1E293B] placeholder-[#64748B]"
+                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
                   />
-                  <button type="submit" className="flex h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white">
+                  <button type="submit" className="flex h-8 md:h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
                     Comment
                   </button>
                   </form>

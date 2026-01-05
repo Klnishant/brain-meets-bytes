@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import UsersCard from "./UsersCard";
@@ -8,7 +8,8 @@ import ThreadsCard from "./ThreadsCard";
 import CategoryCard from "./CategoryCard";
 import CommentsCard from "./CommentsCard";
 import { User } from "lucide-react";
-import { set } from "sanity";
+import MobileViewBar from "./MobileViewBar";
+import PollCard from "./PollCard";
 
 type Category = {
   _id: string;
@@ -16,7 +17,15 @@ type Category = {
   title: string;
   route: string;
   color: string;
+  description: string;
+  threadCount: number;
+  imageUrl: string;
 };
+
+type Like = {
+  userId: number;
+  ThreadId: number;
+}
 type Thread = {
   _id: string;
   title: string;
@@ -24,7 +33,7 @@ type Thread = {
   CategoryId: Array<Number>;
   images: Array<string>;
   userId: Number;
-  likesCount: Number;
+  likesCount: number;
   commentsCount: Number;
   createdAt: string;
   updatedAt: string;
@@ -37,6 +46,7 @@ type Thread = {
   };
   categories: Array<Category>;
   comments: Array<Comment>;
+  likes: Array<Like>;
 };
 
 type Topic = {
@@ -76,6 +86,9 @@ const ThreadDetails = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [commentData, setCommentData] = useState({comment: ""});
+  const [hasLiked, setHasLiked] = useState<Like[]>([]);
+  const [liked, setLiked] = useState(false);
+  const [topicsCount, setTopicsCount] = useState(5);  
 
   const params = useParams();
   const ThreadId = params?.threadId;
@@ -110,7 +123,8 @@ const ThreadDetails = () => {
         
         if (!mounted) return;
         setThreads(Array.isArray(data) ? data : []);
-        
+        setHasLiked(data[0].likes);
+        setLiked(hasLiked.some(like => like.userId === Number(localStorage.getItem("userId"))));
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message ?? "Failed to load threads");
@@ -119,32 +133,6 @@ const ThreadDetails = () => {
       }
       console.log(threads);
       
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch(`http://54.172.93.35:7000/api/category`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!res.ok) {
-          throw new Error("Failed to load categories");
-        }
-
-        const categoryData = (await res.json())?.data as Category[];
-        if (!mounted) return;
-        setCategories(Array.isArray(categoryData) ? categoryData : []);
-        console.log(categoryData);
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message ?? "Failed to load categories");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-
       try {
         setLoading(true);
         setError(null);
@@ -170,64 +158,7 @@ const ThreadDetails = () => {
       } finally {
         if (mounted) setLoading(false);
       }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch(`http://54.172.93.35:7000/api/users`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!res.ok) {
-          throw new Error("Failed to load users");
-        }
-
-        const userData = (await res.json())?.data as User[];
-        if (!mounted) return;
-        setUsers(Array.isArray(userData) ? userData : []);
-        console.log(userData);
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message ?? "Failed to load users");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch(
-          `http://54.172.93.35:7000/api/threads/comments?ThreadId=${ThreadId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (!res?.ok) {
-          throw new Error("Failed to load comments");
-        }
-
-        const data = (await res.json())?.data as Comment[];
-        console.log(data);
-
-        if (!mounted) return;
-        setComments(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message ?? "Failed to load comments");
-      } finally {
-        if (mounted) setLoading(false);
-      }
     };
-
     void load();
 
     return () => {
@@ -318,8 +249,15 @@ const ThreadDetails = () => {
       setError(error?.message ?? "Failed to send comments");
     } 
   };
+
+   const visibleTopics = topics.slice(0, topicsCount);
+
+  const handleTopic = ()=>{
+    setTopicsCount(topicsCount + 5);
+  }
   return (
-    <section className="w-full  bg-[#FAF9F8] px-4 md:px-16 py-20 pt-30">
+    <>
+      <section className="w-full bg-[#FAF9F8] pb-24 pt-5 md:pb-28 md:pt-10">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
         {/* Breadcrumbs */}
         <div className="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 text-sm text-[#1E293B]">
@@ -353,12 +291,12 @@ const ThreadDetails = () => {
           {/* Left: search, composer, posts */}
           <div className="flex w-full max-w-[1059px] flex-col gap-6">
             {/* Threads cards */}
-            <ThreadsCard thread={threads[0]} />
+            <ThreadsCard key={threads[0]?._id} thread={threads[0]} />
 
-            <div className="flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="flex flex-col-reverse md:flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               {/* Comments bar */}
-              <div className="hidden md:flex items-center gap-4">
-                <div className="h-[60px] w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
                   <img
                     src="/forum-user-1.jpg"
                     alt="Current user"
@@ -367,7 +305,7 @@ const ThreadDetails = () => {
                 </div>
                 <div className="w-full ">
                   <form 
-                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-6 pr-2 py-3"
+                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
                   method="post"
                   noValidate
                   onSubmit={handleComment} 
@@ -378,24 +316,25 @@ const ThreadDetails = () => {
                     value={commentData.comment}
                     onChange={handleInputChange}
                     placeholder="Make a comment…"
-                    className="flex-1 bg-transparent outline-none items-center text-sm md:text-base text-[#1E293B] placeholder-[#64748B]"
+                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
                   />
-                  <button type="submit" className="flex h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white">
+                  <button type="submit" className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
                     Comment
                   </button>
                   </form>
                 </div>
               </div>
 
-              {/* Comments */}
+              <div className="flex flex-col gap-4">
+                {/* Comments */}
               <div className="flex gap-2.5">
                 <h1 className="font-sora font-semibold text-[#1E293B] text-[12px] md:text-lg leading-[30px]">
                   Comments
                 </h1>
                 <p className="font-sora font-semibold text-[#505050] text-[12px] md:text-lg leading-[30px]">{`${threads[0]?.commentsCount}`}</p>
               </div>
-
-              {/* comments */}
+                <div className="w-full h-0.5 border border-[#E2E8F0]"></div>
+              {/* comments card */}
               <div className="flex flex-col gap-2">
                 {threads[0]?.comments &&
                   threads[0]?.comments.map((comment) => (
@@ -411,90 +350,73 @@ const ThreadDetails = () => {
                     </>
                   ))}
               </div>
+              </div>
             </div>
           </div>
 
           {/* Right: sidebars placeholder column */}
-          <div className="hidden md:block mt-6 flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
+          <div className="hidden mt-6 md:flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
             <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Top Categories
               </h3>
-              <p className="font-inter text-[14px] text-[#505050]">
-                Episode discussions, cognitive health, longevity, and more.
-              </p>
               {/* categories list */}
-              <div className="flex flex-col gap-2">
-                {categories &&
-                  categories.map((category) => (
-                    <CategoryCard
-                      key={category._id}
-                      title={category.title}
-                      imageUrl="./forum-user-1.jpg"
-                      route={category.route}
-                      color={category.color}
-                      content="dfgrtttfggfgtrtr"
-                      threadCount={0}
-                    />
-                  ))}
+              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+                <CategoryCard />
               </div>
             </div>
 
-            <div className="hidden md:block flex h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="flex min-h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Recommended Topics
               </h3>
-              <div>
-                {/* topics list */}
-                {topics &&
-                  topics.map((topic) => (
-                    <Link
-                      href={topic.route}
-                      className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
-                    >
-                      <p className="font-inter font-normal text-[#505050] text-sm leading-none">
-                        {topic.title}
-                      </p>
-                    </Link>
-                  ))}
+              <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2.5">
+                  {/* topics list */}
+                  {visibleTopics &&
+                    visibleTopics.map((topic) => (
+                      <Link
+                        href={topic.route}
+                        className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
+                      >
+                        <p className="font-inter font-normal text-[#505050] text-sm leading-none">
+                          {topic.title}
+                        </p>
+                      </Link>
+                    ))}
+                </div>
+                <button
+                onClick={handleTopic} 
+                className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start">
+                  See all Topics
+                </button>
               </div>
             </div>
 
-            <div className="hidden md:block flex h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+             <div className="flex min-h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 You may know
               </h3>
               {/* users list */}
-              <div className="flex flex-col gap-2">
-                {users &&
-                  users.map((user) => (
-                    <div>
-                      {
-                        user?.userId!=Number(localStorage.getItem("userId")) && (
-                          <UsersCard
-                            key={user._id}
-                            _id={user._id}
-                            name={user.name}
-                            role={user.role}
-                            userId={user.userId}
-                            ProfilePic={user.ProfilePic}
-                          />
-                        )
-                      }
-                    </div>
-                  ))}
-              </div>
+              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+                  <UsersCard />
+                </div>
             </div>
 
-            <div className="hidden md:block flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Latest Poll
               </h3>
+              {/* poll card */}
+              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+                <PollCard />
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+    </>
   );
 };
 

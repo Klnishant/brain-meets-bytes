@@ -44,7 +44,7 @@ function Contact() {
     }
   }
   return (
-    <section className="flex items-center justify-center w-full px-4 md:px-1  bg-[#FAF9F8] pb-20 md:pb-24 lg:pb-28 pt-20 md:pt-22 lg:pt-24">
+    <section className="flex items-center justify-center w-full px-4 lg:px-1  bg-[#FAF9F8] pb-20 md:pb-24 lg:pb-28 pt-20 md:pt-22 lg:pt-24">
       <div className="absolute z-0 -top-[15%] -left-[378px] opacity-20">
         <img
           src="/contact-bg.png"
@@ -58,14 +58,14 @@ function Contact() {
             <h1 className="text-[#1E293B] font-sora font-bold text-[32px] md:text-[56px] leading-[1] tracking-normal ">
               Get In <span style={{ color: COLORS.brandRed }}>Touch</span>
             </h1>
-            <p className="font-inter font-normal text-[12px] md:text-[18px] text-[#505050] max-w-[653px] leading-[28px] tracking-normal">
+            <p className="font-inter font-normal text-[12px] md:text-[18px] text-[#505050] xl:max-w-[653px] leading-[28px] tracking-normal">
               We’d love to hear from you, whether you’re a listener with a
               question, a researcher with an idea, or a partner exploring
               collaboration opportunities in brain health and longevity.
             </p>
           </div>
           <div className="flex md:flex-col gap-6">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
               <h1 className="font-sora font-bold text-[16px] md:text-[32px] text-[#1E293B] leading-[1] tracking-normal">
                 Call Us
               </h1>
@@ -76,7 +76,7 @@ function Contact() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <h1 className="font-sora font-bold text-[16px] md:text-[32px] text-[#1E293B] leading-[1] tracking-normal">
                 Email Us
               </h1>
@@ -89,7 +89,7 @@ function Contact() {
             </div>
           </div>
           <div>
-            <button className="flex items-center justify-between w-full md:w-[185px] h-[50px] pl-8 pr-2 bg-[#023047] font-sora font-bold text-[18px] leading-[24px] tracking-normal text-[#F2F2F2] rounded-[50px]">
+            <button className="flex items-center justify-between w-full lg:w-1/2 xl:w-[185px] h-[50px] pl-8 pr-2 bg-[#023047] font-sora font-bold text-[18px] leading-[24px] tracking-normal text-[#F2F2F2] rounded-[50px]">
               Live Chat{" "}
               <span className="w-[34px] h-[34px] rounded-[52px] opacity-100 rotate-0 bg-[#FAF9F8] flex items-center justify-center">
                 <ArrowRight className="text-[#023047]" />
@@ -98,7 +98,7 @@ function Contact() {
           </div>
         </div>
         {/* Form */}
-        <div className="w-full md:w-fit">
+        <div className="w-full lg:w-fit">
           <form
             className=" rounded-3xl bg-[#FAF9F8] p-4 md:p-8 shadow-lg border border-[#E2E8F0] text-[#1E293B] placeholder:text-[#0505050]"
             method="post"
@@ -193,7 +193,7 @@ function Contact() {
             <div className="mt-8">
               <button
                 type="submit"
-                className="flex items-center justify-between w-full md:w-[136px] md:-h-[44px] text-[18px] gap-2 rounded-full bg-[#D62828] px-8 py-3 text-sm font-semibold text-white"
+                className="flex items-center justify-between w-full xl:w-[136px] md:-h-[44px] text-[18px] gap-2 rounded-full bg-[#D62828] px-8 py-3 text-sm font-semibold text-white"
               >
                 Send
                 <img src="/send.png" alt="" />
