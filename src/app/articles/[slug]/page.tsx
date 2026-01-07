@@ -266,7 +266,7 @@ const [token, setToken] = useState<string | null>(null);
     };
     let Res;
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/articles/like`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}articles/like`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -298,7 +298,7 @@ const [token, setToken] = useState<string | null>(null);
 
   const fetchLikedCount = async () => {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/articles/like?sanityArticleId=${article?._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}articles/like?sanityArticleId=${article?._id}`,
         {
           method: "GET",
           headers: {
@@ -339,7 +339,7 @@ const [token, setToken] = useState<string | null>(null);
 
     try {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/articles/comments`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}articles/comments`,
         {
           method: "POST",
           headers: {
@@ -368,7 +368,7 @@ const [token, setToken] = useState<string | null>(null);
 
    const fetchComments = async () => {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/articles/comments?sanityArticleId=${article?._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}articles/comments?sanityArticleId=${article?._id}`,
         {
           method: "GET",
           headers: {
@@ -409,7 +409,7 @@ const [token, setToken] = useState<string | null>(null);
   };
 
   const fetchSaved = async () => {
-      const res = await fetch(`http://54.172.93.35:7000/api/articles/getSavedUsersFrArticles?sanityArticleId=${article?._id}`,
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}articles/getSavedUsersFrArticles?sanityArticleId=${article?._id}`,
         {
           method: "GET",
           headers: {
@@ -433,7 +433,7 @@ const [token, setToken] = useState<string | null>(null);
       };
       console.log(body);
 
-      const res = await fetch(`http://54.172.93.35:7000/api/articles/save`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}articles/save`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

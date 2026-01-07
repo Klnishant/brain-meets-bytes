@@ -211,7 +211,7 @@ const ForumsMainSection = () => {
         setError(null);
 
         const res = await fetch(
-          `http://54.172.93.35:7000/api/threads/FulldetailsofThreads`,
+          `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads`,
           {
             method: "GET",
             headers: {
@@ -238,7 +238,7 @@ const ForumsMainSection = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`http://54.172.93.35:7000/api/topics`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

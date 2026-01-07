@@ -26,10 +26,11 @@ const CategoryCard = () => {
     const [visibleCount, setVisibleCount] = useState(4);
     const [token, setToken] = useState<string | null>(null);
     const [userId, setUserId] = useState<number | null>(null);
-   const [user, setUser] = useState<{ data: { roll: string } } | null>(null);
+   const [user, setUser] = useState<{ data: { RoleId: number } } | null>(null);
    const [isEditOpen, setIsEditOpen] = useState(false);
    const [currentEditCategory, setCurrentEditCategory] = useState<number>();
    const [visibleCategories, setVisibleCategories] = useState<Category[]>([]);
+   const [currentCategory,setCurrentCategory] = useState<Category | null>(null);
    
      useEffect(() => {
       const fetchUser = async () => {
@@ -37,6 +38,8 @@ const CategoryCard = () => {
         if (user) {
           setUser(user);
         }
+        console.log(user);
+        
       };
       fetchUser();
     }, []);
@@ -67,7 +70,7 @@ const CategoryCard = () => {
           setError(null);
   
           const res = await fetch(
-            `http://54.172.93.35:7000/api/category`,
+            `${process.env.NEXT_PUBLIC_API_URL}category`,
             {
               method: "GET",
               headers: {
@@ -116,7 +119,7 @@ const CategoryCard = () => {
       e.preventDefault();
 
       try {
-        const res = await fetch(`http://54.172.93.35:7000/api/category?CategoryId=${CategoryId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category?CategoryId=${CategoryId}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -135,12 +138,7 @@ const CategoryCard = () => {
     }
   return (
     <div className="flex flex-col justify-between h-full gap-2 relative">
-      <div className="flex flex-col gap-2">
-      {
-        visibleCategories && visibleCategories.map((category) => (
-          
-         <div>
-           <div className={`w-7 h-7 text-[#505050] ${isEditOpen && currentEditCategory === category.CategoryId ? "block" : "hidden"} z-10 w-full absolute top-0 left-0`}>
+      <div key={currentCategory?._id} className={`w-7 h-7 text-[#505050] ${isEditOpen && currentEditCategory === currentCategory?.CategoryId ? "block" : "hidden"} z-10 w-full absolute top-0 left-0`}>
         <div className="w-full flex justify-end">
           <button>
             <svg
@@ -160,10 +158,22 @@ const CategoryCard = () => {
             </svg>
           </button>
         </div>
-              <EditCategory titles={category?.title} routes={category?.route} descriptions={category?.description} colors={category?.color} images={null} cateGoryId={category?.CategoryId} />
+              <EditCategory 
+                key={currentCategory?._id} 
+                titles={currentCategory?.title || ""} 
+                routes={currentCategory?.route || ""} 
+                descriptions={currentCategory?.description || ""} 
+                colors={currentCategory?.color || ""} 
+                images={currentCategory?.imageUrl || ""} 
+                cateGoryId={currentCategory?.CategoryId || 0} 
+              />
             </div>
+      <div className="flex flex-col gap-2">
+      {
+        visibleCategories && visibleCategories.map((category) => (
+          
+         <div key={category?._id}>
            <div
-          key={category?._id}
       //href={category?.route}
       className="flex flex-col w-full items-center gap-2 rounded-md border border-zinc-200 p-1"
     >
@@ -174,8 +184,8 @@ const CategoryCard = () => {
         >
           <img
             src={category?.imageUrl}
-            alt=""
-            className=" w-6 h-6 opacity-100 object-cover items-center justify-center"
+            alt={category?.title[0]}
+            className=" w-6 h-6 opacity-100 object-cover rounded-full z-5 items-center justify-center"
           />
         </div>
         <div className="w-full">
@@ -193,18 +203,19 @@ const CategoryCard = () => {
             </div>
             <button
             onClick={(e) => handleDelete(e, category?.CategoryId)}
-            className={`w-4 h-4 text-[#505050] `}
+            className={`w-4 h-4 text-[#505050] ${user?.data?.RoleId === 2 ? "block" : "hidden"}`}
             >
-              <Trash2 className={`w-4 h-4 text-[#505050] `} />
+              <Trash2 className={`w-4 h-4 text-[#505050] ${user?.data?.RoleId === 2 ? "block" : "hidden"}`} />
             </button>
 
             <button 
             onClick={() => {
               setIsEditOpen(!isEditOpen);
               setCurrentEditCategory(category?.CategoryId);
+              setCurrentCategory(category);
             }}
-            className={`w-4 h-4 text-[#505050] `}>
-              <SquarePen className={`w-4 h-4 text-[#505050] `} />
+            className={`w-4 h-4 text-[#505050] ${user?.data?.RoleId === 2  ? "block" : "hidden"}`}>
+              <SquarePen className={`w-4 h-4 text-[#505050] ${user?.data?.RoleId === 2  ? "block" : "hidden"}`} />
             </button >
             </div>
           </div>

@@ -121,7 +121,7 @@ const ThreadDetails = () => {
         setError(null);
 
         const res = await fetch(
-          `http://54.172.93.35:7000/api/threads/FulldetailsofThreads?ThreadId=${ThreadId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?ThreadId=${ThreadId}`,
           {
             method: "GET",
             headers: {
@@ -152,7 +152,7 @@ const ThreadDetails = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`http://54.172.93.35:7000/api/topics`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -202,7 +202,7 @@ const ThreadDetails = () => {
     console.log(localStorage.getItem("userId"));
     
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/threads/comments?ThreadId=${ThreadId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}threads/comments?ThreadId=${ThreadId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -239,7 +239,7 @@ const ThreadDetails = () => {
     let Res;
     
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/threads/comments/reply?ThreadId=${ThreadId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}threads/comments/reply?ThreadId=${ThreadId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

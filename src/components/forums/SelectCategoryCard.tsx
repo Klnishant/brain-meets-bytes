@@ -58,7 +58,7 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
             if(!token) return;
     
             const res = await fetch(
-              `http://54.172.93.35:7000/api/category`,
+              `${process.env.NEXT_PUBLIC_API_URL}category`,
               {
                 method: "GET",
                 headers: {

@@ -54,7 +54,7 @@ const CreateCategory = () => {
     };
 
     try {
-       const res = await fetch(`http://54.172.93.35:7000/api/category`, {
+       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

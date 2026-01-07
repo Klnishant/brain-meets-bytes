@@ -33,7 +33,7 @@ export default function CreateTopic() {
     }
     
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/topics`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -41,7 +41,7 @@ const PollCard = () => {
     const fetchPolls = async () => {
       if (!token) return;
       try {
-        const response = await fetch("http://54.172.93.35:7000/api/polls", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}polls`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ const PollCard = () => {
         PollId: PollId,
       };
 
-      const res = await fetch(`http://54.172.93.35:7000/api/polls/vote`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}polls/vote`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

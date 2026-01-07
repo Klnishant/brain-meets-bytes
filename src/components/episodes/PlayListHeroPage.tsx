@@ -222,7 +222,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     console.log(userId);
     
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -254,7 +254,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
   const fetchLikedCount = async () => {
     const res = await fetch(
-      `http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episode?._id}`,
       {
         method: "GET",
         headers: {
@@ -283,7 +283,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
   const fetchComments = async () => {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episode?._id}`,
         {
           method: "GET",
           headers: {
@@ -320,7 +320,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
     try {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/podcasts/comments`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments`,
         {
           method: "POST",
           headers: {
@@ -370,7 +370,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
  const fetchSaved = async () => {
-      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
         {
           method: "GET",
           headers: {
@@ -394,7 +394,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       };
       console.log(body);
 
-      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/save`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -847,7 +847,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
     console.log(userId);
     
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -879,7 +879,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
   const fetchLikedCount = async () => {
     const res = await fetch(
-      `http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episode?._id}`,
       {
         method: "GET",
         headers: {
@@ -908,7 +908,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
   const fetchComments = async () => {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episode?._id}`,
         {
           method: "GET",
           headers: {
@@ -945,7 +945,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
     try {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/podcasts/comments`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments`,
         {
           method: "POST",
           headers: {
@@ -995,7 +995,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   };
 
  const fetchSaved = async () => {
-      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
         {
           method: "GET",
           headers: {
@@ -1019,7 +1019,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
       };
       console.log(body);
 
-      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/save`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -1299,7 +1299,7 @@ const PlayListHeroPage = () => {
 
   const handleFetchLikedCount = async (episodeId: string) => {
     const res = await fetch(
-      `http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episodeId}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episodeId}`,
       {
         method: "GET",
         headers: {

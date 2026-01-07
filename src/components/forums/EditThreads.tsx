@@ -150,7 +150,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
 
     try {
-      const res = await fetch(`http://54.172.93.35:7000/api/threads?ThreadId=${threadId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}threads?ThreadId=${threadId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

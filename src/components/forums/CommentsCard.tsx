@@ -54,7 +54,7 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
         },[])
   
   const user = async () => {
-    const res = await fetch(`http://54.172.93.35:7000/api/users/one?userId=${comment?.userId}`,
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
       {
         method: "GET",
         headers: {

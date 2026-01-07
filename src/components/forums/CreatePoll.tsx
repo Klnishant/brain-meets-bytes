@@ -46,7 +46,7 @@ const CreatePoll: React.FC<CreatePollProps> = ({handleClick}) => {
     "options": options
       }
 
-      const res = await fetch(`http://54.172.93.35:7000/api/polls`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}polls`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -6,20 +6,27 @@ import { set } from "sanity";
 import { form } from "sanity/structure";
 
 type EditCategoryProps = {
-    titles: string;
-    routes: string;
-    descriptions: string;
-    colors: string;
-    images: File | null;
-    cateGoryId: number
+  titles: string;
+  routes: string;
+  descriptions: string;
+  colors: string;
+  images: string| null;
+  cateGoryId: number;
 };
 
-const EditCategory: React.FC<EditCategoryProps> = ({titles, routes, descriptions, colors, images, cateGoryId}) => {
+const EditCategory: React.FC<EditCategoryProps> = ({
+  titles,
+  routes,
+  descriptions,
+  colors,
+  images,
+  cateGoryId,
+}) => {
   const [title, setTitle] = useState(titles);
   const [route, setRoute] = useState(routes);
   const [description, setDescription] = useState(descriptions);
   const [color, setColor] = useState(colors);
-  const [image, setImage] = useState<File | null>(images);
+  const [image, setImage] = useState<File | null>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -48,11 +55,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({titles, routes, descriptions
     return result;
   };
 
-  
-
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const body = {
@@ -63,9 +66,11 @@ const EditCategory: React.FC<EditCategoryProps> = ({titles, routes, descriptions
       imageUrl: image ? await fileToBase64(image) : null,
     };
 
+    console.log("categoryId", cateGoryId);
+
     try {
       const res = await fetch(
-        `http://54.172.93.35:7000/api/category?CategoryId=${cateGoryId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}category?CategoryId=${cateGoryId}`,
         {
           method: "PUT",
           headers: {
@@ -76,21 +81,21 @@ const EditCategory: React.FC<EditCategoryProps> = ({titles, routes, descriptions
         }
       );
       console.log(res);
-      
+
       if (!res.ok) {
-        throw new Error("Failed to create category");
+        throw new Error("Failed to edit category");
       }
 
       const data = await res.json();
-      console.log(data);
-      alert("Category created successfully");
+      console.log("Edit category data", data);
+      alert("Category edited successfully");
       setTitle("");
       setRoute("");
       setDescription("");
       setColor("#2563EB");
       setImage(null);
     } catch (error: any) {
-      console.error(error?.message, "Failed to create category");
+      console.error(error?.message, "Failed to edit category");
     }
   };
 

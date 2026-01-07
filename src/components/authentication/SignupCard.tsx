@@ -52,7 +52,7 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
       }
       console.log(body);
       
-      const res = await fetch(`http://54.172.93.35:7000/api/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
