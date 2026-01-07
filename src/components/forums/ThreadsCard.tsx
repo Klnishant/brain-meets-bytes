@@ -58,14 +58,20 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({thread})=> {
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [CurrentThreadId, setCurrentThreadId] = useState(Number(thread?.ThreadId));
-
+  const [isSaved, setIsSaved] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId,setUserId] = useState<number | null>(null);
   const ThreadId = thread?.ThreadId;
-  const token: string = localStorage.getItem("token") ?? "";
+
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+    setUserId(Number(localStorage.getItem("userId")));
+  }, []);
 
   const handleLike = async(e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       const data = {
-        "userId": Number(localStorage.getItem("userId")),
+        "userId": userId,
       };
       let Res;
       try {
@@ -117,7 +123,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({thread})=> {
     const handleComment = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const data = {
-          "userId": localStorage.getItem("userId"),
+          "userId": userId,
            "comments": commentData.comment,
         };
         console.log(localStorage.getItem("userId"));
@@ -192,6 +198,55 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({thread})=> {
       console.error("Share cancelled", err);
     }
   };
+
+  useEffect(() => {
+     const fetchSaved = async () => {
+        const res = await fetch(`http://54.172.93.35:7000/api/threads/getSavedUsersFrThread?ThreadId=${thread?.ThreadId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("saved",data?.data[0]?.savedBy?.userId);
+          
+          setIsSaved(data?.data[0]?.savedBy?.userId === Number(localStorage.getItem("userId"))); 
+        }
+      };
+      fetchSaved();
+   },[]);
+    const handleSave = async () => {
+      try {
+        const body = {
+           "ThreadId": thread?.ThreadId
+        }
+        console.log(body);
+        
+        const res = await fetch(`http://54.172.93.35:7000/api/threads/save`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        console.log("post save",res);
+        
+        if (res.ok) {
+          alert('thread saved successfully!');
+          setIsSaved(true);
+        }
+        else{
+          alert(`Failed to save thread. Please try again later.`);
+          console.log(res);
+          
+        }
+      } catch (error: any) {
+        console.log(error?.message,"Failed to Save podcast");
+      }
+    }
 
   const duration = intervalToDuration({
     start: new Date(thread?.createdAt),
@@ -356,7 +411,9 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({thread})=> {
                 </button>
 
                 {/* Save */}
-                <button className="hidden items-center h-8 w-8 md:h-auto md:w-auto justify-center gap-2 md:px-4 md:py-2 border border-[#2A4157] rounded-[36px] md:rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button 
+                onClick={handleSave}
+                className={`flex items-center h-8 w-8 md:h-auto md:w-auto justify-center gap-2 md:px-4 md:py-2 border border-[#2A4157] rounded-[36px] md:rounded-full text-[#64748B] hover:bg-[#1A2A38] transition ${isSaved ? "bg-[#1A2A38]" : ""}`}>
                   <img
                     src="/save.png"
                     alt=""

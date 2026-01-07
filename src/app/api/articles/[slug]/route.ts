@@ -38,12 +38,14 @@ const articleQuery = `*[_type == "article" && slug.current == $slug][0]{
   "imageUrl": image.asset->url,
   tags,
   excerpt,
-  authorDetails {
+
+  authors[]{
     name,
     role,
     bio,
     "imageUrl": image.asset->url
   },
+
   content
 }`;
 
@@ -58,9 +60,9 @@ const relatedQuery = `*[_type == "article" && slug.current != $slug] | order(dat
   "slug": slug.current
 }`;
 
-export async function GET(req: Request, context: Context) {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
  try {
-    const {slug} = await context.params;
+    const {slug} = await params;
     const article = (await sanityClient.fetch(articleQuery, { slug })) as Article | null;
     const related = (await sanityClient.fetch(relatedQuery, { slug })) as any[];
     

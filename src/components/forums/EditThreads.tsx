@@ -5,6 +5,7 @@ import SelectCategoryCard from "./SelectCategoryCard";
 import { form } from "sanity/structure";
 import { set } from "sanity";
 import { Edit, Images } from "lucide-react";
+import { getAuth } from "@/lib/getAuth";
 
 export type ChildFormRef = {
   submit: () => void;
@@ -36,6 +37,21 @@ const EditThread: React.FC<EditThreadProps> = ({threadId,threadTitle,threadConte
   const [query, setQuery] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>(threadImages);
+ const [token, setToken] = useState<string | null>(null);
+           const [userId, setUserId] = useState<number | null>(null);
+         
+           useEffect(() => {
+             const fetchAuth = async () => {
+               const auth = await getAuth();
+               if (auth) {
+                 setToken(auth.token);
+                 setUserId(auth.userId);
+               }
+               console.log("auth",auth);;
+               
+             }
+             fetchAuth();
+           },[])
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -122,9 +138,6 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const userId = Number(localStorage.getItem("userId"));
-    const token = localStorage.getItem("token");
 
     const base64Images = await filesToBase64(images);
 

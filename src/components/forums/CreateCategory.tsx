@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuth } from "@/lib/getAuth";
 import { useEffect, useState } from "react";
 import { set } from "sanity";
 import { form } from "sanity/structure";
@@ -12,9 +13,21 @@ const CreateCategory = () => {
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const token: string = localStorage.getItem("token") ?? "";
-
+  const [token, setToken] = useState<string | null>(null);
+            const [userId, setUserId] = useState<number | null>(null);
+          
+            useEffect(() => {
+              const fetchAuth = async () => {
+                const auth = await getAuth();
+                if (auth) {
+                  setToken(auth.token);
+                  setUserId(auth.userId);
+                }
+                console.log("auth",auth);;
+                
+              }
+              fetchAuth();
+            },[])
   const fileToBase64 = async (file: File): Promise<string> => {
   const reader = new FileReader();
 

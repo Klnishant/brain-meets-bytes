@@ -16,6 +16,7 @@ const MobileViewBar = ({ className }: { className?: string }) => {
   const [search, setSearch] = useState("");
   const [isPollOpen, setIsPollOpen] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [videos,setVideos] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isTopicsOpen, setIsTopicsOpen] = useState(false);
@@ -35,6 +36,21 @@ const MobileViewBar = ({ className }: { className?: string }) => {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeVideo = (index: number) => {
+    setVideos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const selectedFiles = Array.from(e.target.files);
+
+    setVideos((prev) => [...prev, ...selectedFiles]);
+
+    // Reset input so same image can be re-selected
+    e.target.value = "";
   };
 
   const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,7 +115,7 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         {/* Composer form */}
 
         <div className={`${isComposerOpen ? "block" : "hidden"}`}>
-          <CreateThread images={images} ref={formRef} />
+          <CreateThread images={images} ref={formRef} videos={videos} />
         </div>
 
         {/* Polls */}
@@ -135,18 +151,37 @@ const MobileViewBar = ({ className }: { className?: string }) => {
                   />
                 </label>
               </div>
-              <button className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                <span className=" items-center justify-center">
-                  <img
-                    src="/video.png"
-                    alt="Videos"
-                    className="h-4 w-4 object-contain"
-                  />
-                </span>
-                <span className="font-sora text-[14px] text-[#023047]">
-                  Videos
-                </span>
-              </button>
+               {/* video Upload */}
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="video-upload"
+                      className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                    >
+                      <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                        <span className=" items-center justify-center ">
+                          <img
+                            src="/video.png"
+                            alt="Images"
+                            className="h-4 w-4 object-contain"
+                          />
+                        </span>
+                        <span className="font-sora text-[14px] text-[#023047]">
+                          Videos
+                        </span>
+                      </div>
+                      <input
+                        id="video-upload"
+                        name="video-upload"
+                        type="file"
+                        multiple
+                        hidden
+                        disabled={!isComposerOpen}
+                        accept="video/*"
+                        capture="environment"
+                        onChange={handleVideoChange}
+                      />
+                    </label>
+                  </div>
               <button
                 onClick={() => setIsPollOpen(!isPollOpen)}
                 className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2"

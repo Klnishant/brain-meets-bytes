@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NAV_LINKS, COLORS } from "@/lib/constants";
 import { Sign } from "crypto";
 import SignupCard from "../authentication/SignupCard";
 import SignInCard from "../authentication/SignInCard";
 import MembershipCard from "../authentication/MembershipCard";
+import { getUser } from "@/lib/getUser";
 
 const linkToHref = (label: string) => {
   if (label === "Home") return "/";
@@ -25,11 +26,27 @@ const Navbar = () => {
   const [openMembership, setOpenMembership] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isForumSubPage = pathname.startsWith("/forum/");
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getUser();
+      setUser(user);
+      setIsLoggedIn(user);
+    };
+    fetchUser();
+  }, []);
 
   const handleLogout = async() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
+   const res = await fetch("/api/auth/logout", {
+  method: "POST"
+ });
+ console.log(res);
+ 
+  if (res.ok) {
     setIsLoggedIn(false);
+    setUser(null);
+  }
   };
 
   return (
@@ -117,7 +134,7 @@ const Navbar = () => {
 
             {/* Login */}
             {
-              !isLoggedIn ? (
+              !user ? (
                 <button
               className="hidden md:flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
               onClick={() => setOpenLogIn(true)}
@@ -141,7 +158,7 @@ const Navbar = () => {
                 borderColor: COLORS.brandNavy,
                 color: COLORS.brandNavy,
               } }
-              onClick={()=>(setIsLoggedIn(false))}
+              onClick={handleLogout}
             >
               Logout
             </button>

@@ -15,10 +15,9 @@ interface Context{
 }
 export async function GET(
   req: NextRequest,
-  context : Context,
-  res: NextResponse
+  { params }: { params: Promise<{ title: string }> },
 ) {
-  const {title} = await context.params;
+  const {title} = await params;
 
   const query = `*[_type == "episode" && podcast->title == "${title}" ] {
   _id,

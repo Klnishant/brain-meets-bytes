@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { getAuth } from "@/lib/getAuth";
+import { useEffect, useState } from "react";
 
 export default function CreateTopic() {
   const [title, setTitle] = useState("");
   const [route, setRoute] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+            const [userId, setUserId] = useState<number | null>(null);
+          
+            useEffect(() => {
+              const fetchAuth = async () => {
+                const auth = await getAuth();
+                if (auth) {
+                  setToken(auth.token);
+                  setUserId(auth.userId);
+                }
+                console.log("auth",auth);;
+                
+              }
+              fetchAuth();
+            },[])
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const token = localStorage.getItem("token");
 
     const data = {
       "title": title,

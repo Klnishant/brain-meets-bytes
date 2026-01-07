@@ -1,12 +1,12 @@
 import type { NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 
-export async function POST(req: Request, res: NextApiResponse) {
+export async function POST(req: Request): Promise<Response> {
   try {
     const { email } = await req.json();
 
     if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+      return NextResponse.json({ error: 'Email is required' });
     }
 
     const MailchimpKey = process.env.MAILCHIMP_API_KEY;
@@ -33,13 +33,13 @@ export async function POST(req: Request, res: NextApiResponse) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return res.status(response.status).json({ error: errorData.detail });
+      return NextResponse.json({ error: errorData.detail });
     }
 
     const received = await response.json();
     return NextResponse.json(received);
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return NextResponse.json({ error: 'Internal Server Error' });
   }
 }

@@ -13,6 +13,7 @@ import CreateTopic from "./CreateTopic";
 import CreatePoll from "./CreatePoll";
 import PollCard from "./PollCard";
 import MobileViewBar from "./MobileViewBar";
+import { getAuth } from "@/lib/getAuth";
 
 type Category = {
   _id: string;
@@ -183,11 +184,26 @@ const ForumsMainSection = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [topicsCount, setTopicsCount] = useState(5);
-
-  const token: string = localStorage.getItem("token") ?? "";
+  const [token, setToken] = useState<string | null>(null);
+        const [userId, setUserId] = useState<number | null>(null);
+      
+        useEffect(() => {
+          const fetchAuth = async () => {
+            const auth = await getAuth();
+            if (auth) {
+              setToken(auth.token);
+              setUserId(auth.userId);
+            }
+            console.log("auth",auth);;
+            
+          }
+          fetchAuth();
+        },[])
 
   useEffect(() => {
     let mounted = true;
+
+    if (!token) return;
 
     const load = async () => {
       try {
@@ -250,7 +266,7 @@ const ForumsMainSection = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [token]);
   const visibleTopics = topics.slice(0, topicsCount);
 
   const handleTopic = () => {
@@ -283,6 +299,7 @@ const filteredThreads = useMemo(
   /* Handle composer */
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [videos,setVideos] = useState<File[]>([]);
 
   const formRef = useRef<CreatThreadFormRef>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,6 +315,21 @@ const filteredThreads = useMemo(
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeVideo = (index: number) => {
+    setVideos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const selectedFiles = Array.from(e.target.files);
+
+    setVideos((prev) => [...prev, ...selectedFiles]);
+
+    // Reset input so same image can be re-selected
+    e.target.value = "";
   };
 
   const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -398,7 +430,7 @@ const filteredThreads = useMemo(
               {/* Composer form */}
 
               <div className={`${isComposerOpen ? "block" : "hidden"}`}>
-                <CreateThread images={images} ref={formRef} />
+                <CreateThread images={images} videos={videos} ref={formRef} />
               </div>
 
               {/* Polls */}
@@ -438,18 +470,37 @@ const filteredThreads = useMemo(
                       />
                     </label>
                   </div>
-                  <button className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                    <span className=" items-center justify-center">
-                      <img
-                        src="/video.png"
-                        alt="Videos"
-                        className="h-4 w-4 object-contain"
+                  {/* video Upload */}
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="video-upload"
+                      className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                    >
+                      <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                        <span className=" items-center justify-center ">
+                          <img
+                            src="/video.png"
+                            alt="Images"
+                            className="h-4 w-4 object-contain"
+                          />
+                        </span>
+                        <span className="font-sora text-[14px] text-[#023047]">
+                          Videos
+                        </span>
+                      </div>
+                      <input
+                        id="video-upload"
+                        name="video-upload"
+                        type="file"
+                        multiple
+                        hidden
+                        disabled={!isComposerOpen}
+                        accept="video/*"
+                        capture="environment"
+                        onChange={handleVideoChange}
                       />
-                    </span>
-                    <span className="font-sora text-[14px] text-[#023047]">
-                      Videos
-                    </span>
-                  </button>
+                    </label>
+                  </div>
                   <button
                    onClick={()=> setIsPollOpen(!isPollOpen)}
                    className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
@@ -474,7 +525,8 @@ const filteredThreads = useMemo(
                 </button>
               </div>
               </form>
-              {/* Image Preview */}
+              <div className="flex gap-3">
+                {/* Image Preview */}
                   <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
                     {images.map((file, index) => (
                       <div key={index} className="relative group">
@@ -495,7 +547,30 @@ const filteredThreads = useMemo(
                       </div>
                     ))}
                   </div>
+                  {/* Video Preview */}
+                  <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
+                    {videos.map((file, index) => (
+                      <div key={index} className="relative group">
+                        <video
+                          src={URL.createObjectURL(file)}
+                          controls
+                          className="h-24 w-full rounded-lg object-cover"
+                        />
+
+                        {/* Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeVideo(index)}
+                          className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+              </div>
             </div>
+            
             {/* Threads cards */}
             {filteredThreads &&
               filteredThreads.map((thread) => (

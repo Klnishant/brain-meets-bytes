@@ -10,6 +10,7 @@ import CommentsCard from "./CommentsCard";
 import { User } from "lucide-react";
 import MobileViewBar from "./MobileViewBar";
 import PollCard from "./PollCard";
+import { getAuth } from "@/lib/getAuth";
 
 type Category = {
   _id: string;
@@ -89,18 +90,32 @@ const ThreadDetails = () => {
   const [hasLiked, setHasLiked] = useState<Like[]>([]);
   const [liked, setLiked] = useState(false);
   const [topicsCount, setTopicsCount] = useState(5);  
+  const [token, setToken] = useState<string | null>(null);
+            const [userId, setUserId] = useState<number | null>(null);
+          
+            useEffect(() => {
+              const fetchAuth = async () => {
+                const auth = await getAuth();
+                if (auth) {
+                  setToken(auth.token);
+                  setUserId(auth.userId);
+                }
+                console.log("auth",auth);;
+                
+              }
+              fetchAuth();
+            },[])
 
   const params = useParams();
   const ThreadId = params?.threadId;
   console.log(ThreadId);
-
-  const token: string = localStorage.getItem("token") ?? "";
   console.log(token);
 
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
+      if (!token) return;
       try {
         setLoading(true);
         setError(null);
@@ -164,7 +179,7 @@ const ThreadDetails = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [token]);
 
   console.log(threads[0]?.comments);
   

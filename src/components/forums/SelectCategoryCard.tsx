@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import CreateCategory from "./CreateCategory";
 import { set } from "sanity";
+import { getAuth } from "@/lib/getAuth";
 
 type Category = {
   _id: string;
@@ -29,9 +30,22 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
   const [openCreate, setOpenCreate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [token, setToken] = useState<string | null>(null);
+            const [userId, setUserId] = useState<number | null>(null);
+          
+            useEffect(() => {
+              const fetchAuth = async () => {
+                const auth = await getAuth();
+                if (auth) {
+                  setToken(auth.token);
+                  setUserId(auth.userId);
+                }
+                console.log("auth",auth);;
+                
+              }
+              fetchAuth();
+            },[])
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const token: string = localStorage.getItem("token") ?? "";
 
    useEffect(() => {
         let mounted = true;
@@ -40,6 +54,8 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
           try {
             setLoading(true);
             setError(null);
+    
+            if(!token) return;
     
             const res = await fetch(
               `http://54.172.93.35:7000/api/category`,
@@ -73,7 +89,7 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
         return () => {
           mounted = false;
         };
-      },[]);
+      },[token]);
 
   // Close on outside click
   useEffect(() => {

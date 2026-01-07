@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuth } from "@/lib/getAuth";
 import { intervalToDuration } from "date-fns";
 import { ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,9 +37,21 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
   const [showReply, setShowReply] = useState(false);
   const [areRepliesVisible, setAreRepliesVisible] = useState(false);
   const [users, setUsers] = useState<User | null>(null);
-
-  const token = localStorage.getItem("token") ?? "";
-  console.log(comment?.userId);
+  const [token, setToken] = useState<string | null>(null);
+        const [userId, setUserId] = useState<number | null>(null);
+      
+        useEffect(() => {
+          const fetchAuth = async () => {
+            const auth = await getAuth();
+            if (auth) {
+              setToken(auth.token);
+              setUserId(auth.userId);
+            }
+            console.log("auth",auth);;
+            
+          }
+          fetchAuth();
+        },[])
   
   const user = async () => {
     const res = await fetch(`http://54.172.93.35:7000/api/users/one?userId=${comment?.userId}`,

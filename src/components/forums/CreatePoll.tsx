@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react'
+import { getAuth } from '@/lib/getAuth';
+import React, { useEffect, useState } from 'react'
 
 type CreatePollProps = {
   handleClick: () => void
@@ -14,14 +15,64 @@ const CreatePoll: React.FC<CreatePollProps> = ({handleClick}) => {
     "",
     "",
   ]);
-
+  const [token, setToken] = useState<string | null>(null);
+            const [userId, setUserId] = useState<number | null>(null);
+          
+            useEffect(() => {
+              const fetchAuth = async () => {
+                const auth = await getAuth();
+                if (auth) {
+                  setToken(auth.token);
+                  setUserId(auth.userId);
+                }
+                console.log("auth",auth);;
+                
+              }
+              fetchAuth();
+            },[])
   const updateOption = (index: number, value: string) => {
     const updated = [...options];
     updated[index] = value;
     setOptions(updated);
   };
+
+  const handleCreatePoll = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    try {
+      const data = {
+        "title": question,
+    "description": "",
+    "options": options
+      }
+
+      const res = await fetch(`http://54.172.93.35:7000/api/polls`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(res);
+      
+      if (!res.ok) {
+        throw new Error("Failed to create poll");
+      }
+      alert("Poll created successfully!");
+      handleClick();
+    } catch (error: any) {
+      console.log(error?.message,"Failed to create poll");
+      alert("Failed to create poll");
+    }
+  };
   return (
-    <div className="w-full max-w-xl rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+   <form 
+   method="post"
+   noValidate
+   onSubmit={handleCreatePoll}
+   >
+     <div className="w-full max-w-xl rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
       {/* Header */}
       <h2 className="mb-4 text-xl font-semibold text-[#023047]">
         Create Poll
@@ -77,11 +128,14 @@ const CreatePoll: React.FC<CreatePollProps> = ({handleClick}) => {
           Cancel
         </button>
 
-        <button className="rounded-lg bg-[#023047] px-5 py-2 text-sm font-medium text-white ">
+        <button
+        type='submit'
+         className="rounded-lg bg-[#023047] px-5 py-2 text-sm font-medium text-white ">
           Create Poll
         </button>
       </div>
     </div>
+   </form>
   )
 }
 

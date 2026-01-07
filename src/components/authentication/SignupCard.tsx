@@ -14,10 +14,12 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [signupData, setSignupData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    "name": "",
+   "email": "",
+    "password": "",
+    "confirmPassword": "",
+    "ProfilePic": "myself",
+    "hasmembership": false,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,29 +46,37 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
       const body = {
         "name": signupData.name,
         "email": signupData.email,
-        "password": signupData.password
+        "password": signupData.password,
+        "hasmembership": signupData.hasmembership,
+        "ProfilePic": signupData.ProfilePic
       }
+      console.log(body);
+      
       const res = await fetch(`http://54.172.93.35:7000/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(signupData),
+        body: JSON.stringify(body),
       });
       if(res.ok) {
         setSignupData({
-          name: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
+          "name": "",
+          "email": "",
+          "password": "",
+          "confirmPassword": "",
+          "ProfilePic": "myself",
+          "hasmembership": false
         });
         const data = await res.json();
+        console.log(data);
 
         localStorage.setItem("token", data?.data?.token);
         localStorage.setItem("userId", data?.data?.userId);
 
-        alert('Account created successfully!');
         handleIsLoggedIn && handleIsLoggedIn();
+        alert('Account created successfully!');
+        
       }
     } catch (error) {
       console.error(error);

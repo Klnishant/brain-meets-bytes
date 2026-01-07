@@ -21,10 +21,9 @@ const query = `*[_type == "podcast" && slug.current != $slug] | order(date desc)
 
 export async function GET(
     req: NextRequest,
-    context : Context,
-    res: NextResponse
+   { params }: { params: Promise<{slug: string }> }
 ) {
-    const {slug} = await context.params;
+    const { slug } = await params;
   try {
     const data = await sanityClient.fetch(query, { slug });
     return NextResponse.json(data ?? []);

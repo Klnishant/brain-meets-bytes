@@ -8,6 +8,8 @@ import { podcast } from "../../../sanity/schemaTypes/podcast";
 import { useParams } from "next/navigation";
 import { set } from "sanity";
 import CommentsCard from "../forums/CommentsCard";
+import { getUser } from "@/lib/getUser";
+import { getAuth } from "@/lib/getAuth";
 
 type Podcast = {
   _id: string;
@@ -50,7 +52,6 @@ type Comment = {
   replies: Array<Comment>;
 };
 
-
 type EpisodeCardProps = {
   episode: Episode;
   podcast: Podcast;
@@ -72,6 +73,19 @@ type PlayerCardProps = {
   onPrev: () => void;
   onShuffle: () => void;
 };
+
+type EpisodeActions = {
+  episodeId: string;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  isSaved: boolean;
+};
+
+type Auth = {
+  userId: number,
+  token: string
+}
 
 const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
   const { title, author, date, imageUrl, tags = [], podcastCount } = podcast;
@@ -176,135 +190,167 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   const podcast = episode?.podcast;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLiked, setIsLiked] = useState(false);
-  const [error,setError] = useState('');
+  const [error, setError] = useState("");
   const [likedCount, setLikedCount] = useState(0);
-  const [commentData, setCommentData] = useState({comment: ""});
+  const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [isSaved, setIsSaved] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
-  const token = localStorage.getItem("token");
+  useEffect(() => {
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
+      }
+    }
+    fetchAuth();
+  },[])
+  
+ 
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const data = {
+      sanityPodcastId: episode?._id,
+      podcastName: podcast?.title,
+      reaction: isLiked ? "dislike" : "like",
+    };
+    let Res;
+    console.log(userId);
+    
+    try {
+      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(res);
+      if (!res?.ok) {
+        throw new Error("Failed to like or dislike");
+      }
+      Res = await res.json();
+      if (res.ok) {
+        alert("like or dislike sent successfully!");
+        if (isLiked) {
+          setIsLiked(false);
+          setLikedCount((prev) => prev - 1);
+        } else {
+          setIsLiked(true);
+          setLikedCount((prev) => prev + 1);
+        }
+      } else {
+        alert("Failed like or dislike. Please try again later.");
+      }
+    } catch (error: any) {
+      setError(error?.message ?? "Failed to send like or dislike");
+    }
+  };
 
+  const fetchLikedCount = async () => {
+    const res = await fetch(
+      `http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      console.log("liked Count", data);
+      console.log(userId);
+      
 
-  const handleLike = async(e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      const data = {
-        "sanityPodcastId": episode?._id,
-    "podcastName": podcast?.title,
-    "reaction": isLiked ? "dislike" : "like",
-      };
-      let Res;
-      try {
-        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+      setLikedCount(data?.data?.likeCount);
+      setIsLiked(
+        data?.data?.usersWhoLiked?.includes(
+          Number(userId)
+        )
+      );
+      console.log(data?.data?.usersWhoLiked?.includes(Number(userId)));
+      
+    }
+  };
+  fetchLikedCount();
+
+  const fetchComments = async () => {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        console.log("comments Count", data);
+
+        setComments(data?.data);
+      }
+    };
+     fetchComments();
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setCommentData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = {
+      sanityPodcastId: episode?._id,
+      comment: commentData.comment,
+    };
+
+    try {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/podcasts/comments`,
+        {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
+        }
+      );
+      console.log(res);
+      if (!res?.ok) {
+        throw new Error("Failed to send comments");
+      }
+      if (res.ok) {
+        setCommentData({
+          comment: "",
         });
-        console.log(res);
-        if (!res?.ok) {
-          throw new Error("Failed to like or dislike");
-        }
-        Res = await res.json();
-        if(res.ok) {
-        alert('like or dislike sent successfully!');
-        if (isLiked) {
-          setIsLiked(false);
-          setLikedCount(prev => prev - 1);
-        } else {
-          setIsLiked(true);
-          setLikedCount(prev => prev + 1);
-        }
+        alert("Message sent successfully!");
       } else {
-        alert('Failed like or dislike. Please try again later.');
+        alert("Failed to send message. Please try again later.");
       }
-      } catch (error: any) {
-        setError(error?.message ?? "Failed to send like or dislike");
-      }
+    } catch (error: any) {
+      setError(error?.message ?? "Failed to send comments");
     }
+  };
 
-    useEffect(() => {
-      const fetchLikedCount = async () => {
-        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setLikedCount(data.count);
-        }
-      };
-      if (episode?._id) {
-        fetchLikedCount();
-      }
-    },[]);
-
-     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-          const { name, value } = e.target;
-          setCommentData((prev)=>({
-            ...prev,
-            [name]: value
-          }));
-        }
-
-    const handleComment = async(e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const data = {
-          "sanityPodcastId": episode?._id,
-          "comment": commentData.comment,
-        };
-        console.log(localStorage.getItem("userId"));
-        
-        try {
-          const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          });
-          console.log(res);
-          if (!res?.ok) {
-            throw new Error("Failed to send comments");
-          }
-          if(res.ok) {
-          setCommentData({
-            comment: "",
-          });
-          alert('Message sent successfully!');
-        } else {
-          alert('Failed to send message. Please try again later.');
-        }
-        } catch (error: any) {
-          setError(error?.message ?? "Failed to send comments");
-        } 
-      };
-
-      useEffect(() => {
-        const fetchComments = async () => {
-        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          console.log("liked Count",data);
-          
-          setComments(data?.data);
-        }
-      };
-      if (episode?._id) {
-        fetchComments();
-      }
-      },[])
-
-      const fallbackShare = (url: string) => {
-  navigator.clipboard.writeText(url);
-  alert("Link copied to clipboard");
-};
-
+  const fallbackShare = (url: string) => {
+    navigator.clipboard.writeText(url);
+    alert("Link copied to clipboard");
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -320,6 +366,53 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       }
     } catch (err) {
       console.error("Share cancelled", err);
+    }
+  };
+
+ const fetchSaved = async () => {
+      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log(res);
+      
+      if (res.ok) {
+        const data = await res.json();
+        setIsSaved(data?.data?.some((item: { savedBy: { userId: number; }; }) => item?.savedBy.userId === Number(userId)));
+      }
+    };
+    fetchSaved();
+  const handleSave = async () => {
+    try {
+      const body = {
+        sanityPodcastId: episode?._id,
+      };
+      console.log(body);
+
+      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/save`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      console.log("post save", res);
+
+      if (res.ok) {
+        alert("Podcast saved successfully!");
+        setIsSaved(true);
+      } else {
+        alert(`Failed to save podcast. Please try again later. ${res}`);
+        console.log(res);
+      }
+    } catch (error: any) {
+      console.log(error?.message, "Failed to Save podcast");
     }
   };
 
@@ -367,22 +460,22 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     <div className="w-full flex items-center mt-8 justify-center">
       <div className="w-full flex items-center justify-center">
         <div
-          className=" md:h-[496px] rounded-3xl opacity-100 p-8 gap-4 md:gap-6 w-full flex flex-col md:flex-row items-start  justify-start md:justify-center bg-white
+          className=" md:h-[496px] rounded-3xl opacity-100 p-2 xl:p-8 gap-4 xl:gap-6 w-full flex flex-col md:flex-row items-start  justify-start md:justify-center bg-white
                           shadow-[0px_0px_4px_rgba(0,0,0,0.2)]
-                          rounded-2xl
+                          rounded-2xl 
 "
         >
           <div className="flex md:flex-col gap-4 md:gap-6 items-center  h-full md:items-start">
-            <div className="w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[290px] lg:h-[319px] border-4 rounded-2xl">
+            <div className="w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[200px] lg:h-[250px] xl:w-[290px] xl:h-[319px] border-4 rounded-2xl">
               <img
                 src={episode?.podcast?.authorImageUrl || "/ki.png"}
                 alt=""
-                className=" w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[308px] lg:h-[319px] rounded-3xl object-cover"
+                className=" w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[200px] lg:h-[250px] xl:w-[308px] xl:h-[319px] rounded-3xl object-cover"
               />
             </div>
-            <div className=" flex flex-col gap-1 justify-start">
+            <div className=" flex flex-col gap-1 w-full justify-start">
               <h1
-                className="font-sora font-bold text-[20px] md:text-[36px] text-[#1E293B] leading-[100%] tracking-[0%] shrink-0
+                className="font-sora font-bold w-full text-[20px] md:text-[36px] text-[#1E293B] leading-[100%] tracking-[0%] shrink-0
 "
               >
                 {podcast?.author || "Unknown Author"}
@@ -413,7 +506,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                   <img
                     src={episode?.imageUrl || "/ki.png"}
                     alt="Speaker"
-                    className="h-[70px] w-[70px] md:w-[90px] md:h-[90px] lg:w-[120px] lg:h-[115px] rounded-full object-cover border border-[#E2E8F0]"
+                    className="shrink-0 h-[70px] w-[70px] md:w-[90px] md:h-[90px] xl:w-[120px] xl:h-[115px] rounded-full object-cover border border-[#E2E8F0]"
                   />
 
                   <div className="flex flex-col justify-center items-start gap-3 md:max-w-[600px] lg:w-[900px] md:h-[211px]">
@@ -598,36 +691,54 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                   <div className="flex items-center justify-between gap-1 lg:gap-6 py-5">
                     {/* Like */}
                     <button
-                    onClick={handleLike} 
-                    className={`hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}>
-                      <img src="/like.png" alt="" className="h-3 w-3 lg:h-6 lg:w-6" />
-                      <span className="text-[12px] md:text-[16px]">{likedCount}</span>
+                      onClick={handleLike}
+                      className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
+                    >
+                      <img
+                        src="/like.png"
+                        alt=""
+                        className="h-3 w-3 lg:h-6 lg:w-6"
+                      />
+                      <span className="text-[12px] md:text-[16px]">
+                        {likedCount}
+                      </span>
                     </button>
 
                     {/* Comments */}
-                    <button 
-                    onClick={()=>(setIsCommentOpen(!isCommentOpen))}
-                    className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                    <button
+                      onClick={() => setIsCommentOpen(!isCommentOpen)}
+                      className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
+                    >
                       <img
                         src="/comment.png"
                         alt=""
                         className="h-3 w-3 lg:h-5 lg:w-5"
                       />
-                      <span className="text-[12px] md:text-[16px]">{comments?.length}</span>
+                      <span className="text-[12px] md:text-[16px]">
+                        {comments?.length}
+                      </span>
                     </button>
 
                     <div className="flex-1" />
 
                     {/* Share */}
-                    <button 
-                    onClick={handleShare}
-                    className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                      <img src="/share 1.png" alt="" className="h-3 w-3 lg:h-6 lg:w-6" />
+                    <button
+                      onClick={handleShare}
+                      className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
+                    >
+                      <img
+                        src="/share 1.png"
+                        alt=""
+                        className="h-3 w-3 lg:h-6 lg:w-6"
+                      />
                       <span className="text-[12px] md:text-[16px]">Share</span>
                     </button>
 
                     {/* Save */}
-                    <button className="hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                    <button
+                      onClick={handleSave}
+                      className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}
+                    >
                       <img
                         src="/save.png"
                         alt=""
@@ -638,43 +749,55 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                   </div>
                 </div>
                 {/* Comments bar */}
-              <div className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}>
-                <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828] shrink-0">
-                  <img
-                    src="/forum-user-1.jpg"
-                    alt="Current user"
-                    className="h-full w-full shrink-0 object-cover"
-                  />
+                <div
+                  className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}
+                >
+                  <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828] shrink-0">
+                    <img
+                      src="/forum-user-1.jpg"
+                      alt="Current user"
+                      className="h-full w-full shrink-0 object-cover"
+                    />
+                  </div>
+                  <div className="w-full ">
+                    <form
+                      className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
+                      method="post"
+                      noValidate
+                      onSubmit={handleComment}
+                    >
+                      <textarea
+                        name="comment"
+                        rows={1}
+                        value={commentData.comment}
+                        onChange={handleInputChange}
+                        placeholder="Make a comment…"
+                        className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+                      />
+                      <button
+                        type="submit"
+                        className="flex h-[30px] w-[100px]  md:h-11 md:w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
+                      >
+                        Comment
+                      </button>
+                    </form>
+                  </div>
                 </div>
-                <div className="w-full ">
-                  <form 
-                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
-                  method="post"
-                  noValidate
-                  onSubmit={handleComment} 
+                {/* Comments */}
+                {comments && comments.length > 0 && (
+                  <div
+                    className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}
                   >
-                    <textarea
-                    name="comment"
-                    rows={1}
-                    value={commentData.comment}
-                    onChange={handleInputChange}
-                    placeholder="Make a comment…"
-                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
-                  />
-                  <button type="submit" className="flex h-[30px] w-[100px]  md:h-11 md:w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
-                    Comment
-                  </button>
-                  </form>
-                </div>
-              </div>
-              {/* Comments */}
-            {comments && comments.length > 0 && (
-              <div className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}>
-                {comments.map((c) => (
-                  <CommentsCard key={c?._id} comment={c} addReply={()=>{}} isActiveReply={false}  />
-                ))}
-              </div>
-            )}
+                    {comments.map((c) => (
+                      <CommentsCard
+                        key={c?._id}
+                        comment={c}
+                        addReply={() => {}}
+                        isActiveReply={false}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -692,142 +815,167 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   onSelect,
 }) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [error,setError] = useState('');
+  const [error, setError] = useState("");
   const [likedCount, setLikedCount] = useState(0);
-  const [commentData, setCommentData] = useState({comment: ""});
+  const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [isSaved, setIsSaved] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
-  const token = localStorage.getItem("token");
+  useEffect(() => {
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
+      }
+    }
+    fetchAuth();
+  },[])
+  
+ 
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const data = {
+      sanityPodcastId: episode?._id,
+      podcastName: podcast?.title,
+      reaction: isLiked ? "dislike" : "like",
+    };
+    let Res;
+    console.log(userId);
+    
+    try {
+      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(res);
+      if (!res?.ok) {
+        throw new Error("Failed to like or dislike");
+      }
+      Res = await res.json();
+      if (res.ok) {
+        alert("like or dislike sent successfully!");
+        if (isLiked) {
+          setIsLiked(false);
+          setLikedCount((prev) => prev - 1);
+        } else {
+          setIsLiked(true);
+          setLikedCount((prev) => prev + 1);
+        }
+      } else {
+        alert("Failed like or dislike. Please try again later.");
+      }
+    } catch (error: any) {
+      setError(error?.message ?? "Failed to send like or dislike");
+    }
+  };
 
-  const handleLike = async(e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      const data = {
-        "sanityPodcastId": episode?._id,
-    "podcastName": podcast?.title,
-    "reaction": isLiked ? "dislike" : "like",
-      };
-      let Res;
-      try {
-        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like`, {
+  const fetchLikedCount = async () => {
+    const res = await fetch(
+      `http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      console.log("liked Count", data);
+      console.log(userId);
+      
+
+      setLikedCount(data?.data?.likeCount);
+      setIsLiked(
+        data?.data?.usersWhoLiked?.includes(
+          Number(userId)
+        )
+      );
+      console.log(data?.data?.usersWhoLiked?.includes(Number(userId)));
+      
+    }
+  };
+  fetchLikedCount();
+
+  const fetchComments = async () => {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        console.log("comments Count", data);
+
+        setComments(data?.data);
+      }
+    };
+     fetchComments();
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setCommentData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = {
+      sanityPodcastId: episode?._id,
+      comment: commentData.comment,
+    };
+
+    try {
+      const res = await fetch(
+        `http://54.172.93.35:7000/api/podcasts/comments`,
+        {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
+        }
+      );
+      console.log(res);
+      if (!res?.ok) {
+        throw new Error("Failed to send comments");
+      }
+      if (res.ok) {
+        setCommentData({
+          comment: "",
         });
-        console.log(res);
-        if (!res?.ok) {
-          throw new Error("Failed to like or dislike");
-        }
-        Res = await res.json();
-        if(res.ok) {
-        alert('like or dislike sent successfully!');
-        if (isLiked) {
-          setIsLiked(false);
-          setLikedCount(prev => prev - 1);
-        } else {
-          setIsLiked(true);
-          setLikedCount(prev => prev + 1);
-        }
+        alert("Message sent successfully!");
       } else {
-        alert('Failed like or dislike. Please try again later.');
+        alert("Failed to send message. Please try again later.");
       }
-      } catch (error: any) {
-        setError(error?.message ?? "Failed to send like or dislike");
-      }
+    } catch (error: any) {
+      setError(error?.message ?? "Failed to send comments");
     }
+  };
 
-    useEffect(() => {
-      const fetchLikedCount = async () => {
-        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episode?._id}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          console.log("liked Count",data);
-          
-          setLikedCount(data?.data?.likeCount);
-        }
-      };
-      if (episode?._id) {
-        fetchLikedCount();
-      }
-    },[]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-          const { name, value } = e.target;
-          setCommentData((prev)=>({
-            ...prev,
-            [name]: value
-          }));
-        }
-
-    const handleComment = async(e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const data = {
-          "sanityPodcastId": episode?._id,
-          "comment": commentData.comment,
-        };
-        console.log(localStorage.getItem("userId"));
-        
-        try {
-          const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          });
-          console.log(res);
-          if (!res?.ok) {
-            throw new Error("Failed to send comments");
-          }
-          if(res.ok) {
-          setCommentData({
-            comment: "",
-          });
-          alert('Message sent successfully!');
-        } else {
-          alert('Failed to send message. Please try again later.');
-        }
-        } catch (error: any) {
-          setError(error?.message ?? "Failed to send comments");
-        } 
-      };
-
-      useEffect(() => {
-        const fetchComments = async () => {
-        const res = await fetch(`http://54.172.93.35:7000/api/podcasts/comments?sanityPodcastId=${episode?._id}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          console.log("liked Count",data);
-          
-          setComments(data?.data);
-        }
-      };
-      if (episode?._id) {
-        fetchComments();
-      }
-      },[])
-
-      const fallbackShare = (url: string) => {
-  navigator.clipboard.writeText(url);
-  alert("Link copied to clipboard");
-};
-
+  const fallbackShare = (url: string) => {
+    navigator.clipboard.writeText(url);
+    alert("Link copied to clipboard");
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -846,6 +994,52 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
     }
   };
 
+ const fetchSaved = async () => {
+      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log(res);
+      
+      if (res.ok) {
+        const data = await res.json();
+        setIsSaved(data?.data?.some((item: { savedBy: { userId: number; }; }) => item?.savedBy.userId === Number(userId)));
+      }
+    };
+    fetchSaved();
+  const handleSave = async () => {
+    try {
+      const body = {
+        sanityPodcastId: episode?._id,
+      };
+      console.log(body);
+
+      const res = await fetch(`http://54.172.93.35:7000/api/podcasts/save`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      console.log("post save", res);
+
+      if (res.ok) {
+        alert("Podcast saved successfully!");
+        setIsSaved(true);
+      } else {
+        alert(`Failed to save podcast. Please try again later. ${res}`);
+        console.log(res);
+      }
+    } catch (error: any) {
+      console.log(error?.message, "Failed to Save podcast");
+    }
+  };
 
   const handleClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -924,35 +1118,53 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
             <div className="">
               <div className="flex items-center gap-3 md:gap-6 py-5">
                 {/* Like */}
-                <button 
-                onClick={handleLike}
-                className={`hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? 'bg-[#1A2A38]' : ''} transition`}>
-                  <img src="/like.png" alt="" className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  <span className="text-[12px] md:text-[14px]">{likedCount}</span>
+                <button
+                  onClick={handleLike}
+                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
+                >
+                  <img
+                    src="/like.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
+                  <span className="text-[12px] md:text-[14px]">
+                    {likedCount}
+                  </span>
                 </button>
 
                 {/* Comments */}
-                <button 
-                onClick={()=>(setIsCommentOpen(!isCommentOpen))}
-                className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button
+                  onClick={() => setIsCommentOpen(!isCommentOpen)}
+                  className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
+                >
                   <img
                     src="/comment.png"
                     alt=""
                     className="h-3 w-3 md:h-3.5 md:w-3.5"
                   />
-                  <span className="text-[12px] md:text-[14px]">{comments?.length}</span>
+                  <span className="text-[12px] md:text-[14px]">
+                    {comments?.length}
+                  </span>
                 </button>
 
                 {/* Share */}
-                <button 
-                onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
-                  <img src="/share 1.png" alt="" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
+                >
+                  <img
+                    src="/share 1.png"
+                    alt=""
+                    className="h-3 w-3 md:h-3.5 md:w-3.5"
+                  />
                   <span className="text-[12px] md:text-[14px]">Share</span>
                 </button>
 
                 {/* Save */}
-                <button className="hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button
+                  onClick={handleSave}
+                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}
+                >
                   <img
                     src="/save.png"
                     alt=""
@@ -966,43 +1178,55 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
         </div>
       </div>
       {/* Comments bar */}
-              <div className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}>
-                <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
-                  <img
-                    src="/forum-user-1.jpg"
-                    alt="Current user"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="w-full ">
-                  <form 
-                  className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
-                  method="post"
-                  noValidate
-                  onSubmit={handleComment} 
-                  >
-                    <textarea
-                    name="comment"
-                    rows={1}
-                    value={commentData.comment}
-                    onChange={handleInputChange}
-                    placeholder="Make a comment…"
-                    className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
-                  />
-                  <button type="submit" className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
-                    Comment
-                  </button>
-                  </form>
-                </div>
-              </div>
-              {/* Comments */}
-            {comments && comments.length > 0 && (
-              <div className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}>
-                {comments.map((c) => (
-                  <CommentsCard key={c?._id} comment={c} addReply={()=>{}} isActiveReply={false}  />
-                ))}
-              </div>
-            )}
+      <div
+        className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}
+      >
+        <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
+          <img
+            src="/forum-user-1.jpg"
+            alt="Current user"
+            className="h-full w-full object-cover"
+          />
+        </div>
+        <div className="w-full ">
+          <form
+            className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
+            method="post"
+            noValidate
+            onSubmit={handleComment}
+          >
+            <textarea
+              name="comment"
+              rows={1}
+              value={commentData.comment}
+              onChange={handleInputChange}
+              placeholder="Make a comment…"
+              className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+            />
+            <button
+              type="submit"
+              className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
+            >
+              Comment
+            </button>
+          </form>
+        </div>
+      </div>
+      {/* Comments */}
+      {comments && comments.length > 0 && (
+        <div
+          className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}
+        >
+          {comments.map((c) => (
+            <CommentsCard
+              key={c?._id}
+              comment={c}
+              addReply={() => {}}
+              isActiveReply={false}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -1013,6 +1237,12 @@ const PlayListHeroPage = () => {
   const [episode, setEpisode] = useState<Episode[]>([]);
   const [episodeNumber, setEpisodeNumber] = useState<number>(1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [action, setAction] = useState({});
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+  }, []);
 
   const params = useParams<{ title: string }>();
   const title = params.title;
@@ -1067,12 +1297,44 @@ const PlayListHeroPage = () => {
     };
   }, []);
 
+  const handleFetchLikedCount = async (episodeId: string) => {
+    const res = await fetch(
+      `http://54.172.93.35:7000/api/podcasts/like?sanityPodcastId=${episodeId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      console.log("liked Count", data);
+
+     setAction({
+       ...action,
+       likesCount: data?.data?.likeCount
+     });
+      setAction({
+        ...action,
+        isLiked: data?.data?.usersWhoLiked?.includes(
+          Number(localStorage.getItem("userId"))
+        ),
+      })
+    }
+  };
+
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    
+  }
+
   const handleNext = () => {
-    setEpisodeNumber((prev)=> prev < episode.length ? prev + 1 : 1);
+    setEpisodeNumber((prev) => (prev < episode.length ? prev + 1 : 1));
   };
 
   const handlePrev = () => {
-    setEpisodeNumber((prev) => prev > 1 ? prev - 1 : episode.length);
+    setEpisodeNumber((prev) => (prev > 1 ? prev - 1 : episode.length));
   };
 
   const handleShuffle = () => {
@@ -1080,7 +1342,7 @@ const PlayListHeroPage = () => {
   };
 
   return (
-    <div className="w-full  bg-[#FAF9F8] px-8 md:px-16">
+    <div className="w-full  bg-[#FAF9F8] px-8 xl:px-16">
       {/* Breadcrumb */}
       <div className="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 text-sm text-[#1E293B]">
         {/* Home Icon */}

@@ -38,7 +38,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
         "email": signInData.email,
         "password": signInData.password 
       }
-      const res = await fetch(`http://54.172.93.35:7000/api/login`, {
+      const res = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,6 +53,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
         
         localStorage.setItem("token", data?.data?.token);
         localStorage.setItem("userId", data?.data?.userId);
+        localStorage.setItem("user", data?.data);
 
         setSignInData({
           email: "",

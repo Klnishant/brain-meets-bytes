@@ -3,9 +3,10 @@ import Navbar from "@/components/core/Navbar";
 import Footer from "@/components/core/Footer";
 import Link from "next/link";
 import { sanityClient } from "@/lib/sanityClient";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { set } from "sanity";
 import CommentsCard from "@/components/forums/CommentsCard";
+import { getAuth } from "@/lib/getAuth";
 
 interface ArticlePageProps {
   params: Promise<{
@@ -22,21 +23,22 @@ type Comment = {
   replies: Array<Comment>;
 };
 
+type Author = {
+  name: string;
+  role: string;
+  bio: string;
+  imageUrl: string;
+};
+
 type Article = {
   _id: string;
   title: string;
-  author?: string;
   date?: string;
   imageUrl?: string;
   tags?: string[];
   excerpt?: string;
   slug?: string;
-  authorDetails?: {
-    name?: string;
-    role?: string;
-    bio?: string;
-    imageUrl?: string;
-  };
+  authors?: Author[];
   content?: {
     _key: string;
     _type: string;
@@ -206,9 +208,21 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
-  const token = localStorage.getItem("token");
-
+  useEffect(() => {
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
+      }
+      console.log("auth", auth);
+    };
+    fetchAuth();
+  }, []);
   useEffect(() => {
     let mounted = true;
 
@@ -282,8 +296,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
     }
   };
 
-  useEffect(() => {
-    const fetchLikedCount = async () => {
+  const fetchLikedCount = async () => {
       const res = await fetch(
         `http://54.172.93.35:7000/api/articles/like?sanityArticleId=${article?._id}`,
         {
@@ -299,12 +312,12 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
         console.log("liked Count", data);
 
         setLikedCount(data?.data?.likeCount);
+        setIsLiked(data?.data?.usersWhoLiked?.includes(Number(userId)));
+        console.log(isLiked);
+        console.log(userId);
       }
     };
-    if (article?._id) {
-      fetchLikedCount();
-    }
-  }, [isLiked]);
+    fetchLikedCount();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -353,8 +366,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
     }
   };
 
-  useEffect(() => {
-    const fetchComments = async () => {
+   const fetchComments = async () => {
       const res = await fetch(
         `http://54.172.93.35:7000/api/articles/comments?sanityArticleId=${article?._id}`,
         {
@@ -367,16 +379,12 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
       );
       if (res.ok) {
         const data = await res.json();
-        console.log("liked Count", data);
+        console.log("comments Count", data);
 
         setComments(data?.data);
       }
     };
-    if (article?._id) {
-      fetchComments();
-    }
-  }, [commentData]);
-
+    fetchComments();
   const fallbackShare = (url: string) => {
   navigator.clipboard.writeText(url);
   alert("Link copied to clipboard");
@@ -400,6 +408,53 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
     }
   };
 
+  const fetchSaved = async () => {
+      const res = await fetch(`http://54.172.93.35:7000/api/articles/getSavedUsersFrArticles?sanityArticleId=${article?._id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log(res);
+      
+      if (res.ok) {
+        const data = await res.json();
+        setIsSaved(data?.data?.some((item: { savedBy: { userId: number; }; }) => item?.savedBy.userId === Number(userId)));
+      }
+    };
+    fetchSaved();
+  const handleSave = async () => {
+    try {
+      const body = {
+        "sanityArticleId": article?._id,
+      };
+      console.log(body);
+
+      const res = await fetch(`http://54.172.93.35:7000/api/articles/save`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      console.log("post save", res);
+
+      if (res.ok) {
+        alert("Podcast saved successfully!");
+        setIsSaved(true);
+      } else {
+        alert(`Failed to save podcast. Please try again later. ${res}`);
+        console.log(res);
+      }
+    } catch (error: any) {
+      console.log(error?.message, "Failed to Save podcast");
+    }
+  };
+
   if (!article) {
     return (
       <main className="min-h-screen bg-[#FAF9F8]">
@@ -414,21 +469,29 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
 
   const {
     title,
-    author,
     date,
     imageUrl,
     tags = [],
     excerpt,
-    authorDetails,
+    authors,
     content,
   } = article;
 
-  const displayAuthorName = authorDetails?.name || author || "Unknown";
-  const displayAuthorRole = authorDetails?.role;
-  const displayAuthorBio =
-    authorDetails?.bio ||
-    "I am a seasoned professional with a rich background in health, technology and leadership. Drawing on extensive experience in the memory care sector and emerging technologies, I am dedicated to exploring the dynamic landscape of brain health and longevity.";
-  const authorImageUrl = authorDetails?.imageUrl;
+ const primaryAuthor = authors?.[0];
+
+const displayAuthorName =
+  primaryAuthor?.name ||  "Unknown";
+
+const displayAuthorRole =
+  primaryAuthor?.role || "";
+
+const displayAuthorBio =
+  primaryAuthor?.bio ||
+  "I am a seasoned professional with a rich background in health, technology and leadership. Drawing on extensive experience in the memory care sector and emerging technologies, I am dedicated to exploring the dynamic landscape of brain health and longevity.";
+
+const authorImageUrl =
+  primaryAuthor?.imageUrl;
+
 
   return (
     <main className="min-h-screen bg-[#FAF9F8]">
@@ -466,16 +529,20 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
               </h1>
 
               <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="inline-flex items-center gap-3 rounded-full bg-[#E2E8F0] px-4 py-2">
+                {
+                  authors && authors.map((author, index) => (
+                    <div key={index} className="inline-flex items-center gap-3 rounded-full bg-[#E2E8F0] px-4 py-2">
                   <span className="font-inter text-[14px] text-[#64748B]">
-                    {displayAuthorName}
+                    {author?.name || "Unknown"}
                   </span>
                   {displayAuthorRole && (
                     <span className="font-inter text-[12px] text-[#94A3B8]">
-                      {displayAuthorRole}
+                      {author?.role || "Unknown"}
                     </span>
                   )}
                 </div>
+                  ))
+                }
                 <span className="font-inter text-[14px] text-[#505050]">
                   {formatDate(date)}
                 </span>
@@ -517,14 +584,16 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
             <div className="flex flex-col">{renderBlocks(content)}</div>
 
             {/* Author card */}
-            <div className="flex flex-col gap-6 rounded-[32px] bg-[#E2E8F0] p-6 md:flex-row md:items-center md:p-8">
+            {
+              authors && authors.map((author, index) => (
+                <div key={index} className="flex flex-col gap-6 rounded-[32px] bg-[#E2E8F0] p-6 md:flex-row md:items-center md:p-8">
               {authorImageUrl && (
                 <div className="relative h-[221px] w-[221px] flex-shrink-0">
                   <div className="absolute left-0.5 top-3 h-[221px] w-[221px] rounded-[32px] bg-[#023047]" />
                   <div className="absolute left-0.5 top-0 h-[221px] w-[221px] overflow-hidden rounded-[32px] border-4 border-[#FAF9F8]">
                     <img
-                      src={authorImageUrl}
-                      alt={displayAuthorName}
+                      src={author?.imageUrl}
+                      alt={author?.name}
                       className="h-full w-full object-cover "
                     />
                   </div>
@@ -533,20 +602,22 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
 
               <div className="flex flex-1 flex-col gap-4">
                 <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
-                  {displayAuthorName}
+                  {author?.name || "Unknown"}
                 </h3>
                 <p className="font-inter text-[16px] md:text-[18px] leading-[32px] text-[#505050]">
-                  {displayAuthorBio}
+                  {author?.bio || "Unknown"}
                 </p>
               </div>
             </div>
+              ))
+            }
             {/*BTNS*/}
             <div className="">
               <div className="flex items-center gap-3 md:gap-6 py-5">
                 {/* Like */}
                 <button
                   onClick={handleLike}
-                  className={`hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
+                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
                 >
                   <img
                     src="/like.png"
@@ -586,7 +657,9 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
                 </button>
 
                 {/* Save */}
-                <button className="hidden items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button
+                onClick={handleSave} 
+                className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}>
                   <img
                     src="/save.png"
                     alt=""
