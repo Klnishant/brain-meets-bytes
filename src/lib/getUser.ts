@@ -4,12 +4,11 @@ export async function getUser() {
   if (!token || !userId) return null;
 
   const res = await fetch(
-    `http://54.172.93.35:7000/api//users/one?userId=${userId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`
-      },
-      cache: "no-store"
+      }
     }
   );
   if (!res.ok) return null;

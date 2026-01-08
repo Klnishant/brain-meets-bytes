@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { X, Eye, EyeOff } from "lucide-react";
+import { X, Eye, EyeOff, Loader } from "lucide-react";
+import toast from "react-hot-toast";
 
 type SignupCardProps = {
   onClose?: () => void;
@@ -13,6 +14,7 @@ type SignupCardProps = {
 const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLoggedIn})=> {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting,setIsSubmitting] = useState(false);
   const [signupData, setSignupData] = useState({
     "name": "",
    "email": "",
@@ -32,6 +34,7 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     // Handle form submission logic here
 
     if(!signupData.name || !signupData.email || !signupData.password || !signupData.confirmPassword) {
@@ -71,16 +74,17 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
         const data = await res.json();
         console.log(data);
 
-        localStorage.setItem("token", data?.data?.token);
-        localStorage.setItem("userId", data?.data?.userId);
+        handleSignIn && handleSignIn();
+
+        setIsSubmitting(false);
 
         handleIsLoggedIn && handleIsLoggedIn();
-        alert('Account created successfully!');
+        toast.success("Account created successfully!");
         
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to create account. Please try again later.');
+      toast.error("Failed to create account. Please try again.");
     }
   }
 
@@ -179,18 +183,22 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
             </button>
           </div>
 
-          {/* Remember Me */}
-          <label className="flex items-center gap-2 text-sm text-[#64748B]">
-            <input type="checkbox" className="rounded border-[#E2E8F0]" />
-            Remember me
-          </label>
-
           {/* Sign Up Button */}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="mt-2 w-full rounded-full bg-[#D62828] py-3 text-white font-semibold hover:bg-red-700 transition"
           >
-            Sign Up
+            {
+            isSubmitting ? (
+              <div className="flex items-center justify-center w-full">
+                <Loader size={14} className="animate-spin" />
+              </div>
+            ):
+            (
+              "LogIn"
+            )
+           }
           </button>
         </form>
 

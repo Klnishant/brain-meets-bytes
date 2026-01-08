@@ -7,6 +7,7 @@ import AboutKiSection from "@/components/home/AboutKiSection";
 import AboutRebeccaSection from "@/components/home/AboutRebeccaSection";
 import ForumsSection from "@/components/home/ForumsSection";
 import NewsletterSection from "@/components/home/NewsletterSection";
+import { Toaster } from "react-hot-toast";
 
 export default function Home() {
   return (
@@ -20,6 +21,8 @@ export default function Home() {
       <ForumsSection />
       <NewsletterSection />
       <Footer />
+      <div>
+      </div>
     </main>
   );
 }

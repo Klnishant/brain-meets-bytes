@@ -14,6 +14,8 @@ import CreatePoll from "./CreatePoll";
 import PollCard from "./PollCard";
 import MobileViewBar from "./MobileViewBar";
 import { getAuth } from "@/lib/getAuth";
+import { set } from "sanity";
+import { Loader } from "lucide-react";
 
 type Category = {
   _id: string;
@@ -185,57 +187,59 @@ const ForumsMainSection = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [topicsCount, setTopicsCount] = useState(5);
   const [token, setToken] = useState<string | null>(null);
-        const [userId, setUserId] = useState<number | null>(null);
-      
-        useEffect(() => {
-          const fetchAuth = async () => {
-            const auth = await getAuth();
-            if (auth) {
-              setToken(auth.token);
-              setUserId(auth.userId);
-            }
-            console.log("auth",auth);;
-            
-          }
-          fetchAuth();
-        },[])
+  const [userId, setUserId] = useState<number | null>(null);
+  const [isCreatingThread, setIsCreatingThread] = useState(false);
+  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
-    if (!token) return;
-
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (!res.ok) {
-          throw new Error("Failed to load threads");
-        }
-
-        const data = (await res.json())?.data as Thread[];
-        if (!mounted) return;
-        setThreads(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message ?? "Failed to load threads");
-      } finally {
-        if (mounted) setLoading(false);
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
       }
+      console.log("auth", auth);
+    };
+    fetchAuth();
+  }, []);
 
+  const fetchThreads = async () => {
+  if (!token) return;
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to load threads");
+    }
+
+    const data = (await res.json())?.data as Thread[];
+
+    setThreads(Array.isArray(data) ? data : []);
+  } catch (e: any) {
+    setError(e?.message ?? "Failed to load threads");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+    const fetchTopics = async () => {
+      if (!token) return;
       try {
-        setLoading(true);
+        setIsLoadingTopics(true);
         setError(null);
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
@@ -250,56 +254,52 @@ const ForumsMainSection = () => {
         }
 
         const topicData = (await res.json())?.meta?.data as Topic[];
-        if (!mounted) return;
+       
         setTopics(Array.isArray(topicData) ? topicData : []);
         console.log(topicData);
       } catch (e: any) {
-        if (!mounted) return;
+       
         setError(e?.message ?? "Failed to load topics");
       } finally {
-        if (mounted) setLoading(false);
+         setIsLoadingTopics(false);
       }
-    };
+    }
 
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [token]);
+  useEffect(() => {
+    fetchThreads();
+    fetchTopics();
+  },[token]);
+  const onSuccess = () => fetchThreads();
   const visibleTopics = topics.slice(0, topicsCount);
 
   const handleTopic = () => {
     setTopicsCount(topicsCount + 5);
   };
 
-/* handle search */
+  /* handle search */
   const [search, setSearch] = useState("");
 
   const searchThreads = () => {
-  if (!search.trim()) return threads;
+    if (!search.trim()) return threads;
 
-  const q = search.toLowerCase();
+    const q = search.toLowerCase();
 
-  return threads.filter((thread) =>
-    thread?.title.toLowerCase().includes(q) ||
-    thread?.user?.name.toLowerCase().includes(q) ||
-    thread?.categories?.some((category) =>
-      category?.title.toLowerCase().includes(q)
-    )
-  );
-};
+    return threads.filter(
+      (thread) =>
+        thread?.title.toLowerCase().includes(q) ||
+        thread?.user?.name.toLowerCase().includes(q) ||
+        thread?.categories?.some((category) =>
+          category?.title.toLowerCase().includes(q)
+        )
+    );
+  };
 
-const filteredThreads = useMemo(
-    () => searchThreads(),
-    [threads, search]
-  );
-
+  const filteredThreads = useMemo(() => searchThreads(), [threads, search]);
 
   /* Handle composer */
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [images, setImages] = useState<File[]>([]);
-  const [videos,setVideos] = useState<File[]>([]);
+  const [videos, setVideos] = useState<File[]>([]);
 
   const formRef = useRef<CreatThreadFormRef>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -336,9 +336,14 @@ const filteredThreads = useMemo(
     e.preventDefault();
     formRef.current?.submit(e);
   };
-  
+
+  const handleLoading = () => {
+    setIsCreatingThread(!isCreatingThread);
+  }
+
   /* handle poll */
   const [isPollOpen, setIsPollOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
 
   return (
     <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16">
@@ -381,12 +386,12 @@ const filteredThreads = useMemo(
             {/* Search bar */}
             <div className="hidden md:block md:flex items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3">
               <input
-               type="text"
-               placeholder="Search for a tread...."
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-               className="flex-1 bg-transparent outline-none text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]" 
-               />
+                type="text"
+                placeholder="Search for a tread...."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+              />
               <button className="flex h-[44px] w-[136px] items-center justify-center gap-2 rounded-[34px] bg-[#D62828] text-[16px] text-white">
                 <span>Search</span>
                 <img
@@ -430,152 +435,164 @@ const filteredThreads = useMemo(
               {/* Composer form */}
 
               <div className={`${isComposerOpen ? "block" : "hidden"}`}>
-                <CreateThread images={images} videos={videos} ref={formRef} />
+                <CreateThread images={images} videos={videos} ref={formRef} isOpen={()=>(setIsComposerOpen(!isComposerOpen))} isCreateThread={(key: boolean)=>{setIsCreatingThread(key)}} onSuccess={onSuccess} />
               </div>
 
               {/* Polls */}
-                  <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
-                  <CreatePoll handleClick={()=> setIsPollOpen(!isPollOpen)} />
+              <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
+                <CreatePoll handleClick={() => setIsPollOpen(!isPollOpen)} />
               </div>
               <form noValidate onSubmit={handleParentSubmit}>
                 <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Image Upload */}
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="image-upload"
-                      className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Image Upload */}
+                    <div className="flex items-center gap-4">
+                      <label
+                        htmlFor="image-upload"
+                        className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                      >
+                        <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                          <span className=" items-center justify-center ">
+                            <img
+                              src="/image.png"
+                              alt="Images"
+                              className="h-4 w-4 object-contain"
+                            />
+                          </span>
+                          <span className="font-sora text-[14px] text-[#023047]">
+                            Images
+                          </span>
+                        </div>
+                        <input
+                          id="image-upload"
+                          name="image-upload"
+                          type="file"
+                          multiple
+                          hidden
+                          disabled={!isComposerOpen}
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                    </div>
+                    {/* video Upload */}
+                    <div className="flex items-center gap-4">
+                      <label
+                        htmlFor="video-upload"
+                        className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                      >
+                        <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                          <span className=" items-center justify-center ">
+                            <img
+                              src="/video.png"
+                              alt="Images"
+                              className="h-4 w-4 object-contain"
+                            />
+                          </span>
+                          <span className="font-sora text-[14px] text-[#023047]">
+                            Videos
+                          </span>
+                        </div>
+                        <input
+                          id="video-upload"
+                          name="video-upload"
+                          type="file"
+                          multiple
+                          hidden
+                          disabled={!isComposerOpen}
+                          accept="video/*"
+                          capture="environment"
+                          onChange={handleVideoChange}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      onClick={() => setIsPollOpen(!isPollOpen)}
+                      className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2"
                     >
-                      <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                        <span className=" items-center justify-center ">
-                          <img
-                            src="/image.png"
-                            alt="Images"
-                            className="h-4 w-4 object-contain"
-                          />
-                        </span>
-                        <span className="font-sora text-[14px] text-[#023047]">
-                          Images
-                        </span>
-                      </div>
-                      <input
-                        id="image-upload"
-                        name="image-upload"
-                        type="file"
-                        multiple
-                        hidden
-                        disabled={!isComposerOpen}
-                        accept="image/*"
-                        onChange={handleImageChange}
-                      />
-                    </label>
+                      <span className=" items-center justify-center ">
+                        <img
+                          src="/poll.png"
+                          alt="Polls"
+                          className="h-4 w-4 object-contain"
+                        />
+                      </span>
+                      <span className="font-sora text-[14px] text-[#023047]">
+                        Polls
+                      </span>
+                    </button>
                   </div>
-                  {/* video Upload */}
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="video-upload"
-                      className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
-                    >
-                      <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                        <span className=" items-center justify-center ">
-                          <img
-                            src="/video.png"
-                            alt="Images"
-                            className="h-4 w-4 object-contain"
-                          />
-                        </span>
-                        <span className="font-sora text-[14px] text-[#023047]">
-                          Videos
-                        </span>
-                      </div>
-                      <input
-                        id="video-upload"
-                        name="video-upload"
-                        type="file"
-                        multiple
-                        hidden
-                        disabled={!isComposerOpen}
-                        accept="video/*"
-                        capture="environment"
-                        onChange={handleVideoChange}
-                      />
-                    </label>
-                  </div>
+
                   <button
-                   onClick={()=> setIsPollOpen(!isPollOpen)}
-                   className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                    <span className=" items-center justify-center ">
-                      <img
-                        src="/poll.png"
-                        alt="Polls"
-                        className="h-4 w-4 object-contain"
-                      />
-                    </span>
-                    <span className="font-sora text-[14px] text-[#023047]">
-                      Polls
-                    </span>
+                    type="submit"
+                    disabled={isCreatingThread}
+                    className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
+                  >
+                    {!isCreatingThread ? "Publish" : (<Loader size={14} className="animate-spin" />)}
                   </button>
                 </div>
-
-                <button
-                  type="submit"
-                  className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
-                >
-                  Publish
-                </button>
-              </div>
               </form>
               <div className="flex gap-3">
                 {/* Image Preview */}
-                  <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
-                    {images.map((file, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt="preview"
-                          className="h-24 w-full rounded-lg object-cover"
-                        />
+                <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
+                  {images.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="preview"
+                        className="h-24 w-full rounded-lg object-cover"
+                      />
 
-                        {/* Remove Button */}
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Video Preview */}
-                  <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
-                    {videos.map((file, index) => (
-                      <div key={index} className="relative group">
-                        <video
-                          src={URL.createObjectURL(file)}
-                          controls
-                          className="h-24 w-full rounded-lg object-cover"
-                        />
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {/* Video Preview */}
+                <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
+                  {videos.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <video
+                        src={URL.createObjectURL(file)}
+                        controls
+                        className="h-24 w-full rounded-lg object-cover"
+                      />
 
-                        {/* Remove Button */}
-                        <button
-                          type="button"
-                          onClick={() => removeVideo(index)}
-                          className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => removeVideo(index)}
+                        className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            
-            {/* Threads cards */}
+
+            {
+              loading ? (
+                 <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
+              Thread Are Loading...
+            </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {/* Threads cards */}
             {filteredThreads &&
               filteredThreads.map((thread) => (
-                <ThreadsCard key={thread._id} thread={thread} />
+                <ThreadsCard key={thread._id} thread={thread} onSuccess={onSuccess} />
               ))}
+                </div>
+              )
+            }
           </div>
 
           {/* Right: sidebars placeholder column */}
@@ -598,7 +615,13 @@ const filteredThreads = useMemo(
                 Recommended Topics
               </h3>
               <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
-                <div className="flex gap-2.5">
+                {
+                  isLoadingTopics ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader size={24} className="animate-spin" color="black" />
+                    </div>
+                  ) : (
+                    <div className="flex gap-2.5">
                   {/* topics list */}
                   {visibleTopics &&
                     visibleTopics.map((topic) => (
@@ -612,6 +635,8 @@ const filteredThreads = useMemo(
                       </Link>
                     ))}
                 </div>
+                  )
+                }
                 <button
                   onClick={handleTopic}
                   className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"

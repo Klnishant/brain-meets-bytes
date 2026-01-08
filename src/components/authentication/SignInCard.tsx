@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { X, Eye, EyeOff } from "lucide-react";
+import { X, Eye, EyeOff, Loader } from "lucide-react";
+import { set } from "sanity";
 
 type SignInCardProps = {
     onClose?: () => void;
@@ -16,6 +17,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,6 +29,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     // Handle form submission logic here
     if (!signInData.email || !signInData.password) {
       return;
@@ -59,6 +62,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
         });
         handleIsLoggedIn && handleIsLoggedIn();
         onClose && onClose();
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -135,12 +139,22 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
             <p className="font-inter font-weight-[400] text-sm text-[#D62828] cursor-pointer">Forgot password?</p>
           </div>
 
-          {/* Sign Up Button */}
+          {/* Sign In Button */}
           <button
             type="submit"
+            disabled={isLoading}
             className="mt-2 w-full rounded-full bg-[#D62828] py-3 text-white font-semibold hover:bg-red-700 transition"
           >
-            Login
+           {
+            isLoading ? (
+              <div className="flex items-center justify-center w-full">
+                <Loader size={14} className="animate-spin" />
+              </div>
+            ):
+            (
+              "LogIn"
+            )
+           }
           </button>
         </form>
 

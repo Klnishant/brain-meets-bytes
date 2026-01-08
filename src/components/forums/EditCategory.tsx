@@ -1,7 +1,9 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
+import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { set } from "sanity";
 import { form } from "sanity/structure";
 
@@ -12,6 +14,7 @@ type EditCategoryProps = {
   colors: string;
   images: string| null;
   cateGoryId: number;
+  isOpen: ()=>void;
 };
 
 const EditCategory: React.FC<EditCategoryProps> = ({
@@ -21,6 +24,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
   colors,
   images,
   cateGoryId,
+  isOpen
 }) => {
   const [title, setTitle] = useState(titles);
   const [route, setRoute] = useState(routes);
@@ -57,6 +61,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
 
     const body = {
       title: title,
@@ -84,6 +89,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
 
       if (!res.ok) {
         throw new Error("Failed to edit category");
+        toast.error("Failed to edit category");
       }
 
       const data = await res.json();
@@ -94,8 +100,11 @@ const EditCategory: React.FC<EditCategoryProps> = ({
       setDescription("");
       setColor("#2563EB");
       setImage(null);
+      setLoading(false);
+      isOpen();
     } catch (error: any) {
       console.error(error?.message, "Failed to edit category");
+      toast.error("Failed to edit category");
     }
   };
 
@@ -212,7 +221,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
           type="submit"
           className="rounded-full bg-[#023047] px-6 py-2 text-sm font-semibold text-white"
         >
-          Edit Category
+          {!loading ? "Edit Category" : (<Loader size={14} className="animate-spin" />)}
         </button>
       </div>
     </div>

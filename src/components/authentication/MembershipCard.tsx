@@ -1,6 +1,8 @@
 "use client";
 
+import { getUser } from "@/lib/getUser";
 import { X, Mic, FileText, MessageCircle, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 
 /* Feature Card Component */
 const FeatureCard =({
@@ -41,6 +43,17 @@ const MembershipCard = ({
 }: {
   onClose?: () => void;
 }) => {
+  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+    useEffect(() => {
+      const fetchUser = async () => {
+        const user = await getUser();
+        setUser(user);
+        setIsLoggedIn(user);
+      };
+      fetchUser();
+    }, []);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="relative w-full max-w-5xl rounded-[48px] bg-white p-10 shadow-xl overflow-hidden">
@@ -75,12 +88,16 @@ const MembershipCard = ({
               Join Membership
             </button>
 
-            <p className="mt-4 font-inter font-weight-[400] text-[18px] text-[#505050]">
+            {
+              !isLoggedIn && (
+                <p className="mt-4 font-inter font-weight-[400] text-[18px] text-[#505050]">
               Already a member?{" "}
               <span className="cursor-pointer text-[#D62828]">
                 Sign in
               </span>
             </p>
+              )
+            }
           </div>
 
           {/* RIGHT FEATURES */}

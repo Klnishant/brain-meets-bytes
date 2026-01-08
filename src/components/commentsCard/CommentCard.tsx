@@ -25,11 +25,7 @@ type User = {
 
 type CommentsCardProps = {
   comment: Comment;
-  addReply: (
-    e: React.FormEvent<HTMLFormElement>,
-    reply: string,
-    parentCommentId: number
-  ) => void;
+  addReply: (e: React.FormEvent<HTMLFormElement>, reply: string, parentCommentId: number) => void;
   isActiveReply: boolean;
 };
 const CommentsCard: React.FC<CommentsCardProps> = ({
@@ -37,29 +33,28 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
   addReply,
   isActiveReply,
 }) => {
-  const [reply, setReply] = useState({ comment: "" });
+  const [reply, setReply] = useState({comment: ""});
   const [showReply, setShowReply] = useState(false);
   const [areRepliesVisible, setAreRepliesVisible] = useState(false);
   const [users, setUsers] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
-
+        const [userId, setUserId] = useState<number | null>(null);
+      
+        useEffect(() => {
+          const fetchAuth = async () => {
+            const auth = await getAuth();
+            if (auth) {
+              setToken(auth.token);
+              setUserId(auth.userId);
+            }
+            console.log("auth",auth);;
+            
+          }
+          fetchAuth();
+        },[])
+  
   const user = async () => {
-    if (!comment) return;
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
       {
         method: "GET",
         headers: {
@@ -75,26 +70,23 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
     }
   };
 
- useEffect(() => {
-    user();
-  }, [comment]);
+  user();
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setReply((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setReply((prev)=>({
+          ...prev,
+          [name]: value
+        }));
+      }
 
-  const handleReply = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleReply = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const res = await addReply(e, reply?.comment, comment?.CommentId);
+    const res = await addReply(e, reply?.comment,comment?.CommentId);
 
-    setReply({ comment: "" });
-  };
+    setReply({comment: ""});
+  }
+  
 
   const duration = intervalToDuration({
     start: new Date(comment?.createdAt),
@@ -190,28 +182,29 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
           <div>
             <div>
               {areRepliesVisible &&
-                comment?.replies &&
-                comment?.replies.length > 0 &&
-                comment.replies.map((reply: Comment) => (
-                  <div key={reply._id} className="flex flex-col mt-2 pl-4">
-                    <CommentsCard
-                      key={reply._id}
-                      comment={reply}
-                      addReply={handleReply}
-                      isActiveReply={isActiveReply}
-                    />
-                  </div>
-                ))}
+              comment?.replies &&
+              comment?.replies.length > 0 &&
+              comment.replies.map((reply: Comment) => (
+                <div key={reply._id} className="flex flex-col mt-2 pl-4">
+                  <CommentsCard
+                    key={reply._id}
+                    comment={reply}
+                    addReply={handleReply}
+                    isActiveReply={isActiveReply}
+                  />
+                </div>
+                
+              ))}
             </div>
-            {
-              <div className="w-full mt-2 pl-4">
-                <form
+              {
+                <div className="w-full mt-2 pl-4">
+                  <form 
                   className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-6 pr-2 py-1 md:py-3"
                   method="post"
                   noValidate
                   onSubmit={handleReply}
-                >
-                  <textarea
+                  >
+                    <textarea
                     name="comment"
                     value={reply.comment}
                     onChange={handleInputChange}
@@ -219,15 +212,12 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
                     placeholder="Make a comment…"
                     className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
                   />
-                  <button
-                    type="submit"
-                    className="flex h-8 md:h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
-                  >
+                  <button type="submit" className="flex h-8 md:h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
                     Comment
                   </button>
-                </form>
-              </div>
-            }
+                  </form>
+                </div>
+              }
           </div>
         )}
       </div>

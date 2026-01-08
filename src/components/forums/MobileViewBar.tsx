@@ -22,6 +22,7 @@ const MobileViewBar = ({ className }: { className?: string }) => {
   const [isTopicsOpen, setIsTopicsOpen] = useState(false);
   const [isPollsOpen, setIsPollsOpen] = useState(false);
   const [isUsersOpen, setIsUsersOpen] = useState(false);
+  const [isCreatingThread, setIsCreatingThread] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -115,7 +116,7 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         {/* Composer form */}
 
         <div className={`${isComposerOpen ? "block" : "hidden"}`}>
-          <CreateThread images={images} ref={formRef} videos={videos} />
+          <CreateThread images={images} ref={formRef} videos={videos} isOpen={()=>(setIsComposerOpen(!isComposerOpen))} isCreateThread={(key: boolean)=>{setIsCreatingThread(key)}} onSuccess={()=>{}} />
         </div>
 
         {/* Polls */}

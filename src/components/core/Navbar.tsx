@@ -25,7 +25,6 @@ const Navbar = () => {
   const [openSignUp, setOpenSignUp] = useState(false);
   const [openMembership, setOpenMembership] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const isForumSubPage = pathname.startsWith("/forum/");
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -266,7 +265,7 @@ const Navbar = () => {
 
             {/* Login */}
             {
-              !isLoggedIn ? (
+              !user ? (
                 <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
               onClick={() => setOpenLogIn(true)}
@@ -316,8 +315,10 @@ const Navbar = () => {
       {/* SignUp Modal */}
       {openSignUp && (
         <SignupCard onClose={() => setOpenSignUp(false)} 
-        handleSignIn={() => {setOpenSignUp(false); setOpenLogIn(true);}}
-        handleIsLoggedIn={() => setIsLoggedIn(true)}
+        handleSignIn={() => {
+          setOpenSignUp(false);
+          setOpenLogIn(true);
+        }}
         />
       )}
 

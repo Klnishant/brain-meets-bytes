@@ -2,12 +2,15 @@
 
 import { COLORS } from "@/lib/constants";
 import { Edit, Share2, SquarePen, ThumbsUp, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { intervalToDuration, set } from "date-fns";
 import Link from "next/link";
 import CreateThread from "./CreateThread";
 import EditThread from "./EditThreads";
 import { getAuth } from "@/lib/getAuth";
+import toast from "react-hot-toast";
+import { on } from "events";
 
 type Category = {
   _id: string;
@@ -48,9 +51,10 @@ type Like = {
 
 type ThreadsCardProps = {
   thread: Thread;
+  onSuccess: () => void;
 };
 
-const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
+const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
   const [likesCount, setLikesCount] = useState<number>(thread?.likesCount);
   const [likes, setLikes] = useState<Like[]>(thread?.likes);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +73,14 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const ThreadId = thread?.ThreadId;
+  const [isDeleting, setIsDeleting] = useState(false);
+  const pathname = usePathname();
+  const isForumsPage = pathname === "/forums";
+  const [isEditing, setIsEditing] = useState(false);
+  const [isliking, setIsLiking] = useState(false);
+  const [isSaving,setIsSaving] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const [isReporting,setIsReporting] = useState(false);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -82,6 +94,11 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
     fetchAuth();
   }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+    setHasLiked(thread?.likes.some((like) => like.userId === Number(userId)));
+  }, [userId]);
+
   const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const data = {
@@ -89,6 +106,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
     };
     let Res;
     try {
+      setIsLiking(true);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}threads/like?ThreadId=${ThreadId}`,
         {
@@ -106,7 +124,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
       }
       Res = await res.json();
       if (res.ok) {
-        alert("like or dislike sent successfully!");
+        toast.success("Like and dislike sent successfully!");
         if (hasLiked) {
           setLikes((prev) => prev.filter((like) => like.userId !== userId));
           setLikesCount((prev) => prev - 1);
@@ -123,10 +141,13 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
           setHasLiked(!hasLiked);
         }
       } else {
-        alert("Failed like or dislike. Please try again later.");
+        toast.error("Failed to like or dislike");
       }
     } catch (error: any) {
       setError(error?.message ?? "Failed to send like or dislike");
+      toast.error(error?.message ?? "Failed to send like or dislike");
+    } finally{
+      setIsLiking(false);
     }
   };
 
@@ -142,6 +163,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
 
   const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsReplying(true);
     const data = {
       userId: userId,
       comments: commentData.comment,
@@ -168,18 +190,21 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
         setCommentData({
           comment: "",
         });
-        alert("Message sent successfully!");
+        toast.success("Comments sent successfully!");
+        setIsCommentOpen(false);
       } else {
-        alert("Failed to send message. Please try again later.");
+        toast.error("Failed to send comments. Please try again later.");
       }
     } catch (error: any) {
       setError(error?.message ?? "Failed to send comments");
+    } finally{
+      setIsReplying(false);
     }
   };
 
   const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-
+    setIsDeleting(true);
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}threads?ThreadId=${ThreadId}`,
@@ -192,13 +217,18 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
         }
       );
       if (!res?.ok) {
+        toast.error("Failed to delete thread");
         throw new Error("Failed to delete thread");
       }
       if (res.ok) {
-        alert("Thread deleted successfully!");
+        toast.success("Thread deleted successfully!");
+        onSuccess();
       }
     } catch (error: any) {
       console.log(error?.message, "Failed to delete thread");
+      toast.error("Failed to delete thread");
+    } finally{
+      setIsDeleting(false);
     }
   };
 
@@ -226,8 +256,9 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
 
   useEffect(() => {
     const fetchSaved = async () => {
+      if (!token) return;
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}threads/getSavedUsersFrThread?ThreadId=${thread?.ThreadId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}threads/getMySavedThreads?ThreadId=${thread?.ThreadId}`,
         {
           method: "GET",
           headers: {
@@ -238,17 +269,23 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
       );
       if (res.ok) {
         const data = await res.json();
-        console.log("saved", data?.data[0]?.savedBy?.userId);
+        console.log("saved", data);
 
-        setIsSaved(
-          data?.data[0]?.savedBy?.userId ===
-            Number(localStorage.getItem("userId"))
+        const savedThread = data?.data?.some(
+          (item: { ThreadId: Number }) =>
+            item.ThreadId === Number(thread?.ThreadId)
         );
+        console.log("saved Thread", savedThread);
+
+        if (savedThread) {
+          setIsSaved(true);
+        }
       }
     };
     fetchSaved();
-  }, []);
+  }, [token]);
   const handleSave = async () => {
+    setIsSaving(true);
     try {
       const body = {
         ThreadId: thread?.ThreadId,
@@ -269,16 +306,51 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
       console.log("post save", res);
 
       if (res.ok) {
-        alert("thread saved successfully!");
+        toast.success("Thread saved successfully!");
         setIsSaved(true);
       } else {
-        alert(`Failed to save thread. Please try again later.`);
+        toast.error("Failed to save thread. Please try again later.");
         console.log(res);
       }
     } catch (error: any) {
       console.log(error?.message, "Failed to Save podcast");
+    } finally{
+      setIsSaving(false);
     }
   };
+
+  const handleReporting = async () => {
+    setIsReporting(true);
+    try {
+      const body = {
+        ThreadId: thread?.ThreadId,
+        reason: "Spam",
+      };
+      console.log(body);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}threads/report`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+      if (res.ok) {
+        toast.success("Thread reported successfully!");
+      } else {
+        toast.error("Failed to report thread. Please try again later.");
+        console.log(res);
+      }
+    } catch (error: any) {
+      console.log(error?.message, "Failed to Report Thread");
+    } finally{
+      setIsReporting(false);
+    }
+  }
 
   const duration = intervalToDuration({
     start: new Date(thread?.createdAt),
@@ -331,6 +403,11 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
           threadTitle={thread?.title}
           threadContent={thread?.content}
           threadCategories={thread?.categories}
+          isOpen={() => setIsEditOpen(!isEditOpen)}
+          isCreateThread={(key: boolean) => {
+            setIsEditing(key);
+          }}
+          onSuccess={onSuccess}
         />
       </div>
       <div className="flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
@@ -357,7 +434,10 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
               </div>
             </div>
             <div className="flex gap-1 items-center">
-              <button className="flex items-center justify-center h-8 w-8 md:h-auto md:w-auto  md:px-4 gap-2.5 rounded-full border border-[#D62828] bg-[#D62828] md:bg-white py-2">
+              <button
+              onClick={handleReporting}
+              disabled={isReporting} 
+              className="flex items-center justify-center h-8 w-8 md:h-auto md:w-auto  md:px-4 gap-2.5 rounded-full border border-[#D62828] bg-[#D62828] md:bg-white py-2">
                 <img
                   src="/red-flag.png"
                   alt="Flag post"
@@ -372,19 +452,20 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
               </button>
               <button
                 onClick={handleDelete}
-                className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(localStorage.getItem("userId")) ? "block" : "hidden"}`}
+                disabled={isDeleting}
+                className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) ? "block" : "hidden"}`}
               >
                 <Trash2
-                  className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(localStorage.getItem("userId")) ? "block" : "hidden"}`}
+                  className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) ? "block" : "hidden"}`}
                 />
               </button>
 
               <button
                 onClick={() => setIsEditOpen(!isEditOpen)}
-                className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(localStorage.getItem("userId")) && (duration?.hours ?? 0) < 1 ? "block" : "hidden"}`}
+                className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) && (duration?.hours ?? 0) < 1 ? "block" : "hidden"}`}
               >
                 <SquarePen
-                  className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(localStorage.getItem("userId")) && (duration?.hours ?? 0) < 1 ? "block" : "hidden"}`}
+                  className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) && (duration?.hours ?? 0) < 1 ? "block" : "hidden"}`}
                 />
               </button>
             </div>
@@ -431,6 +512,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
                   {/* Like */}
                   <button
                     onClick={handleLike}
+                    disabled={isliking}
                     className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition ${hasLiked ? "bg-[#1A2A38]" : ""}`}
                   >
                     <img
@@ -471,6 +553,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
                   {/* Save */}
                   <button
                     onClick={handleSave}
+                    disabled={isSaving}
                     className={`flex items-center h-8 w-8 md:h-auto md:w-auto justify-center gap-2 md:px-4 md:py-2 border border-[#2A4157] rounded-[36px] md:rounded-full text-[#64748B] hover:bg-[#1A2A38] transition ${isSaved ? "bg-[#1A2A38]" : ""}`}
                   >
                     <img
@@ -490,7 +573,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
       </div>
       {/* Comments bar */}
       <div
-        className={`flex items-center gap-2 md:gap-4 ${isCommentOpen ? "block" : "hidden"}`}
+        className={`flex items-center gap-2 md:gap-4 ${isCommentOpen && isForumsPage ? "block" : "hidden"}`}
       >
         <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
           <img
@@ -516,6 +599,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread }) => {
             />
             <button
               type="submit"
+              disabled={!commentData.comment || isReplying}
               className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
             >
               Comment

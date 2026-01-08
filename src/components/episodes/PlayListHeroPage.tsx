@@ -416,6 +416,24 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   };
 
+  const handleCommentLike = async (e: React.MouseEvent<HTMLButtonElement>, commentId: number) => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments/like?commentId=${commentId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({commentId: commentId}),
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      console.log(data);
+    }
+  }
+
 
   // Load new episode when changed
   useEffect(() => {

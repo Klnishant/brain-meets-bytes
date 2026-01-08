@@ -2,6 +2,7 @@
 
 import { COLORS } from "@/lib/constants";
 import { getAuth } from "@/lib/getAuth";
+import { Loader } from "lucide-react";
 import Link from "next/link";
 import React, { use, useEffect, useState } from "react";
 import { set } from "sanity";
@@ -86,7 +87,13 @@ const UsersCard = () => {
 
   return (
     <div className="flex flex-col gap-2 justify-between h-full">
-      <div className="flex flex-col gap-2">
+      {
+        loading ? (
+           <div className="flex items-center justify-center h-full w-full">
+            <Loader size={24} className="animate-spin" color="black" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
         {visibleUsers &&
           visibleUsers.map(
             (user) =>
@@ -127,6 +134,8 @@ const UsersCard = () => {
               )
           )}
       </div>
+        )
+      }
       <button
         onClick={handleLoadMore}
         className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"
