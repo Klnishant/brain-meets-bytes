@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  console.log("hello");
+  
    const body = await req.json();
+   console.log(body);
+   
 
    try {
-     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}auth/login`, {
+    if (!body.email || !body.password) {
+      return NextResponse.json(
+        { message: "Email and password are required" },
+        { status: 400 }
+      );
+    }
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
