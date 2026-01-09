@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 import { set } from "sanity";
 
 type Comment = {
-  sanityArticleId: string;
-  ArticleId: number;
+  sanityPodcastId: string;
+  PodcastId: number;
   userId: number;
   comment: string;
   parentCommentId: number | null;
@@ -38,7 +38,7 @@ type CommentsCardProps = {
   isActiveReply: boolean;
 };
 
-const ArticleCommentsCard: React.FC<CommentsCardProps> = ({
+const PodcastCommentsCard: React.FC<CommentsCardProps> = ({
   comment,
   addReply,
   isActiveReply,
@@ -269,10 +269,10 @@ const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
                 replyComment.length > 0 &&
                 replyComment.map((reply: Comment) => (
                   <div
-                    key={reply?.sanityArticleId}
+                    key={reply?.sanityPodcastId}
                     className="flex flex-col mt-2 pl-4"
                   >
-                    <ArticleCommentsCard
+                    <PodcastCommentsCard
                       comment={reply}
                       addReply={handleReply}
                       isActiveReply={isActiveReply}
@@ -312,4 +312,4 @@ const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
   );
 };
 
-export default ArticleCommentsCard;
+export default PodcastCommentsCard;

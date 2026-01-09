@@ -298,7 +298,6 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
       }
       Res = await res.json();
       if (res.ok) {
-        toast.success("like or dislike sent successfully!");
         if (isLiked) {
           setIsLiked(false);
           setLikedCount((prev) => prev - 1);
@@ -307,7 +306,6 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
           setLikedCount((prev) => prev + 1);
         }
       } else {
-        toast.error("Failed like or dislike. Please try again later.");
       }
     } catch (error: any) {
       setError(error?.message ?? "Failed to send like or dislike");
@@ -449,13 +447,13 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
 
     if (!res.ok) {
       toast.error(result?.message || "Failed to send comments");
-      return null; // ✅ ALWAYS return
+      return null; // ALWAYS return
     }
 
     toast.success("Message sent successfully!");
     setCommentData({ comment: "" });
 
-    return result; // ✅ SUCCESS RESPONSE
+    return result; // SUCCESS RESPONSE
   } catch (error: any) {
     toast.error("Failed to send comments");
     setError(error?.message ?? "Failed to send comments");
@@ -564,10 +562,8 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
       console.log("post save", res);
 
       if (res.ok) {
-        alert("Podcast saved successfully!");
-        setIsSaved(true);
+        setIsSaved(!isSaved);
       } else {
-        alert(`Failed to save podcast. Please try again later. ${res}`);
         console.log(res);
       }
     } catch (error: any) {

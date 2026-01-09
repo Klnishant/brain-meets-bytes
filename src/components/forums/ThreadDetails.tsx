@@ -422,6 +422,7 @@ const ThreadDetails = () => {
                             comment={comment}
                             addReply={handleReply}
                             isActiveReply={openReplies.has(comment.CommentId)}
+                            threadId={Number(ThreadId)}
                           />
                         </>
                       ))}

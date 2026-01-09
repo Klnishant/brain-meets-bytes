@@ -4,6 +4,7 @@ import { getAuth } from "@/lib/getAuth";
 import { intervalToDuration } from "date-fns";
 import { ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { set } from "sanity";
 
 type Comment = {
@@ -23,6 +24,14 @@ type User = {
   ProfilePic: string;
 };
 
+type CommentNode = {
+  CommentId: number;
+  isLikedByMe: boolean;
+  likes: number;
+  replies?: CommentNode[];
+};
+
+
 type CommentsCardProps = {
   comment: Comment;
   addReply: (
@@ -31,11 +40,13 @@ type CommentsCardProps = {
     parentCommentId: number
   ) => void;
   isActiveReply: boolean;
+  threadId: number;
 };
 const CommentsCard: React.FC<CommentsCardProps> = ({
   comment,
   addReply,
   isActiveReply,
+  threadId,
 }) => {
   const [reply, setReply] = useState({ comment: "" });
   const [showReply, setShowReply] = useState(false);
@@ -43,6 +54,8 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
   const [users, setUsers] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -75,7 +88,7 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
     }
   };
 
- useEffect(() => {
+  useEffect(() => {
     user();
   }, [comment]);
 
@@ -95,6 +108,80 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
 
     setReply({ comment: "" });
   };
+
+  const handleCommentLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}threads/comments/like?ThreadId=${threadId}&CommentId=${comment?.CommentId}`,
+        {
+          method: "Post",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: userId }),
+        }
+      );
+      if (res.ok) {
+        setIsLiked(!isLiked);
+        toast.success("Comment liked successfully!");
+        isLiked ? setLikesCount((prev) => prev - 1) : setLikesCount((prev) => prev + 1);
+      }
+      if (!res.ok) {
+        toast.error("Failed to like comment. Please try again later.");
+      }
+    } catch (error: any) {
+      console.log(error?.message, "failed to like comment");
+      toast.error("Failed to like comment. Please try again later.");
+    }
+  };
+
+const findIsLikedByMe = (
+  comments: CommentNode[],
+  targetCommentId: number
+): { likes: number; isLikedByMe: boolean } | undefined => {
+  for (const comment of comments) {
+    if (comment.CommentId === targetCommentId) {
+     return {
+        likes: comment.likes,
+        isLikedByMe: comment.isLikedByMe,
+      };
+    }
+  }
+  return undefined;
+};
+
+
+  useEffect(() => {
+    const fetchLikedByMe = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}threads/comments/like?ThreadId=${threadId}&CommentId=${comment?.CommentId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            }
+          }
+        );
+        const data = await res.json();
+        console.log("comment Like data",data);
+        
+        if (res.ok) {
+          const hasLiked = findIsLikedByMe(data?.data, comment?.CommentId);
+          if (hasLiked !== undefined) {
+            setIsLiked(hasLiked?.isLikedByMe);
+            setLikesCount(hasLiked?.likes);
+          }
+        }
+      } catch (error: any) {
+        console.log(error?.message, "failed to load like comment");
+      }
+    };
+    fetchLikedByMe();
+  },[token, comment]);
 
   const duration = intervalToDuration({
     start: new Date(comment?.createdAt),
@@ -156,13 +243,15 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
               <div className="w-full flex items-center justify-between gap-3 md:gap-6">
                 <div className="flex items-center gap-3">
                   {/* Like */}
-                  <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                  <button 
+                  onClick={handleCommentLike}
+                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}>
                     <img
                       src="/like.png"
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${2}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${likesCount}`}</span>
                   </button>
 
                   {/* Comments */}
@@ -199,6 +288,7 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
                       comment={reply}
                       addReply={handleReply}
                       isActiveReply={isActiveReply}
+                      threadId={threadId}
                     />
                   </div>
                 ))}

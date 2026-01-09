@@ -11,6 +11,9 @@ import CommentsCard from "../forums/CommentsCard";
 import { getUser } from "@/lib/getUser";
 import { getAuth } from "@/lib/getAuth";
 import { on } from "events";
+import { get } from "http";
+import toast from "react-hot-toast";
+import PodcastCommentsCard from "../commentsCard/PodcastCommentsCard";
 
 type Podcast = {
   _id: string;
@@ -45,12 +48,17 @@ type Episode = {
 };
 
 type Comment = {
-  _id: string;
+  sanityPodcastId: string;
+  PodcastId: number;
   userId: number;
   comment: string;
+  parentCommentId: number | null;
+  level: number;
+  likeCount: number;
+  dislikeCount: number;
   CommentId: number;
+  children?: Comment[];
   createdAt: string;
-  replies: Array<Comment>;
 };
 
 type EpisodeCardProps = {
@@ -62,9 +70,10 @@ type EpisodeCardProps = {
   isLiked: boolean;
   isSaved: boolean;
   likedCount: number;
-  commentsCount?: number;
+  comments: Comment[];
   onLike: () => Promise<void>;
   onSave: () => Promise<void>;
+  onComment: (text: string, parentCommentId?: number) => void;
   onSelect: () => void;
 };
 
@@ -74,9 +83,10 @@ interface PlayerCardProps {
   isLike: boolean;
   likeCount: number;
   isSaved: boolean;
-  commentsCount: number;
+  comments: Comment[];
   onLike: () => Promise<void>;
   onSave: () => Promise<void>;
+  onComment: (text: string, parentCommentId?: number) => void;
   onNext: () => void;
   onPrev: () => void;
   onShuffle: () => void;
@@ -86,7 +96,7 @@ type EpisodeActionState = {
   isLiked: boolean;
   likesCount: number;
   isSaved: boolean;
-  commentsCount: number;
+  comments: Comment[];
 };
 
 type Auth = {
@@ -192,9 +202,10 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   onShuffle,
   likeCount,
   isSaved,
-  commentsCount,
+  comments,
   onLike,
   onSave,
+  onComment,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -204,7 +215,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   const [error, setError] = useState("");
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
@@ -231,35 +241,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
   const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const data = {
-      sanityPodcastId: episode?._id,
-      comment: commentData.comment,
-    };
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to send comments");
-      }
-      if (res.ok) {
-        setCommentData({
-          comment: "",
-        });
-        alert("Message sent successfully!");
-      } else {
-        alert("Failed to send message. Please try again later.");
-      }
+    const parentCommentId: number | undefined = undefined;
+    try{
+      onComment(commentData.comment, parentCommentId);
     } catch (error: any) {
       setError(error?.message ?? "Failed to send comments");
     }
@@ -579,10 +563,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                 </div>
                 {/*BTNS*/}
                 <div>
-                  <div
-                    onClick={onLike}
-                    className="flex items-center justify-between gap-1 lg:gap-6 py-5"
-                  >
+                  <div className="flex items-center justify-between gap-1 lg:gap-6 py-5">
                     {/* Like */}
                     <button
                       onClick={onLike}
@@ -682,13 +663,13 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                   <div
                     className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}
                   >
-                    {comments.map((c) => (
-                      <CommentsCard
-                        key={c?._id}
-                        comment={c}
-                        addReply={() => {}}
+                    {comments.map((comment: Comment) => (
+                      <PodcastCommentsCard
+                        key={comment?.sanityPodcastId}
+                        comment={comment as Comment}
+                        addReply={handleComment}
                         isActiveReply={false}
-                      />
+                  />
                     ))}
                   </div>
                 )}
@@ -710,14 +691,13 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   isLiked,
   isSaved,
   likedCount,
-  commentsCount,
+  comments,
   onLike,
   onSave,
 }) => {
   const [error, setError] = useState("");
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
@@ -925,16 +905,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
       {comments && comments.length > 0 && (
         <div
           className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}
-        >
-          {comments.map((c) => (
-            <CommentsCard
-              key={c?._id}
-              comment={c}
-              addReply={() => {}}
-              isActiveReply={false}
-            />
-          ))}
-        </div>
+        ></div>
       )}
     </div>
   );
@@ -952,8 +923,11 @@ const PlayListHeroPage = () => {
   const [episodeActions, setEpisodeActions] = useState<
     Record<string, EpisodeActionState>
   >({});
-  const [auth, setAuth] = useState<{ token: string; userId: number } | null>(null);
-
+  const [auth, setAuth] = useState<{ token: string; userId: number } | null>(
+    null
+  );
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [nestedComments, setNestedComments] = useState<Comment[]>([]);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -972,10 +946,9 @@ const PlayListHeroPage = () => {
   const title = params.title;
 
   let currentEpisode = useMemo(
-  () => episode[episodeNumber - 1] ?? null,
-  [episode, episodeNumber]
-);
-
+    () => episode[episodeNumber - 1] ?? null,
+    [episode, episodeNumber]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -1032,127 +1005,220 @@ const PlayListHeroPage = () => {
           isLiked: false,
           likesCount: 0,
           isSaved: false,
-          commentsCount: 0,
+          comments: [],
         };
   };
 
   const fetchLikedCount = async (episodeId: string) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episodeId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episodeId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  if (!res.ok) return;
-  const data = await res.json();
-
-  setEpisodeActions((prev) => ({
-  ...prev,
-  [episodeId]: {
-    ...getEpisodeAction(episodeId),
-    likesCount: data?.data?.likeCount ?? 0,
-    isLiked:
-      data?.data?.usersWhoLiked?.includes(Number(userId)) ?? false,
-  },
-}));
-
-};
-
-
- const fetchSaved = async (episodeId: string) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episodeId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-
-  if (!res.ok) return;
-  const data = await res.json();
-
-  setEpisodeActions((prev) => ({
-    ...prev,
-    [episodeId]: {
-      ...prev[episodeId],
-      isSaved: data?.data?.some(
-        (item: { savedBy: { userId: number } }) =>
-          item.savedBy.userId === Number(userId)
-      ),
-    },
-  }));
-};
-
-  const fetchComments = async (episodeId: string) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episodeId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-
-  if (!res.ok) return;
-  const data = await res.json();
-
-  setEpisodeActions((prev) => ({
-    ...prev,
-    [episodeId]: {
-      ...prev[episodeId],
-      commentsCount: data?.data?.length ?? 0,
-    },
-  }));
-};
-
-
-  const handleLike = async (episodeId: string) => {
-    const current = getEpisodeAction(episodeId);
-
-    setEpisodeActions((prev) => ({
-      ...prev,
-      [episodeId]: {
-        ...current,
-        isLiked: !current.isLiked,
-        likesCount: current.isLiked
-          ? current.likesCount - 1
-          : current.likesCount + 1,
-      },
-    }));
-
-    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sanityPodcastId: episodeId,
-        reaction: current.isLiked ? "dislike" : "like",
-      }),
-    });
-  };
-
-  const handleSave = async (episodeId: string) => {
-    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sanityPodcastId: episodeId }),
-    });
+    if (!res.ok) return;
+    const data = await res.json();
 
     setEpisodeActions((prev) => ({
       ...prev,
       [episodeId]: {
         ...getEpisodeAction(episodeId),
-        isSaved: !getEpisodeAction(episodeId).isSaved,
+        likesCount: data?.data?.likeCount ?? 0,
+        isLiked: data?.data?.usersWhoLiked?.includes(Number(userId)) ?? false,
       },
     }));
   };
 
-  useEffect(() => {
-  if (!token || !userId || episode.length === 0) return;
+  const fetchSaved = async (episodeId: string) => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episodeId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  episode.forEach((ep) => {
-    fetchLikedCount(ep._id);
-    fetchSaved(ep._id);
-    fetchComments(ep._id);
-  });
-}, [token, userId, episode]);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    setEpisodeActions((prev) => ({
+      ...prev,
+      [episodeId]: {
+        ...prev[episodeId],
+        isSaved: data?.data?.some(
+          (item: { savedBy: { userId: number } }) =>
+            item.savedBy.userId === Number(userId)
+        ),
+      },
+    }));
+  };
+
+  function buildCommentTree(comments: Comment[]): Comment[] {
+    const map = new Map<number, Comment>();
+    const roots: Comment[] = [];
+
+    console.log("comments", comments);
+
+    //  Initialize map with CommentId
+    comments.forEach((comment) => {
+      map.set(comment.CommentId, { ...comment, children: [] });
+    });
+
+    // Build tree
+    comments.forEach((comment) => {
+      if (comment.parentCommentId !== null) {
+        const parent = map.get(comment.parentCommentId);
+        if (parent) {
+          parent.children!.push(map.get(comment.CommentId)!);
+        }
+      } else {
+        // root comment
+        roots.push(map.get(comment.CommentId)!);
+      }
+    });
+
+    return roots; // Add this return statement
+  }
+
+  const fetchComments = async (episodeId: string) => {
+    if (!token) return;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episodeId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("articles comment", res);
+
+    if (res.ok) {
+      const data = await res.json();
+      console.log("comments Count", data);
+
+      setComments(data?.data);
+      const NestedComment = buildCommentTree(data?.data);
+      setNestedComments(NestedComment);
+      console.log(nestedComments);
+      setEpisodeActions((prev) => ({
+        ...prev,
+        [episodeId]: {
+          ...prev[episodeId],
+          comments: nestedComments,
+        },
+      }));
+    }
+  };
+
+  const handleLike = async (episode: Episode) => {
+    const current = getEpisodeAction(episode._id);
+
+    const body = {
+      sanityPodcastId: episode?._id,
+      podcastName: episode?.title,
+      reaction: current.isLiked ? "dislike" : "like",
+    };
+
+    console.log(body);
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    console.log(res);
+
+    if (res.ok) {
+      const data = await res.json();
+      setEpisodeActions((prev) => ({
+        ...prev,
+        [episode?._id]: {
+          ...getEpisodeAction(episode?._id),
+          isLiked: !getEpisodeAction(episode?._id).isLiked,
+          likesCount: !getEpisodeAction(episode?._id).isLiked
+            ? getEpisodeAction(episode?._id).likesCount + 1
+            : getEpisodeAction(episode?._id).likesCount - 1,
+        },
+      }));
+    }
+  };
+
+  const handleSave = async (episodeId: string) => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sanityPodcastId: episodeId }),
+      }
+    );
+
+    console.log(res);
+
+    if (res.ok) {
+      setEpisodeActions((prev) => ({
+        ...prev,
+        [episodeId]: {
+          ...getEpisodeAction(episodeId),
+          isSaved: !getEpisodeAction(episodeId).isSaved,
+        },
+      }));
+    }
+  };
+
+  const handleComment = async (
+    episodeId: string,
+    text: string,
+    parentCommentId: number | undefined
+  ) => {
+    if (!token) return;
+
+    const body = {
+      sanityPodcastId: episodeId,
+      comment: text,
+      parentCommentId: parentCommentId ?? null,
+    };
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to comment");
+
+      toast.success("Comment added");
+
+      // Re-fetch comments for perfect sync
+      await fetchComments(episodeId);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to comment");
+    }
+  };
+
+  useEffect(() => {
+    if (!token || !userId || episode.length === 0) return;
+
+    episode.forEach((ep) => {
+      fetchLikedCount(ep._id);
+      fetchSaved(ep._id);
+      fetchComments(ep._id);
+    });
+  }, [token, userId, episode]);
 
   const handleNext = () => {
     setEpisodeNumber((prev) => (prev < episode.length ? prev + 1 : 1));
@@ -1205,12 +1271,15 @@ const PlayListHeroPage = () => {
         <PlayerCard
           episode={currentEpisode}
           index={episodeNumber}
-          isLike={getEpisodeAction(currentEpisode?._id).isLiked}
-          likeCount={getEpisodeAction(currentEpisode?._id).likesCount}
-          isSaved={getEpisodeAction(currentEpisode?._id).isSaved}
-          commentsCount={getEpisodeAction(currentEpisode?._id).commentsCount}
-          onLike={() => handleLike(currentEpisode!._id)}
-          onSave={() => handleSave(currentEpisode!._id)}
+          isLike={getEpisodeAction(currentEpisode?._id)?.isLiked}
+          likeCount={getEpisodeAction(currentEpisode?._id)?.likesCount}
+          isSaved={getEpisodeAction(currentEpisode?._id)?.isSaved}
+          comments={getEpisodeAction(currentEpisode?._id)?.comments}
+          onLike={() => handleLike(currentEpisode)}
+          onSave={() => handleSave(currentEpisode?._id)}
+          onComment={(text: string, parentCommentId?: number) =>
+            handleComment(currentEpisode?._id, text, parentCommentId)
+          }
           onNext={handleNext}
           onPrev={handlePrev}
           onShuffle={handleShuffle}
@@ -1233,12 +1302,15 @@ const PlayListHeroPage = () => {
               podcast={podcasts[0]}
               index={index + 1}
               isPlaying={episodeNumber === index + 1}
-              isLiked={getEpisodeAction(ep._id).isLiked}
-              likedCount={getEpisodeAction(ep._id).likesCount}
-              isSaved={getEpisodeAction(ep._id).isSaved}
-              commentsCount={getEpisodeAction(ep._id).commentsCount}
-              onLike={() => handleLike(ep._id)}
-              onSave={() => handleSave(ep._id)}
+              isLiked={getEpisodeAction(ep?._id)?.isLiked}
+              likedCount={getEpisodeAction(ep?._id)?.likesCount}
+              isSaved={getEpisodeAction(ep?._id)?.isSaved}
+              comments={getEpisodeAction(ep?._id)?.comments}
+              onLike={() => handleLike(ep)}
+              onSave={() => handleSave(ep?._id)}
+              onComment={(text: string, parentCommentId?: number) =>
+                handleComment(ep?._id, text, parentCommentId)
+              }
               onSelect={() => setEpisodeNumber(index + 1)}
             />
           ))}

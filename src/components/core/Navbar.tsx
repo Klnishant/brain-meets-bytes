@@ -167,7 +167,8 @@ const Navbar = () => {
         </div>
             
         {/* Hamburger Menu Button (mobile) */}
-        <div className="flex lg:hidden items-start justify-end w-full h-1/2">
+        <div className="fixed top-2 left-0 right-0 z-50 flex lg:hidden items-start justify-end pointer-events-auto"
+>
         <div className="w-full flex justify-end mr-1">
           {/* Search with hover expand animation */}
             <button
@@ -194,10 +195,10 @@ const Navbar = () => {
               </span>
             </button>
         </div>
-          <div className={`${isOpen ? "bg-zinc-500 rounded-xl" : "bg-none"}  px-4 py-2`}>
+          <div className={`${isOpen ? "bg-[#FAF9F8] border border-[#E2E8F0]  rounded-xl" : "bg-none"}  px-4 py-2`}>
             <button
           className={`lg:hidden focus:outline-none w-full flex justify-end ${
-            isForumsPage ? "text-white" : "text-slate-800"
+            "text-slate-800"
           }`}
           onClick={() => setIsOpen(!isOpen)}
         >
@@ -241,8 +242,6 @@ const Navbar = () => {
                   className={`transition-colors ${
                     isActive
                       ? "text-[#D62828] font-semibold"
-                      : isForumsPage
-                        ? "text-white opacity-70 hover:opacity-100 hover:text-[#D62828]"
                         : "text-[#1E293B] opacity-50 hover:opacity-100 hover:text-[#D62828]"
                   }`}
                 >
@@ -269,10 +268,7 @@ const Navbar = () => {
                 <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
               onClick={() => setOpenLogIn(true)}
-              style={isForumsPage? {
-                borderColor: COLORS.white,
-                color: COLORS.white,
-              } :{
+              style={{
                 borderColor: COLORS.brandNavy,
                 color: COLORS.brandNavy,
               } }
@@ -282,10 +278,7 @@ const Navbar = () => {
               ) : (
                 <button
               className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
-              style={isForumsPage? {
-                borderColor: COLORS.white,
-                color: COLORS.white,
-              } :{
+              style={{
                 borderColor: COLORS.brandNavy,
                 color: COLORS.brandNavy,
               } }

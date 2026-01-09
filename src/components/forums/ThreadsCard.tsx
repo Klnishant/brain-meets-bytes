@@ -124,7 +124,6 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
       }
       Res = await res.json();
       if (res.ok) {
-        toast.success("Like and dislike sent successfully!");
         if (hasLiked) {
           setLikes((prev) => prev.filter((like) => like.userId !== userId));
           setLikesCount((prev) => prev - 1);
@@ -140,12 +139,9 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
           setLikesCount((prev) => prev + 1);
           setHasLiked(!hasLiked);
         }
-      } else {
-        toast.error("Failed to like or dislike");
-      }
+      } 
     } catch (error: any) {
       setError(error?.message ?? "Failed to send like or dislike");
-      toast.error(error?.message ?? "Failed to send like or dislike");
     } finally{
       setIsLiking(false);
     }
@@ -306,10 +302,8 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
       console.log("post save", res);
 
       if (res.ok) {
-        toast.success("Thread saved successfully!");
-        setIsSaved(true);
+        setIsSaved(!isSaved);
       } else {
-        toast.error("Failed to save thread. Please try again later.");
         console.log(res);
       }
     } catch (error: any) {
