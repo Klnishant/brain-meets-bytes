@@ -213,7 +213,7 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
                 >
                   <textarea
                     name="comment"
-                    value={reply.comment}
+                    value={reply?.comment}
                     onChange={handleInputChange}
                     rows={1}
                     placeholder="Make a comment…"

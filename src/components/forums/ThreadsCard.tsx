@@ -323,8 +323,8 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
     setIsReporting(true);
     try {
       const body = {
-        ThreadId: thread?.ThreadId,
-        reason: "Spam",
+        "ThreadId": thread?.ThreadId,
+        "reason": "spam",
       };
       console.log(body);
 

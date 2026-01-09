@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import { set } from "sanity";
 import CommentsCard from "@/components/forums/CommentsCard";
 import { getAuth } from "@/lib/getAuth";
+import ArticleCommentsCard from "@/components/commentsCard/ArticleCommentsCard";
+import toast from "react-hot-toast";
 
 interface ArticlePageProps {
   params: Promise<{
@@ -15,13 +17,24 @@ interface ArticlePageProps {
 }
 
 type Comment = {
-  _id: string;
+  sanityArticleId: string;
+  ArticleId: number;
   userId: number;
   comment: string;
+  parentCommentId: number | null;
+  level: number;
+  likeCount: number;
+  dislikeCount: number;
   CommentId: number;
+  children?: Comment[];
   createdAt: string;
-  replies: Array<Comment>;
 };
+
+type NestedComment = {
+    _id: string;
+    text: string;
+    parentCommentId: string | null;
+  };
 
 type Author = {
   name: string;
@@ -208,9 +221,11 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
-const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [nestedComments, setNestedComments] = useState<Comment[]>([]);
+  const [isReplying, setIsReplying] = useState(false);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -266,21 +281,24 @@ const [token, setToken] = useState<string | null>(null);
     };
     let Res;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}articles/like`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}articles/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
       console.log(res);
       if (!res?.ok) {
         throw new Error("Failed to like or dislike");
       }
       Res = await res.json();
       if (res.ok) {
-        alert("like or dislike sent successfully!");
+        toast.success("like or dislike sent successfully!");
         if (isLiked) {
           setIsLiked(false);
           setLikedCount((prev) => prev - 1);
@@ -289,35 +307,39 @@ const [token, setToken] = useState<string | null>(null);
           setLikedCount((prev) => prev + 1);
         }
       } else {
-        alert("Failed like or dislike. Please try again later.");
+        toast.error("Failed like or dislike. Please try again later.");
       }
     } catch (error: any) {
       setError(error?.message ?? "Failed to send like or dislike");
+      toast.error(error?.message ?? "Failed to send like or dislike");
     }
   };
 
-  const fetchLikedCount = async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}articles/like?sanityArticleId=${article?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        console.log("liked Count", data);
-
-        setLikedCount(data?.data?.likeCount);
-        setIsLiked(data?.data?.usersWhoLiked?.includes(Number(userId)));
-        console.log(isLiked);
-        console.log(userId);
+  useEffect(() => {
+    const fetchLikedCount = async () => {
+      if(!token) return
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}articles/like?sanityArticleId=${article?._id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       }
-    };
-    fetchLikedCount();
+    );
+    if (res.ok) {
+      const data = await res.json();
+      console.log("liked Count", data);
+
+      setLikedCount(data?.data?.likeCount);
+      setIsLiked(data?.data?.usersWhoLiked?.includes(Number(userId)));
+      console.log(isLiked);
+      console.log(userId);
+    }
+  };
+  fetchLikedCount();
+  },[token, article]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -329,13 +351,42 @@ const [token, setToken] = useState<string | null>(null);
     }));
   };
 
+
+  function buildCommentTree(comments: Comment[]): Comment[] {
+  const map = new Map<number, Comment>();
+  const roots: Comment[] = [];
+
+  console.log("comments",comments);
+  
+
+  //  Initialize map with CommentId
+  comments.forEach((comment) => {
+    map.set(comment.CommentId, { ...comment, children: [] });
+  });
+
+  // Build tree
+  comments.forEach((comment) => {
+    if (comment.parentCommentId !== null) {
+      const parent = map.get(comment.parentCommentId);
+      if (parent) {
+        parent.children!.push(map.get(comment.CommentId)!);
+      }
+    } else {
+      // root comment
+      roots.push(map.get(comment.CommentId)!);
+    }
+  });
+
+  return roots;
+}
+
+
   const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = {
-      "sanityArticleId": article?._id,
-      "comment": commentData.comment,
+      sanityArticleId: article?._id,
+      comment: commentData.comment,
     };
-    console.log(localStorage.getItem("userId"));
 
     try {
       const res = await fetch(
@@ -357,39 +408,96 @@ const [token, setToken] = useState<string | null>(null);
         setCommentData({
           comment: "",
         });
-        alert("Message sent successfully!");
+        toast.success("Message sent successfully!");
       } else {
-        alert("Failed to send message. Please try again later.");
+        toast.error("Failed to send message. Please try again later.");
       }
     } catch (error: any) {
       setError(error?.message ?? "Failed to send comments");
+      toast.error(error?.message ?? "Failed to send comments");
     }
   };
 
-   const fetchComments = async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}articles/comments?sanityArticleId=${article?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        console.log("comments Count", data);
+   const handleReply = async (
+  e: React.FormEvent<HTMLFormElement>,
+  reply: string,
+  parentCommentId: number
+) => {
+  e.preventDefault();
+  setIsReplying(true);
 
-        setComments(data?.data);
+  const data = {
+    sanityArticleId: article?._id,
+    comment: reply,
+    parentCommentId,
+  };
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}articles/comments`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       }
-    };
-    fetchComments();
-  const fallbackShare = (url: string) => {
-  navigator.clipboard.writeText(url);
-  alert("Link copied to clipboard");
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      toast.error(result?.message || "Failed to send comments");
+      return null; // ✅ ALWAYS return
+    }
+
+    toast.success("Message sent successfully!");
+    setCommentData({ comment: "" });
+
+    return result; // ✅ SUCCESS RESPONSE
+  } catch (error: any) {
+    toast.error("Failed to send comments");
+    setError(error?.message ?? "Failed to send comments");
+    return null;
+  } finally {
+    setIsReplying(false);
+  }
 };
 
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if(!token) return
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}articles/comments?sanityArticleId=${article?._id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("articles comment",res);
+    
+    if (res.ok) {
+      const data = await res.json();
+      console.log("comments Count", data);
+
+      setComments(data?.data);
+      const NestedComment = buildCommentTree(data?.data);
+      setNestedComments(NestedComment);
+      console.log(nestedComments);
+      
+    }
+  };
+  fetchComments();
+  },[token,article]);
+  const fallbackShare = (url: string) => {
+    navigator.clipboard.writeText(url);
+    alert("Link copied to clipboard");
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -408,39 +516,51 @@ const [token, setToken] = useState<string | null>(null);
     }
   };
 
-  const fetchSaved = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}articles/getSavedUsersFrArticles?sanityArticleId=${article?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log(res);
-      
-      if (res.ok) {
-        const data = await res.json();
-        setIsSaved(data?.data?.some((item: { savedBy: { userId: number; }; }) => item?.savedBy.userId === Number(userId)));
-      }
-    };
-    fetchSaved();
-  const handleSave = async () => {
-    try {
-      const body = {
-        "sanityArticleId": article?._id,
-      };
-      console.log(body);
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}articles/save`, {
-        method: "POST",
+  useEffect(() => {
+    const fetchSaved = async () => {
+      if(!token) return
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}articles/getSavedUsersFrArticles?sanityArticleId=${article?._id}`,
+      {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
-      });
+      }
+    );
+    console.log(res);
+
+    if (res.ok) {
+      const data = await res.json();
+      setIsSaved(
+        data?.data?.some(
+          (item: { savedBy: { userId: number } }) =>
+            item?.savedBy.userId === Number(userId)
+        )
+      );
+    }
+  };
+  fetchSaved();
+  },[token,article]);
+  const handleSave = async () => {
+    try {
+      const body = {
+        sanityArticleId: article?._id,
+      };
+      console.log(body);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}articles/save`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
       console.log("post save", res);
 
       if (res.ok) {
@@ -477,21 +597,17 @@ const [token, setToken] = useState<string | null>(null);
     content,
   } = article;
 
- const primaryAuthor = authors?.[0];
+  const primaryAuthor = authors?.[0];
 
-const displayAuthorName =
-  primaryAuthor?.name ||  "Unknown";
+  const displayAuthorName = primaryAuthor?.name || "Unknown";
 
-const displayAuthorRole =
-  primaryAuthor?.role || "";
+  const displayAuthorRole = primaryAuthor?.role || "";
 
-const displayAuthorBio =
-  primaryAuthor?.bio ||
-  "I am a seasoned professional with a rich background in health, technology and leadership. Drawing on extensive experience in the memory care sector and emerging technologies, I am dedicated to exploring the dynamic landscape of brain health and longevity.";
+  const displayAuthorBio =
+    primaryAuthor?.bio ||
+    "I am a seasoned professional with a rich background in health, technology and leadership. Drawing on extensive experience in the memory care sector and emerging technologies, I am dedicated to exploring the dynamic landscape of brain health and longevity.";
 
-const authorImageUrl =
-  primaryAuthor?.imageUrl;
-
+  const authorImageUrl = primaryAuthor?.imageUrl;
 
   return (
     <main className="min-h-screen bg-[#FAF9F8]">
@@ -529,20 +645,22 @@ const authorImageUrl =
               </h1>
 
               <div className="flex flex-wrap items-center gap-4 text-sm">
-                {
-                  authors && authors.map((author, index) => (
-                    <div key={index} className="inline-flex items-center gap-3 rounded-full bg-[#E2E8F0] px-4 py-2">
-                  <span className="font-inter text-[14px] text-[#64748B]">
-                    {author?.name || "Unknown"}
-                  </span>
-                  {displayAuthorRole && (
-                    <span className="font-inter text-[12px] text-[#94A3B8]">
-                      {author?.role || "Unknown"}
-                    </span>
-                  )}
-                </div>
-                  ))
-                }
+                {authors &&
+                  authors.map((author, index) => (
+                    <div
+                      key={index}
+                      className="inline-flex items-center gap-3 rounded-full bg-[#E2E8F0] px-4 py-2"
+                    >
+                      <span className="font-inter text-[14px] text-[#64748B]">
+                        {author?.name || "Unknown"}
+                      </span>
+                      {displayAuthorRole && (
+                        <span className="font-inter text-[12px] text-[#94A3B8]">
+                          {author?.role || "Unknown"}
+                        </span>
+                      )}
+                    </div>
+                  ))}
                 <span className="font-inter text-[14px] text-[#505050]">
                   {formatDate(date)}
                 </span>
@@ -584,33 +702,35 @@ const authorImageUrl =
             <div className="flex flex-col">{renderBlocks(content)}</div>
 
             {/* Author card */}
-            {
-              authors && authors.map((author, index) => (
-                <div key={index} className="flex flex-col gap-6 rounded-[32px] bg-[#E2E8F0] p-6 md:flex-row md:items-center md:p-8">
-              {authorImageUrl && (
-                <div className="relative h-[221px] w-[221px] flex-shrink-0">
-                  <div className="absolute left-0.5 top-3 h-[221px] w-[221px] rounded-[32px] bg-[#023047]" />
-                  <div className="absolute left-0.5 top-0 h-[221px] w-[221px] overflow-hidden rounded-[32px] border-4 border-[#FAF9F8]">
-                    <img
-                      src={author?.imageUrl}
-                      alt={author?.name}
-                      className="h-full w-full object-cover "
-                    />
+            {authors &&
+              authors.map((author, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col gap-6 rounded-[32px] bg-[#E2E8F0] p-6 md:flex-row md:items-center md:p-8"
+                >
+                  {authorImageUrl && (
+                    <div className="relative h-[221px] w-[221px] flex-shrink-0">
+                      <div className="absolute left-0.5 top-3 h-[221px] w-[221px] rounded-[32px] bg-[#023047]" />
+                      <div className="absolute left-0.5 top-0 h-[221px] w-[221px] overflow-hidden rounded-[32px] border-4 border-[#FAF9F8]">
+                        <img
+                          src={author?.imageUrl}
+                          alt={author?.name}
+                          className="h-full w-full object-cover "
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-1 flex-col gap-4">
+                    <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+                      {author?.name || "Unknown"}
+                    </h3>
+                    <p className="font-inter text-[16px] md:text-[18px] leading-[32px] text-[#505050]">
+                      {author?.bio || "Unknown"}
+                    </p>
                   </div>
                 </div>
-              )}
-
-              <div className="flex flex-1 flex-col gap-4">
-                <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
-                  {author?.name || "Unknown"}
-                </h3>
-                <p className="font-inter text-[16px] md:text-[18px] leading-[32px] text-[#505050]">
-                  {author?.bio || "Unknown"}
-                </p>
-              </div>
-            </div>
-              ))
-            }
+              ))}
             {/*BTNS*/}
             <div className="">
               <div className="flex items-center gap-3 md:gap-6 py-5">
@@ -645,9 +765,10 @@ const authorImageUrl =
                 </button>
 
                 {/* Share */}
-                <button 
-                onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
+                >
                   <img
                     src="/share 1.png"
                     alt=""
@@ -658,8 +779,9 @@ const authorImageUrl =
 
                 {/* Save */}
                 <button
-                onClick={handleSave} 
-                className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}>
+                  onClick={handleSave}
+                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}
+                >
                   <img
                     src="/save.png"
                     alt=""
@@ -707,10 +829,17 @@ const authorImageUrl =
             </div>
 
             {/* Comments */}
-            {comments && comments.length > 0 && (
-              <div className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8`}>
-                {comments.map((c) => (
-                  <CommentsCard key={c?._id} comment={c} addReply={()=>{}} isActiveReply={false}  />
+            {nestedComments && nestedComments.length > 0 && (
+              <div
+                className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8`}
+              >
+                {nestedComments.map((c) => (
+                  <ArticleCommentsCard
+                    key={c?.sanityArticleId}
+                    comment={c}
+                    addReply={handleReply}
+                    isActiveReply={false}
+                  />
                 ))}
               </div>
             )}

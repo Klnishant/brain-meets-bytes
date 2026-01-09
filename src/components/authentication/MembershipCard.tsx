@@ -50,7 +50,6 @@ const MembershipCard = ({
       const fetchUser = async () => {
         const user = await getUser();
         setUser(user);
-        setIsLoggedIn(user);
       };
       fetchUser();
     }, []);
@@ -89,7 +88,7 @@ const MembershipCard = ({
             </button>
 
             {
-              !isLoggedIn && (
+              !user && (
                 <p className="mt-4 font-inter font-weight-[400] text-[18px] text-[#505050]">
               Already a member?{" "}
               <span className="cursor-pointer text-[#D62828]">

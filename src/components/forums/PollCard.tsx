@@ -65,6 +65,8 @@ const PollCard = () => {
 
         const data = await response.json();
         const polls = data?.data ?? [];
+        console.log("polls",polls);
+        
 
         setPolls(polls);
         setVisiblePolls(polls.length ? [polls[0]] : []);
@@ -77,8 +79,11 @@ const PollCard = () => {
 
        polls.forEach((poll: Poll) => {
   const votedOption = poll.options.find((option) =>
-    option.votedUserIds?.includes(userId)
+    option.votedUserIds?.includes(Number(userId))
   );
+
+  console.log("votedOption",{votedOption});
+  
 
   voteStatus[poll.PollId] = {
     hasVoted: !!votedOption,

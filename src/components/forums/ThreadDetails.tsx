@@ -248,7 +248,7 @@ const ThreadDetails = () => {
     e.preventDefault();
     setIsReplying(true);
     const data = {
-      userId: Number(localStorage.getItem("userId")),
+      userId: Number(userId),
       parentCommentId: parentCommentId,
       comments: reply,
     };

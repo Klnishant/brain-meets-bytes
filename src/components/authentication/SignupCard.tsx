@@ -85,6 +85,8 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
     } catch (error) {
       console.error(error);
       toast.error("Failed to create account. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -196,7 +198,7 @@ const SignupCard: React.FC<SignupCardProps> = ({onClose,handleSignIn,handleIsLog
               </div>
             ):
             (
-              "LogIn"
+              "SignUp"
             )
            }
           </button>

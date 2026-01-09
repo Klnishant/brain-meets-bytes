@@ -10,6 +10,7 @@ import { set } from "sanity";
 import CommentsCard from "../forums/CommentsCard";
 import { getUser } from "@/lib/getUser";
 import { getAuth } from "@/lib/getAuth";
+import { on } from "events";
 
 type Podcast = {
   _id: string;
@@ -57,35 +58,41 @@ type EpisodeCardProps = {
   podcast: Podcast;
   index: number;
   isPlaying: boolean;
-  onSelect: (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    episode: Episode,
-    index: number,
-    isPlaying: boolean
-  ) => void;
+
+  isLiked: boolean;
+  isSaved: boolean;
+  likedCount: number;
+  commentsCount?: number;
+  onLike: () => Promise<void>;
+  onSave: () => Promise<void>;
+  onSelect: () => void;
 };
 
-type PlayerCardProps = {
+interface PlayerCardProps {
   episode: Episode;
   index: number;
   isLike: boolean;
+  likeCount: number;
+  isSaved: boolean;
+  commentsCount: number;
+  onLike: () => Promise<void>;
+  onSave: () => Promise<void>;
   onNext: () => void;
   onPrev: () => void;
   onShuffle: () => void;
-};
+}
 
-type EpisodeActions = {
-  episodeId: string;
-  likesCount: number;
-  commentsCount: number;
+type EpisodeActionState = {
   isLiked: boolean;
+  likesCount: number;
   isSaved: boolean;
+  commentsCount: number;
 };
 
 type Auth = {
-  userId: number,
-  token: string
-}
+  userId: number;
+  token: string;
+};
 
 const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
   const { title, author, date, imageUrl, tags = [], podcastCount } = podcast;
@@ -183,19 +190,21 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   onNext,
   onPrev,
   onShuffle,
+  likeCount,
+  isSaved,
+  commentsCount,
+  onLike,
+  onSave,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const podcast = episode?.podcast;
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
   const [error, setError] = useState("");
-  const [likedCount, setLikedCount] = useState(0);
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isSaved, setIsSaved] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
@@ -206,100 +215,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         setToken(auth.token);
         setUserId(auth.userId);
       }
-    }
+    };
     fetchAuth();
-  },[])
-  
- 
-  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const data = {
-      sanityPodcastId: episode?._id,
-      podcastName: podcast?.title,
-      reaction: isLiked ? "dislike" : "like",
-    };
-    let Res;
-    console.log(userId);
-    
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to like or dislike");
-      }
-      Res = await res.json();
-      if (res.ok) {
-        alert("like or dislike sent successfully!");
-        if (isLiked) {
-          setIsLiked(false);
-          setLikedCount((prev) => prev - 1);
-        } else {
-          setIsLiked(true);
-          setLikedCount((prev) => prev + 1);
-        }
-      } else {
-        alert("Failed like or dislike. Please try again later.");
-      }
-    } catch (error: any) {
-      setError(error?.message ?? "Failed to send like or dislike");
-    }
-  };
-
-  const fetchLikedCount = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episode?._id}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      console.log("liked Count", data);
-      console.log(userId);
-      
-
-      setLikedCount(data?.data?.likeCount);
-      setIsLiked(
-        data?.data?.usersWhoLiked?.includes(
-          Number(userId)
-        )
-      );
-      console.log(data?.data?.usersWhoLiked?.includes(Number(userId)));
-      
-    }
-  };
-  fetchLikedCount();
-
-  const fetchComments = async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episode?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        console.log("comments Count", data);
-
-        setComments(data?.data);
-      }
-    };
-     fetchComments();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -369,54 +287,10 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   };
 
- const fetchSaved = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log(res);
-      
-      if (res.ok) {
-        const data = await res.json();
-        setIsSaved(data?.data?.some((item: { savedBy: { userId: number; }; }) => item?.savedBy.userId === Number(userId)));
-      }
-    };
-    fetchSaved();
-  const handleSave = async () => {
-    try {
-      const body = {
-        sanityPodcastId: episode?._id,
-      };
-      console.log(body);
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      console.log("post save", res);
-
-      if (res.ok) {
-        alert("Podcast saved successfully!");
-        setIsSaved(true);
-      } else {
-        alert(`Failed to save podcast. Please try again later. ${res}`);
-        console.log(res);
-      }
-    } catch (error: any) {
-      console.log(error?.message, "Failed to Save podcast");
-    }
-  };
-
-  const handleCommentLike = async (e: React.MouseEvent<HTMLButtonElement>, commentId: number) => {
+  const handleCommentLike = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    commentId: number
+  ) => {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments/like?commentId=${commentId}`,
       {
@@ -425,15 +299,14 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({commentId: commentId}),
+        body: JSON.stringify({ commentId: commentId }),
       }
     );
     if (res.ok) {
       const data = await res.json();
       console.log(data);
     }
-  }
-
+  };
 
   // Load new episode when changed
   useEffect(() => {
@@ -706,11 +579,14 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                 </div>
                 {/*BTNS*/}
                 <div>
-                  <div className="flex items-center justify-between gap-1 lg:gap-6 py-5">
+                  <div
+                    onClick={onLike}
+                    className="flex items-center justify-between gap-1 lg:gap-6 py-5"
+                  >
                     {/* Like */}
                     <button
-                      onClick={handleLike}
-                      className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
+                      onClick={onLike}
+                      className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLike ? "bg-[#1A2A38]" : ""} transition`}
                     >
                       <img
                         src="/like.png"
@@ -718,7 +594,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                         className="h-3 w-3 lg:h-6 lg:w-6"
                       />
                       <span className="text-[12px] md:text-[16px]">
-                        {likedCount}
+                        {likeCount}
                       </span>
                     </button>
 
@@ -754,7 +630,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
                     {/* Save */}
                     <button
-                      onClick={handleSave}
+                      onClick={onSave}
                       className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}
                     >
                       <img
@@ -831,14 +707,17 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   index,
   isPlaying,
   onSelect,
+  isLiked,
+  isSaved,
+  likedCount,
+  commentsCount,
+  onLike,
+  onSave,
 }) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [error, setError] = useState("");
-  const [likedCount, setLikedCount] = useState(0);
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isSaved, setIsSaved] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
@@ -849,147 +728,9 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
         setToken(auth.token);
         setUserId(auth.userId);
       }
-    }
+    };
     fetchAuth();
-  },[])
-  
- 
-  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const data = {
-      sanityPodcastId: episode?._id,
-      podcastName: podcast?.title,
-      reaction: isLiked ? "dislike" : "like",
-    };
-    let Res;
-    console.log(userId);
-    
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to like or dislike");
-      }
-      Res = await res.json();
-      if (res.ok) {
-        alert("like or dislike sent successfully!");
-        if (isLiked) {
-          setIsLiked(false);
-          setLikedCount((prev) => prev - 1);
-        } else {
-          setIsLiked(true);
-          setLikedCount((prev) => prev + 1);
-        }
-      } else {
-        alert("Failed like or dislike. Please try again later.");
-      }
-    } catch (error: any) {
-      setError(error?.message ?? "Failed to send like or dislike");
-    }
-  };
-
-  const fetchLikedCount = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episode?._id}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      console.log("liked Count", data);
-      console.log(userId);
-      
-
-      setLikedCount(data?.data?.likeCount);
-      setIsLiked(
-        data?.data?.usersWhoLiked?.includes(
-          Number(userId)
-        )
-      );
-      console.log(data?.data?.usersWhoLiked?.includes(Number(userId)));
-      
-    }
-  };
-  fetchLikedCount();
-
-  const fetchComments = async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episode?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        console.log("comments Count", data);
-
-        setComments(data?.data);
-      }
-    };
-     fetchComments();
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setCommentData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const data = {
-      sanityPodcastId: episode?._id,
-      comment: commentData.comment,
-    };
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to send comments");
-      }
-      if (res.ok) {
-        setCommentData({
-          comment: "",
-        });
-        alert("Message sent successfully!");
-      } else {
-        alert("Failed to send message. Please try again later.");
-      }
-    } catch (error: any) {
-      setError(error?.message ?? "Failed to send comments");
-    }
-  };
-
+  }, []);
   const fallbackShare = (url: string) => {
     navigator.clipboard.writeText(url);
     alert("Link copied to clipboard");
@@ -1011,58 +752,10 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
       console.error("Share cancelled", err);
     }
   };
-
- const fetchSaved = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episode?._id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log(res);
-      
-      if (res.ok) {
-        const data = await res.json();
-        setIsSaved(data?.data?.some((item: { savedBy: { userId: number; }; }) => item?.savedBy.userId === Number(userId)));
-      }
-    };
-    fetchSaved();
-  const handleSave = async () => {
-    try {
-      const body = {
-        sanityPodcastId: episode?._id,
-      };
-      console.log(body);
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      console.log("post save", res);
-
-      if (res.ok) {
-        alert("Podcast saved successfully!");
-        setIsSaved(true);
-      } else {
-        alert(`Failed to save podcast. Please try again later. ${res}`);
-        console.log(res);
-      }
-    } catch (error: any) {
-      console.log(error?.message, "Failed to Save podcast");
-    }
-  };
-
   const handleClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
-    onSelect(event, episode, index, isPlaying);
+    onSelect();
   };
   return (
     <div className="w-full">
@@ -1137,7 +830,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
               <div className="flex items-center gap-3 md:gap-6 py-5">
                 {/* Like */}
                 <button
-                  onClick={handleLike}
+                  onClick={onLike}
                   className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}
                 >
                   <img
@@ -1180,7 +873,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
                 {/* Save */}
                 <button
-                  onClick={handleSave}
+                  onClick={onSave}
                   className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isSaved ? "bg-[#1A2A38]" : ""} transition`}
                 >
                   <img
@@ -1211,13 +904,11 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
             className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
             method="post"
             noValidate
-            onSubmit={handleComment}
           >
             <textarea
               name="comment"
               rows={1}
               value={commentData.comment}
-              onChange={handleInputChange}
               placeholder="Make a comment…"
               className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
             />
@@ -1257,15 +948,34 @@ const PlayListHeroPage = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [action, setAction] = useState({});
   const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [episodeActions, setEpisodeActions] = useState<
+    Record<string, EpisodeActionState>
+  >({});
+  const [auth, setAuth] = useState<{ token: string; userId: number } | null>(null);
+
 
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
+        setAuth(auth);
+      }
+      console.log("auth", auth);
+    };
+    fetchAuth();
   }, []);
 
   const params = useParams<{ title: string }>();
   const title = params.title;
 
-  let currentEpisode = episode[episodeNumber - 1];
+  let currentEpisode = useMemo(
+  () => episode[episodeNumber - 1] ?? null,
+  [episode, episodeNumber]
+);
+
 
   useEffect(() => {
     let mounted = true;
@@ -1315,37 +1025,134 @@ const PlayListHeroPage = () => {
     };
   }, []);
 
-  const handleFetchLikedCount = async (episodeId: string) => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episodeId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      console.log("liked Count", data);
-
-     setAction({
-       ...action,
-       likesCount: data?.data?.likeCount
-     });
-      setAction({
-        ...action,
-        isLiked: data?.data?.usersWhoLiked?.includes(
-          Number(localStorage.getItem("userId"))
-        ),
-      })
-    }
+  const getEpisodeAction = (episodeId?: string): EpisodeActionState => {
+    return episodeId && episodeActions[episodeId]
+      ? episodeActions[episodeId]
+      : {
+          isLiked: false,
+          likesCount: 0,
+          isSaved: false,
+          commentsCount: 0,
+        };
   };
 
-  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    
-  }
+  const fetchLikedCount = async (episodeId: string) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episodeId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) return;
+  const data = await res.json();
+
+  setEpisodeActions((prev) => ({
+  ...prev,
+  [episodeId]: {
+    ...getEpisodeAction(episodeId),
+    likesCount: data?.data?.likeCount ?? 0,
+    isLiked:
+      data?.data?.usersWhoLiked?.includes(Number(userId)) ?? false,
+  },
+}));
+
+};
+
+
+ const fetchSaved = async (episodeId: string) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episodeId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) return;
+  const data = await res.json();
+
+  setEpisodeActions((prev) => ({
+    ...prev,
+    [episodeId]: {
+      ...prev[episodeId],
+      isSaved: data?.data?.some(
+        (item: { savedBy: { userId: number } }) =>
+          item.savedBy.userId === Number(userId)
+      ),
+    },
+  }));
+};
+
+  const fetchComments = async (episodeId: string) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/comments?sanityPodcastId=${episodeId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) return;
+  const data = await res.json();
+
+  setEpisodeActions((prev) => ({
+    ...prev,
+    [episodeId]: {
+      ...prev[episodeId],
+      commentsCount: data?.data?.length ?? 0,
+    },
+  }));
+};
+
+
+  const handleLike = async (episodeId: string) => {
+    const current = getEpisodeAction(episodeId);
+
+    setEpisodeActions((prev) => ({
+      ...prev,
+      [episodeId]: {
+        ...current,
+        isLiked: !current.isLiked,
+        likesCount: current.isLiked
+          ? current.likesCount - 1
+          : current.likesCount + 1,
+      },
+    }));
+
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sanityPodcastId: episodeId,
+        reaction: current.isLiked ? "dislike" : "like",
+      }),
+    });
+  };
+
+  const handleSave = async (episodeId: string) => {
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}podcasts/save`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sanityPodcastId: episodeId }),
+    });
+
+    setEpisodeActions((prev) => ({
+      ...prev,
+      [episodeId]: {
+        ...getEpisodeAction(episodeId),
+        isSaved: !getEpisodeAction(episodeId).isSaved,
+      },
+    }));
+  };
+
+  useEffect(() => {
+  if (!token || !userId || episode.length === 0) return;
+
+  episode.forEach((ep) => {
+    fetchLikedCount(ep._id);
+    fetchSaved(ep._id);
+    fetchComments(ep._id);
+  });
+}, [token, userId, episode]);
 
   const handleNext = () => {
     setEpisodeNumber((prev) => (prev < episode.length ? prev + 1 : 1));
@@ -1398,13 +1205,14 @@ const PlayListHeroPage = () => {
         <PlayerCard
           episode={currentEpisode}
           index={episodeNumber}
-          isLike={false}
-          onNext={() => {
-            handleNext();
-          }}
-          onPrev={() => {
-            handlePrev();
-          }}
+          isLike={getEpisodeAction(currentEpisode?._id).isLiked}
+          likeCount={getEpisodeAction(currentEpisode?._id).likesCount}
+          isSaved={getEpisodeAction(currentEpisode?._id).isSaved}
+          commentsCount={getEpisodeAction(currentEpisode?._id).commentsCount}
+          onLike={() => handleLike(currentEpisode!._id)}
+          onSave={() => handleSave(currentEpisode!._id)}
+          onNext={handleNext}
+          onPrev={handlePrev}
           onShuffle={handleShuffle}
         />
       )}
@@ -1424,10 +1232,14 @@ const PlayListHeroPage = () => {
               episode={ep}
               podcast={podcasts[0]}
               index={index + 1}
-              isPlaying={isPlaying}
-              onSelect={(e, ep, ind) => {
-                setEpisodeNumber(ind);
-              }}
+              isPlaying={episodeNumber === index + 1}
+              isLiked={getEpisodeAction(ep._id).isLiked}
+              likedCount={getEpisodeAction(ep._id).likesCount}
+              isSaved={getEpisodeAction(ep._id).isSaved}
+              commentsCount={getEpisodeAction(ep._id).commentsCount}
+              onLike={() => handleLike(ep._id)}
+              onSave={() => handleSave(ep._id)}
+              onSelect={() => setEpisodeNumber(index + 1)}
             />
           ))}
           {episode.length === 0 && (

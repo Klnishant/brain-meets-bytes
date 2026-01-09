@@ -7,12 +7,17 @@ import { useEffect, useState } from "react";
 import { set } from "sanity";
 
 type Comment = {
-  _id: string;
+  sanityArticleId: string;
+  ArticleId: number;
   userId: number;
   comment: string;
+  parentCommentId: number | null;
+  level: number;
+  likeCount: number;
+  dislikeCount: number;
   CommentId: number;
+  children?: Comment[];
   createdAt: string;
-  replies: Array<Comment>;
 };
 
 type User = {
@@ -25,36 +30,46 @@ type User = {
 
 type CommentsCardProps = {
   comment: Comment;
-  addReply: (e: React.FormEvent<HTMLFormElement>, reply: string, parentCommentId: number) => void;
+  addReply: (
+    e: React.FormEvent<HTMLFormElement>,
+    reply: string,
+    parentCommentId: number
+  ) => Promise<any>;
   isActiveReply: boolean;
 };
-const CommentsCard: React.FC<CommentsCardProps> = ({
+
+const ArticleCommentsCard: React.FC<CommentsCardProps> = ({
   comment,
   addReply,
   isActiveReply,
 }) => {
-  const [reply, setReply] = useState({comment: ""});
+  const [reply, setReply] = useState({ comment: "" });
   const [showReply, setShowReply] = useState(false);
   const [areRepliesVisible, setAreRepliesVisible] = useState(false);
   const [users, setUsers] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-        const [userId, setUserId] = useState<number | null>(null);
-      
-        useEffect(() => {
-          const fetchAuth = async () => {
-            const auth = await getAuth();
-            if (auth) {
-              setToken(auth.token);
-              setUserId(auth.userId);
-            }
-            console.log("auth",auth);;
-            
-          }
-          fetchAuth();
-        },[])
-  
-  const user = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
+  const [userId, setUserId] = useState<number | null>(null);
+  const [replyComment, setReplyComment] = useState<Comment [] | null>(comment?.children || null);
+  const [likeCount, setLikeCount] = useState(comment?.likeCount || 0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  useEffect(() => {
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
+      }
+      console.log("auth", auth);
+    };
+    fetchAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    const user = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
       {
         method: "GET",
         headers: {
@@ -69,24 +84,84 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
       setUsers(data?.data);
     }
   };
+    user();
+  },[token]);
 
-  user();
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setReply((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setReply((prev)=>({
-          ...prev,
-          [name]: value
-        }));
+  const handleReply = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  const response = await addReply(
+    e,
+    reply.comment,
+    comment.CommentId
+  );
+
+  console.log("parentCommentId:", comment.CommentId);
+  console.log("response:", response);
+  if (response) {
+  setReplyComment(prev => [...prev??[], response.data]);
+}
+};
+
+useEffect(() => {
+  const fetcLikeCount = async () => {
+    if (!token) return;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/articles/like?commentId=${comment?.CommentId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       }
-
-  const handleReply = async(e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const res = await addReply(e, reply?.comment,comment?.CommentId);
-
-    setReply({comment: ""});
+    );
+    const data = await res.json();
   }
-  
+},[token]);
+
+const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+  const data = {
+    CommentId: comment?.CommentId,
+  };
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}articles/comments/like`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    if (!res.ok) {
+      console.log("failed to like");
+    }
+    else{
+      isLiked ? setLikeCount((prev) => prev - 1) : setLikeCount((prev) => prev + 1);
+       setIsLiked(!isLiked);
+    }
+    const data2 = await res.json();
+    console.log(data2);
+  } catch (error: any) {
+    console.log(error?.message,"failed to like and dislike");
+    
+  }
+}
+
 
   const duration = intervalToDuration({
     start: new Date(comment?.createdAt),
@@ -148,13 +223,15 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
               <div className="w-full flex items-center justify-between gap-3 md:gap-6">
                 <div className="flex items-center gap-3">
                   {/* Like */}
-                  <button className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition">
+                  <button 
+                  onClick={handleLike}
+                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}>
                     <img
                       src="/like.png"
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${2}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${likeCount}`}</span>
                   </button>
 
                   {/* Comments */}
@@ -169,7 +246,7 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${comment?.replies?.length}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${comment?.children?.length}`}</span>
                   </button>
                 </div>
               </div>
@@ -182,42 +259,46 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
           <div>
             <div>
               {areRepliesVisible &&
-              comment?.replies &&
-              comment?.replies.length > 0 &&
-              comment.replies.map((reply: Comment) => (
-                <div key={reply._id} className="flex flex-col mt-2 pl-4">
-                  <CommentsCard
-                    key={reply._id}
-                    comment={reply}
-                    addReply={handleReply}
-                    isActiveReply={isActiveReply}
-                  />
-                </div>
-                
-              ))}
+                replyComment &&
+                replyComment.length > 0 &&
+                replyComment.map((reply: Comment) => (
+                  <div
+                    key={reply?.sanityArticleId}
+                    className="flex flex-col mt-2 pl-4"
+                  >
+                    <ArticleCommentsCard
+                      comment={reply}
+                      addReply={handleReply}
+                      isActiveReply={isActiveReply}
+                    />
+                  </div>
+                ))}
             </div>
-              {
-                <div className="w-full mt-2 pl-4">
-                  <form 
+            {
+              <div className="w-full mt-2 pl-4">
+                <form
                   className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-6 pr-2 py-1 md:py-3"
                   method="post"
                   noValidate
                   onSubmit={handleReply}
-                  >
-                    <textarea
+                >
+                  <textarea
                     name="comment"
-                    value={reply.comment}
+                    value={reply?.comment}
                     onChange={handleInputChange}
                     rows={1}
                     placeholder="Make a comment…"
                     className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
                   />
-                  <button type="submit" className="flex h-8 md:h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white">
+                  <button
+                    type="submit"
+                    className="flex h-8 md:h-[44px] w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
+                  >
                     Comment
                   </button>
-                  </form>
-                </div>
-              }
+                </form>
+              </div>
+            }
           </div>
         )}
       </div>
@@ -225,4 +306,4 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
   );
 };
 
-export default CommentsCard;
+export default ArticleCommentsCard;
