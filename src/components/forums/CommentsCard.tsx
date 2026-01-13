@@ -9,11 +9,15 @@ import { set } from "sanity";
 
 type Comment = {
   _id: string;
+  ThreadId: number;
   userId: number;
-  comment: string;
+  comments: string;
+  parentCommentId: number;
   CommentId: number;
+  likes: number;
+  isLikedByMe: false;
+  replies?: Comment[];
   createdAt: string;
-  replies: Array<Comment>;
 };
 
 type User = {
@@ -233,7 +237,7 @@ const findIsLikedByMe = (
           <div>
             <div className="flex flex-col gap-4">
               <p className="font-inter font-light text-[#64748B] text-[12px] md:text-sm leading-[18px]">
-                {comment?.comment}
+                {comment?.comments}
               </p>
             </div>
           </div>
@@ -266,7 +270,7 @@ const findIsLikedByMe = (
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${comment?.replies?.length}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${comment?.replies?.length || 0}`}</span>
                   </button>
                 </div>
               </div>
@@ -282,9 +286,8 @@ const findIsLikedByMe = (
                 comment?.replies &&
                 comment?.replies.length > 0 &&
                 comment.replies.map((reply: Comment) => (
-                  <div key={reply._id} className="flex flex-col mt-2 pl-4">
+                  <div key={reply?._id} className="flex flex-col mt-2 pl-4">
                     <CommentsCard
-                      key={reply._id}
                       comment={reply}
                       addReply={handleReply}
                       isActiveReply={isActiveReply}

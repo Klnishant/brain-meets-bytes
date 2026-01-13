@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import SelectCategoryCard from "./SelectCategoryCard";
 import { form } from "sanity/structure";
 import { set } from "sanity";
@@ -11,12 +11,50 @@ export type CreatThreadFormRef = {
   submit: (e: React.FormEvent<HTMLFormElement>) => void;
 };
 
+
+type Like = {
+  userId: number;
+  ThreadId: number;
+};
+
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
+type Thread = {
+  _id: string;
+  title: string;
+  content: string;
+  CategoryId: Array<Number>;
+  images: Array<string>;
+  userId: Number;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  ThreadId: Number;
+  user: {
+    userId: Number;
+    name: string;
+    email: string;
+    ProfilePic: string;
+  };
+  categories: Array<Category>;
+  comments: Array<Comment>;
+  likes: Array<Like>;
+};
+
+
 type CreateThreadProps = {
   images: File[];
   videos: File[];
   isOpen: ()=>void;
   isCreateThread: (key: boolean) => void;
-  onSuccess: () => void;
+  onSuccess: (data: Thread) => void;
 };
 type Category = {
   _id: string;
@@ -40,6 +78,7 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
     const [token, setToken] = useState<string | null>(null);
     const [userId, setUserId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
       const fetchAuth = async () => {
@@ -55,9 +94,9 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
 
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleCategoryChange = (categories: Category[]) => {
-      setSelectedCategories(categories);
-    };
+    const handleCategoryChange = useCallback((categories: Category[]) => {
+  setSelectedCategories(categories);
+}, []);
 
     const filesToBase64 = async (files: File[]): Promise<string[]> => {
       const base64Images: string[] = [];
@@ -99,6 +138,7 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
       e.preventDefault();
       setLoading(true);
       isCreateThread(true);
+      setError(null);
 
       const base64Images = await filesToBase64(images);
       const base64Videos = await videosToBase64(videos);
@@ -136,8 +176,9 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
         setLoading(false);
         isOpen();
         isCreateThread(false);
-        onSuccess();
+        onSuccess(Resdata?.data);
       } catch (error: any) {
+        setError(error?.message);
         console.log(error?.message, "Failed to create Thread");
         toast.error("Failed to create Thread");
       } finally{
@@ -187,6 +228,9 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
             threadCategories={[]}
           />
         </form>
+        {error && (
+          <p className="mt-2 text-sm font-semibold text-red-600">{error}</p>
+        )}
       </div>
     );
   }

@@ -4,28 +4,25 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { X, Eye, EyeOff, Loader, CircleUserRound } from "lucide-react";
 import toast from "react-hot-toast";
+import { set } from "sanity";
 
-type SignupCardProps = {
+type ResetPasswordCardProps = {
   onClose?: () => void;
   handleSignIn?: () => void;
-  handleIsLoggedIn?: () => void;
 };
 
-const SignupCard: React.FC<SignupCardProps> = ({
+const ResetPasswordCard: React.FC<ResetPasswordCardProps> = ({
   onClose,
   handleSignIn,
-  handleIsLoggedIn,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupData, setSignupData] = useState({
-    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    hasmembership: false,
   });
   const [image, setImage] = useState<File | null>(null);
 
@@ -47,33 +44,27 @@ const SignupCard: React.FC<SignupCardProps> = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     // Handle form submission logic here
 
     if (
-      !signupData.name ||
       !signupData.email ||
       !signupData.password ||
       !signupData.confirmPassword
     ) {
-      setError("Please fill in all the required fields.");
       return;
     }
 
     // Perform signup logic here
     try {
-      if (signupData.password !== signupData.confirmPassword) {
-        throw new Error("Password and confirm password do not match");
-      }
       const body = {
-        name: signupData.name,
         email: signupData.email,
-        password: signupData.password,
-        hasmembership: signupData.hasmembership,
-        ProfilePic: URL.createObjectURL(image!),
+        oldPassword: signupData.password,
+        newPassword: signupData.confirmPassword
       };
       console.log(body);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}users/resetPassword`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,26 +73,23 @@ const SignupCard: React.FC<SignupCardProps> = ({
       });
       if (res.ok) {
         setSignupData({
-          name: "",
           email: "",
           password: "",
           confirmPassword: "",
-          hasmembership: false,
         });
         const data = await res.json();
         console.log(data);
 
+        onClose && onClose();
         handleSignIn && handleSignIn();
 
         setIsSubmitting(false);
-
-        handleIsLoggedIn && handleIsLoggedIn();
-        toast.success("Account created successfully!");
+        toast.success("password reset successfully!");
       }
     } catch (error: any) {
       console.error(error);
       setError(error?.message);
-      toast.error("Failed to create account. Please try again.");
+      toast.error("Failed to reset password. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,11 +103,8 @@ const SignupCard: React.FC<SignupCardProps> = ({
             {/* Header */}
             <div>
               <h2 className="text-[30px] font-bold text-[#1E293B]">
-                Create Your Account
+                Reset Your Password
               </h2>
-              <p className="mt-1 text-lg text-[#505050]">
-                Join the community exploring smarter brain health and longevity.
-              </p>
             </div>
 
             {/* Close Button */}
@@ -138,45 +123,6 @@ const SignupCard: React.FC<SignupCardProps> = ({
             noValidate
             onSubmit={handleSubmit}
           >
-            <div className="flex w-full items-center gap-4">
-              <label
-                htmlFor="image-upload"
-                className="cursor-pointer w-full rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
-              >
-                <div className="inline-flex w-full justify-center items-center">
-                  {image ? (
-                    <div>
-                      <img src={URL.createObjectURL(image)} alt=""
-                       className="w-30 h-30 object-cover rounded-full"
-                       />
-                    </div>
-                  ):(
-                    <div>
-                      <CircleUserRound size={100} />
-                    </div>
-                  )}
-                </div>
-                <div>
-                </div>
-                <input
-                  id="image-upload"
-                  name="image-upload"
-                  type="file"
-                  onChange={handleImageChange}
-                  multiple
-                  hidden
-                  accept="image/*"
-                />
-              </label>
-            </div>
-            <input
-              type="text"
-              placeholder="Full Name"
-              name="name"
-              value={signupData.name}
-              onChange={handleInputChange}
-              className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
-            />
 
             <input
               type="email"
@@ -191,7 +137,7 @@ const SignupCard: React.FC<SignupCardProps> = ({
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                placeholder="OldPassword"
                 name="password"
                 value={signupData.password}
                 onChange={handleInputChange}
@@ -210,7 +156,7 @@ const SignupCard: React.FC<SignupCardProps> = ({
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm Password"
+                placeholder="New Password"
                 name="confirmPassword"
                 value={signupData.confirmPassword}
                 onChange={handleInputChange}
@@ -239,22 +185,14 @@ const SignupCard: React.FC<SignupCardProps> = ({
                   <Loader size={14} className="animate-spin" />
                 </div>
               ) : (
-                "SignUp"
+                "Reset Password"
               )}
             </button>
           </form>
-
-          {/* Footer */}
-          <p className="mt-4 text-center text-sm text-[#000000]">
-            Already have an account?{" "}
-            <span className="cursor-pointer text-[#D62828] font-medium">
-              <button onClick={handleSignIn}>Login</button>
-            </span>
-          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default SignupCard;
+export default ResetPasswordCard;

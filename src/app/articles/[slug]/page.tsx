@@ -9,6 +9,9 @@ import CommentsCard from "@/components/forums/CommentsCard";
 import { getAuth } from "@/lib/getAuth";
 import ArticleCommentsCard from "@/components/commentsCard/ArticleCommentsCard";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchComments, postComment } from "@/Redux/slices/ArticleCommentSlice";
+import { AppDispatch, RootState } from "@/Redux/store";
 
 interface ArticlePageProps {
   params: Promise<{
@@ -16,17 +19,17 @@ interface ArticlePageProps {
   }>;
 }
 
-type Comment = {
+ type Comment = {
   sanityArticleId: string;
   ArticleId: number;
+  CommentId: number;
   userId: number;
   comment: string;
-  parentCommentId: number | null;
+  parentCommentId?: number | null;
   level: number;
   likeCount: number;
-  dislikeCount: number;
-  CommentId: number;
-  children?: Comment[];
+  likedBy: number[];
+  replies?: Comment[];
   createdAt: string;
 };
 
@@ -249,7 +252,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
         const { slug } = await params;
         const res = await fetch(`/api/articles/${slug}`);
         if (!res.ok) {
-          throw new Error("Failed to load podcasts");
+          throw new Error("Failed to load articles");
         }
 
         const data = await res.json();
@@ -259,7 +262,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
         setRelated(Array.isArray(data?.related) ? data?.related : []);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message ?? "Failed to load podcasts");
+        setError(e?.message ?? "Failed to load articles");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -271,6 +274,27 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
       mounted = false;
     };
   }, []);
+
+  const dispatch = useDispatch<AppDispatch>();
+  
+     useEffect(() => {
+    if (token && article?._id) {
+      dispatch(
+        fetchComments({
+          articleId: article._id,
+          token,
+        })
+      );
+    }
+  }, [token, article?._id]);
+
+  const commentsTree = useSelector(
+    (state: RootState) =>
+      state.articleComments.byArticle[article?._id ?? ""]?.tree || []
+  );
+
+  console.log("commentsTree",commentsTree);
+  
 
   const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -350,148 +374,43 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
   };
 
 
-  function buildCommentTree(comments: Comment[]): Comment[] {
-  const map = new Map<number, Comment>();
-  const roots: Comment[] = [];
 
-  console.log("comments",comments);
-  
-
-  //  Initialize map with CommentId
-  comments.forEach((comment) => {
-    map.set(comment.CommentId, { ...comment, children: [] });
-  });
-
-  // Build tree
-  comments.forEach((comment) => {
-    if (comment.parentCommentId !== null) {
-      const parent = map.get(comment.parentCommentId);
-      if (parent) {
-        parent.children!.push(map.get(comment.CommentId)!);
-      }
-    } else {
-      // root comment
-      roots.push(map.get(comment.CommentId)!);
-    }
-  });
-
-  return roots;
-}
-
-
-  const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleComment = (
+    e: React.FormEvent<HTMLFormElement>,
+    reply: string,
+    parentCommentId?: number
+  ) => {
+    if ( !token) return;
     e.preventDefault();
-    const data = {
-      sanityArticleId: article?._id,
-      comment: commentData.comment,
-    };
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}articles/comments`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to send comments");
-      }
-      if (res.ok) {
-        setCommentData({
-          comment: "",
-        });
-        toast.success("Message sent successfully!");
-      } else {
-        toast.error("Failed to send message. Please try again later.");
-      }
-    } catch (error: any) {
-      setError(error?.message ?? "Failed to send comments");
-      toast.error(error?.message ?? "Failed to send comments");
-    }
-  };
-
-   const handleReply = async (
-  e: React.FormEvent<HTMLFormElement>,
-  reply: string,
-  parentCommentId: number
-) => {
-  e.preventDefault();
-  setIsReplying(true);
-
-  const data = {
-    sanityArticleId: article?._id,
-    comment: reply,
-    parentCommentId,
-  };
-
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}articles/comments`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
+  
+    dispatch(
+      postComment({
+        articleId: article?._id ?? "",
+        token,
+        comment: reply,
+        parentCommentId, // undefined = root comment
+      })
     );
+  };
 
-    const result = await res.json();
-
-    if (!res.ok) {
-      toast.error(result?.message || "Failed to send comments");
-      return null; // ALWAYS return
-    }
-
-    toast.success("Message sent successfully!");
+   const handleReply = (
+    e: React.FormEvent<HTMLFormElement>,
+    reply: string,
+    parentCommentId?: number
+  ) => {
+    if ( !token) return;
+    e.preventDefault();
+  
+    dispatch(
+      postComment({
+        articleId: article?._id ?? "",
+        token,
+        comment: reply,
+        parentCommentId, // undefined = root comment
+      })
+    );
     setCommentData({ comment: "" });
-
-    return result; // SUCCESS RESPONSE
-  } catch (error: any) {
-    toast.error("Failed to send comments");
-    setError(error?.message ?? "Failed to send comments");
-    return null;
-  } finally {
-    setIsReplying(false);
-  }
-};
-
-
-  useEffect(() => {
-    const fetchComments = async () => {
-      if(!token) return
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}articles/comments?sanityArticleId=${article?._id}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("articles comment",res);
-    
-    if (res.ok) {
-      const data = await res.json();
-      console.log("comments Count", data);
-
-      setComments(data?.data);
-      const NestedComment = buildCommentTree(data?.data);
-      setNestedComments(NestedComment);
-      console.log(nestedComments);
-      
-    }
   };
-  fetchComments();
-  },[token,article]);
   const fallbackShare = (url: string) => {
     navigator.clipboard.writeText(url);
     alert("Link copied to clipboard");
@@ -756,7 +675,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
                     className="h-3 w-3 md:h-3.5 md:w-3.5"
                   />
                   <span className="text-[12px] md:text-[14px]">
-                    {comments?.length}
+                    {commentsTree?.length}
                   </span>
                 </button>
 
@@ -804,7 +723,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
                   className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
                   method="post"
                   noValidate
-                  onSubmit={handleComment}
+                  onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleComment(e, commentData.comment)}
                 >
                   <textarea
                     name="comment"
@@ -825,15 +744,15 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
             </div>
 
             {/* Comments */}
-            {nestedComments && nestedComments.length > 0 && (
+            {commentsTree && commentsTree.length > 0 && (
               <div
                 className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8`}
               >
-                {nestedComments.map((c) => (
+                {commentsTree.map((c) => (
                   <ArticleCommentsCard
                     key={c?.sanityArticleId}
                     comment={c}
-                    addReply={handleReply}
+                    addReply={handleComment}
                     isActiveReply={false}
                   />
                 ))}

@@ -1,8 +1,8 @@
 "use client";
 
 import { COLORS } from "@/lib/constants";
-import { Edit, Share2, SquarePen, ThumbsUp, Trash2 } from "lucide-react";
-import { use, useEffect, useState } from "react";
+import { Edit, Loader, Share2, SquarePen, ThumbsUp, Trash2 } from "lucide-react";
+import { use, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { intervalToDuration, set } from "date-fns";
 import Link from "next/link";
@@ -22,6 +22,15 @@ type Category = {
   threadCount: number;
   imageUrl: string;
 };
+
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
 type Thread = {
   _id: string;
   title: string;
@@ -30,7 +39,7 @@ type Thread = {
   images: Array<string>;
   userId: Number;
   likesCount: number;
-  commentsCount: Number;
+  commentsCount: number;
   createdAt: string;
   updatedAt: string;
   ThreadId: Number;
@@ -41,8 +50,10 @@ type Thread = {
     ProfilePic: string;
   };
   categories: Array<Category>;
+  comments: Array<Comment>;
   likes: Array<Like>;
 };
+
 
 type Like = {
   userId: number;
@@ -51,17 +62,16 @@ type Like = {
 
 type ThreadsCardProps = {
   thread: Thread;
-  onSuccess: () => void;
+  onSuccess: (ThreadId: number) => void;
+ onEdit?: (data: Thread) => void;
 };
 
-const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
+const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess, onEdit }) => {
   const [likesCount, setLikesCount] = useState<number>(thread?.likesCount);
   const [likes, setLikes] = useState<Like[]>(thread?.likes);
   const [error, setError] = useState<string | null>(null);
   const [hasLiked, setHasLiked] = useState(
-    thread?.likes.some(
-      (like) => like.userId === Number(localStorage.getItem("userId"))
-    )
+   false
   );
   const [commentData, setCommentData] = useState({ comment: "" });
   const [isCommentOpen, setIsCommentOpen] = useState(false);
@@ -81,13 +91,17 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
   const [isSaving,setIsSaving] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [isReporting,setIsReporting] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reason,setReason] = useState('');
+  const [likedArray,setLikedArray] = useState<Like[]>([]);
 
-  useEffect(() => {
+  useMemo(() => {
     const fetchAuth = async () => {
       const auth = await getAuth();
       if (auth) {
         setToken(auth.token);
         setUserId(auth.userId);
+        //setHasLiked(thread?.likes.some((like) => like.userId === Number(userId)));
       }
       console.log("auth", auth);
     };
@@ -96,7 +110,15 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
 
   useEffect(() => {
     if (!userId) return;
-    setHasLiked(thread?.likes.some((like) => like.userId === Number(userId)));
+    const normalizedLikes: Like[] = Array.isArray(thread.likes)
+  ? thread.likes
+  : [];
+
+const hasLiked = normalizedLikes.some(
+  (like) => like.userId === Number(userId)
+);
+
+setHasLiked(hasLiked);
   }, [userId]);
 
   const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -218,7 +240,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
       }
       if (res.ok) {
         toast.success("Thread deleted successfully!");
-        onSuccess();
+        onSuccess(Number(ThreadId));
       }
     } catch (error: any) {
       console.log(error?.message, "Failed to delete thread");
@@ -313,12 +335,13 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
     }
   };
 
-  const handleReporting = async () => {
+  const handleReporting = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setIsReporting(true);
     try {
       const body = {
         "ThreadId": thread?.ThreadId,
-        "reason": "spam",
+        "reason": reason,
       };
       console.log(body);
 
@@ -335,6 +358,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
       );
       if (res.ok) {
         toast.success("Thread reported successfully!");
+        setIsReportOpen(false);
       } else {
         toast.error("Failed to report thread. Please try again later.");
         console.log(res);
@@ -369,6 +393,41 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
 
   return (
     <div className="flex flex-col gap-2">
+      <div className={`${!isReportOpen ? "hidden" : ""} w-full flex justify-end items-center`}>
+        <div className="border bg-[#FAF9F8] w-[30%] shadow-xl">
+        <form 
+        className="flex flex-col gap-2 p-4"
+        method="post"
+        noValidate
+        onSubmit={handleReporting}
+        >
+          <input
+            type="text"
+            placeholder="Reason for reporting"
+            name="reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
+          />
+          <button
+            type="submit"
+            disabled={isReporting}
+            className=" w-full rounded-full bg-[#D62828] py-2 text-white font-semibold hover:bg-red-700 transition"
+          >
+           {
+            isReporting ? (
+              <div className="flex items-center justify-center w-full">
+                <Loader size={14} className="animate-spin" />
+              </div>
+            ):
+            (
+              "Report"
+            )
+           }
+          </button>
+          </form>
+      </div>
+      </div>
       <div
         className={`w-7 h-7 text-[#505050] ${isEditOpen ? "block" : "hidden"} z-10 w-full`}
       >
@@ -401,7 +460,8 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
           isCreateThread={(key: boolean) => {
             setIsEditing(key);
           }}
-          onSuccess={onSuccess}
+          onSuccess={(data: Thread) => onEdit?.(data)}
+
         />
       </div>
       <div className="flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
@@ -429,8 +489,8 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
             </div>
             <div className="flex gap-1 items-center">
               <button
-              onClick={handleReporting}
-              disabled={isReporting} 
+              disabled={isReporting}
+              onClick={()=>setIsReportOpen(!isReportOpen)} 
               className="flex items-center justify-center h-8 w-8 md:h-auto md:w-auto  md:px-4 gap-2.5 rounded-full border border-[#D62828] bg-[#D62828] md:bg-white py-2">
                 <img
                   src="/red-flag.png"
@@ -514,7 +574,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${likesCount || thread?.likesCount}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${likesCount || thread?.likesCount || 0}`}</span>
                   </button>
 
                   {/* Comments */}
@@ -527,7 +587,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess }) => {
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${thread?.commentsCount}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${thread?.comments?.length || 0}`}</span>
                   </button>
                 </div>
                 <div className="flex items-center gap-3">

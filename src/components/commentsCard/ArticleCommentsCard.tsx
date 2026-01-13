@@ -9,14 +9,14 @@ import { set } from "sanity";
 type Comment = {
   sanityArticleId: string;
   ArticleId: number;
+  CommentId: number;
   userId: number;
   comment: string;
-  parentCommentId: number | null;
+  parentCommentId?: number | null;
   level: number;
   likeCount: number;
-  dislikeCount: number;
-  CommentId: number;
-  children?: Comment[];
+  likedBy: number[];
+  replies?: Comment[];
   createdAt: string;
 };
 
@@ -34,7 +34,7 @@ type CommentsCardProps = {
     e: React.FormEvent<HTMLFormElement>,
     reply: string,
     parentCommentId: number
-  ) => Promise<any>;
+  ) => void;
   isActiveReply: boolean;
 };
 
@@ -49,7 +49,7 @@ const ArticleCommentsCard: React.FC<CommentsCardProps> = ({
   const [users, setUsers] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  const [replyComment, setReplyComment] = useState<Comment [] | null>(comment?.children || null);
+  const [replyComment, setReplyComment] = useState<Comment [] | null>(comment?.replies || null);
   const [likeCount, setLikeCount] = useState(comment?.likeCount || 0);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -108,9 +108,6 @@ const ArticleCommentsCard: React.FC<CommentsCardProps> = ({
 
   console.log("parentCommentId:", comment.CommentId);
   console.log("response:", response);
-  if (response) {
-  setReplyComment(prev => [...prev??[], response.data]);
-}
 };
 
 useEffect(() => {
@@ -252,7 +249,7 @@ const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${comment?.children?.length}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${comment?.replies?.length || 0}`}</span>
                   </button>
                 </div>
               </div>

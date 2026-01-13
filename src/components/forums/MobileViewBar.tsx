@@ -23,6 +23,7 @@ const MobileViewBar = ({ className }: { className?: string }) => {
   const [isPollsOpen, setIsPollsOpen] = useState(false);
   const [isUsersOpen, setIsUsersOpen] = useState(false);
   const [isCreatingThread, setIsCreatingThread] = useState(false);
+  const [isCreatingPoll, setIsCreatingPoll] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -121,7 +122,7 @@ const MobileViewBar = ({ className }: { className?: string }) => {
 
         {/* Polls */}
         <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
-          <CreatePoll handleClick={() => setIsPollOpen(!isPollOpen)} />
+          <CreatePoll handleClick={() => setIsPollOpen(!isPollOpen) } isCreatePoll={(key: boolean)=>{setIsCreatingPoll(key)}} />
         </div>
         <form noValidate onSubmit={handleParentSubmit}>
           <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">

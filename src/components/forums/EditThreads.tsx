@@ -6,6 +6,7 @@ import { form } from "sanity/structure";
 import { set } from "sanity";
 import { Edit, Images, Loader } from "lucide-react";
 import { getAuth } from "@/lib/getAuth";
+import toast from "react-hot-toast";
 
 export type ChildFormRef = {
   submit: () => void;
@@ -22,6 +23,44 @@ type Category = {
   imageUrl: string;
 };
 
+type Like = {
+  userId: number;
+  ThreadId: number;
+};
+
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
+
+type Thread = {
+  _id: string;
+  title: string;
+  content: string;
+  CategoryId: Array<Number>;
+  images: Array<string>;
+  userId: Number;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  ThreadId: Number;
+  user: {
+    userId: Number;
+    name: string;
+    email: string;
+    ProfilePic: string;
+  };
+  categories: Array<Category>;
+  comments: Array<Comment>;
+  likes: Array<Like>;
+};
+
+
 type EditThreadProps = {
   threadId: Number;
   threadImages: string[];
@@ -30,14 +69,14 @@ type EditThreadProps = {
   threadCategories: Category[];
   isOpen: () => void;
   isCreateThread: (key: boolean) => void;
-  onSuccess: () => void;
+  onSuccess?: ((data: Thread) => void) | undefined;
 };
 
 const EditThread: React.FC<EditThreadProps> = ({
   threadId,
+ threadImages,
   threadTitle,
   threadContent,
-  threadImages,
   threadCategories,
   isOpen,
   isCreateThread,
@@ -53,6 +92,8 @@ const EditThread: React.FC<EditThreadProps> = ({
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [loading,setLoading] = useState(false)
+  const [submiting,setSubmiting] = useState(false)
+  const [error,setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -76,7 +117,7 @@ const EditThread: React.FC<EditThreadProps> = ({
     }
   ): Promise<File[]> => {
     return Promise.all(
-      urls.map(async (url, index) => {
+      urls?.map(async (url, index) => {
         const res = await fetch(url);
         if (!res.ok) {
           throw new Error(`Failed to fetch ${url}`);
@@ -150,6 +191,8 @@ const EditThread: React.FC<EditThreadProps> = ({
     e.preventDefault();
     setLoading(true);
     isCreateThread(true);
+    setSubmiting(true);
+    setError(null)
 
     const base64Images = await filesToBase64(images);
 
@@ -180,18 +223,22 @@ const EditThread: React.FC<EditThreadProps> = ({
 
       const Resdata = await res.json();
       console.log(Resdata);
-      alert("Thread updated successfully!");
+      toast.success("Thread updated successfully!");
       setTitle("");
       setContent("");
       setSelectedCategories([]);
       setLoading(false);
         isOpen();
         isCreateThread(false);
-        onSuccess();
+        onSuccess && onSuccess(Resdata?.data);
     } catch (error: any) {
+      setError(error?.message);
       console.log(error?.message, "Failed to update Thread");
+      toast.error("Failed to update Thread");
     } finally{
       isCreateThread(false);
+      setLoading(false);
+      setSubmiting(false);
     }
   };
 
@@ -288,14 +335,21 @@ const EditThread: React.FC<EditThreadProps> = ({
           ))}
         </div>
 
+          {/* Error */}
+          {error && (
+            <div className="mt-4 rounded-md bg-red-50 p-4">
+              <h3 className="text-sm font-semibold text-red-900">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
+          )}
         {/* Publish */}
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={loading}
+            disabled={submiting}
             className="rounded-full bg-[#023047] px-6 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
-            {!loading ? "Edit" : (<Loader size={14} className="animate-spin" />)}
+            {!submiting ? "Edit" : (<Loader size={14} className="animate-spin" />)}
           </button>
         </div>
       </form>

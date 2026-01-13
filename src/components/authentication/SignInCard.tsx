@@ -9,15 +9,17 @@ type SignInCardProps = {
     onClose?: () => void;
     handleSignup?: () => void;
     handleIsLoggedIn?: () => void
+   handleForgetPassword?: () => void
 };
 
-const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLoggedIn})=> {
+const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLoggedIn,handleForgetPassword})=> {
   const [showPassword, setShowPassword] = useState(false);
   const [signInData, setSignInData] = useState({
     email: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -30,6 +32,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     // Handle form submission logic here
     if (!signInData.email || !signInData.password) {
       return;
@@ -64,8 +67,11 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
         onClose && onClose();
         setIsLoading(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      setError(error?.message);
       console.error("Login failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -136,8 +142,15 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
             <input type="checkbox" className="rounded border-[#E2E8F0]" />
             Remember me
           </label>
-            <p className="font-inter font-weight-[400] text-sm text-[#D62828] cursor-pointer">Forgot password?</p>
+            <p
+             onClick={handleForgetPassword}
+             className="font-inter font-weight-[400] text-sm text-[#D62828] cursor-pointer">Forgot password?</p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <p className="mt-2 text-sm text-red-500">{error}</p>
+          )}
 
           {/* Sign In Button */}
           <button

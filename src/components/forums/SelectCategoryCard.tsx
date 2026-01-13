@@ -16,13 +16,15 @@ type Category = {
   imageUrl: string;
 };
 
-
 type SelectCategoryCardProps = {
-  onChange: (categories: Category[]) => void;
+  onChange?: (categories: Category[]) => void;
   threadCategories: Category[];
 };
 
-const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threadCategories})=> {
+const SelectCategoryCard: React.FC<SelectCategoryCardProps> = ({
+  onChange,
+  threadCategories=[],
+}) => {
   const [categories, setCategories] = useState<Category[]>();
   const [selected, setSelected] = useState<Category[]>(threadCategories);
   const [query, setQuery] = useState("");
@@ -31,65 +33,61 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-            const [userId, setUserId] = useState<number | null>(null);
-          
-            useEffect(() => {
-              const fetchAuth = async () => {
-                const auth = await getAuth();
-                if (auth) {
-                  setToken(auth.token);
-                  setUserId(auth.userId);
-                }
-                console.log("auth",auth);;
-                
-              }
-              fetchAuth();
-            },[])
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchAuth = async () => {
+      const auth = await getAuth();
+      if (auth) {
+        setToken(auth.token);
+        setUserId(auth.userId);
+      }
+      console.log("auth", auth);
+    };
+    fetchAuth();
+  }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-   useEffect(() => {
-        let mounted = true;
-    
-        const load = async () => {
-          try {
-            setLoading(true);
-            setError(null);
-    
-            if(!token) return;
-    
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}category`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            console.log(res);
-            
-            if (!res.ok) {
-              throw new Error("Failed to load threads");
-            }
-    
-            const data = (await res.json())?.data as Category[];
-            if (!mounted) return;
-            setCategories(Array.isArray(data) ? data : []);
-          } catch (e: any) {
-            if (!mounted) return;
-            setError(e?.message ?? "Failed to load threads");
-          } finally {
-            if (mounted) setLoading(false);
-          }
-        };
-    
-        load();
-    
-        return () => {
-          mounted = false;
-        };
-      },[token]);
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (!token) return;
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        console.log(res);
+
+        if (!res.ok) {
+          throw new Error("Failed to load threads");
+        }
+
+        const data = (await res.json())?.data as Category[];
+        if (!mounted) return;
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        if (!mounted) return;
+        setError(e?.message ?? "Failed to load threads");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
 
   // Close on outside click
   useEffect(() => {
@@ -103,8 +101,7 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const filtered = categories?.filter(
@@ -113,29 +110,22 @@ const SelectCategoryCard : React.FC<SelectCategoryCardProps> = ({onChange, threa
       !selected?.includes(cat)
   );
 
-  const visibleCategories = query
-    ? filtered
-    : filtered?.slice(0, 5);
+  const visibleCategories = query ? filtered : filtered?.slice(0, 5);
+
+  useEffect(() => {
+    onChange?.(selected);
+  }, [selected, onChange]);
 
   const selectCategory = (cat: Category) => {
-  setSelected((prev) => {
-    const updated = [...prev, cat];
-    onChange?.(updated);
-    return updated;
-  });
-  setQuery("");
-  setOpen(false);
-  setOpenCreate(false);
-};
+    setSelected((prev) => {
+      if (prev.some((c) => c._id === cat._id)) return prev;
+      return [...prev, cat];
+    });
+  };
 
-const removeCategory = (cat: Category) => {
-  setSelected((prev) => {
-    const updated = prev.filter((c) => c !== cat);
-    onChange?.(updated);
-    return updated;
-  });
-};
-
+  const removeCategory = (cat: Category) => {
+    setSelected((prev) => prev.filter((c) => c._id !== cat._id));
+  };
 
   return (
     <div ref={wrapperRef} className="relative w-full max-w-md">
@@ -165,9 +155,7 @@ const removeCategory = (cat: Category) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
-          placeholder={
-            selected?.length === 0 ? "Select categories" : ""
-          }
+          placeholder={selected?.length === 0 ? "Select categories" : ""}
           className="flex-1 border-none text-[#64748B] text-sm outline-none"
         />
       </div>
@@ -204,18 +192,18 @@ const removeCategory = (cat: Category) => {
 
           {/* Create Category */}
           {query && filtered?.length === 0 && (
-           <div>
-            {/* Create Category */}
-            <div className={`${openCreate ? "block" : "hidden"}`}>
+            <div>
+              {/* Create Category */}
+              <div className={`${openCreate ? "block" : "hidden"}`}>
                 <CreateCategory />
+              </div>
+              <button
+                onClick={() => setOpenCreate(!openCreate)}
+                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50"
+              >
+                ➕ Create
+              </button>
             </div>
-             <button
-              onClick={() => setOpenCreate(!openCreate)}
-              className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50"
-            >
-              ➕ Create
-            </button>
-           </div>
           )}
 
           {!query && filtered && filtered.length > 5 && (
@@ -227,5 +215,5 @@ const removeCategory = (cat: Category) => {
       )}
     </div>
   );
-}
- export default SelectCategoryCard;
+};
+export default SelectCategoryCard;

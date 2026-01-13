@@ -13,6 +13,9 @@ import PollCard from "./PollCard";
 import { getAuth } from "@/lib/getAuth";
 import toast from "react-hot-toast";
 import { set } from "sanity";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { fetchComments, postComment, replyComment } from "@/Redux/slices/ThreadCommentSlice";
 
 type Category = {
   _id: string;
@@ -37,7 +40,7 @@ type Thread = {
   images: Array<string>;
   userId: Number;
   likesCount: number;
-  commentsCount: Number;
+  commentsCount: number;
   createdAt: string;
   updatedAt: string;
   ThreadId: Number;
@@ -200,96 +203,60 @@ const ThreadDetails = () => {
   };
   console.log(commentData.comment);
 
-  const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsCommentLoading(true);
-    const data = {
-      userId: localStorage.getItem("userId"),
-      comments: commentData.comment,
-    };
-    console.log(localStorage.getItem("userId"));
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}threads/comments?ThreadId=${ThreadId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
+  const handleComment = (
+      e: React.FormEvent<HTMLFormElement>,
+    ) => {
+      if ( !token) return;
+      e.preventDefault();
+    
+      dispatch(
+        postComment({
+          ThreadId: Number(ThreadId),
+          token,
+          comments: commentData.comment,
+          userId: Number(userId), // undefined = root comment
+        })
       );
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to send comments");
-      }
-      if (res.ok) {
-        setCommentData({
-          comment: "",
-        });
-        toast.success("Message sent successfully!");
-        setIsCommentLoading(false);
-      } else {
-        toast.error("Failed to send message. Please try again later.");
-      }
-    } catch (error: any) {
-      setError(error?.message ?? "Failed to send comments");
-    } finally {
-      setIsCommentLoading(false);
-    }
-  };
-  const handleReply = async (
-    e: React.FormEvent<HTMLFormElement>,
-    reply: string,
-    parentCommentId: number
-  ) => {
-    e.preventDefault();
-    setIsReplying(true);
-    const data = {
-      userId: Number(userId),
-      parentCommentId: parentCommentId,
-      comments: reply,
     };
-    console.log(reply);
-    console.log(parentCommentId);
-
-    let Res;
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}threads/comments/reply?ThreadId=${ThreadId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
+  const handleReply = (
+      e: React.FormEvent<HTMLFormElement>,
+      parentCommentId: number,
+      comments: string
+    ) => {
+      if ( !token) return;
+      e.preventDefault();
+    
+      dispatch(
+        replyComment({
+          ThreadId: Number(ThreadId),
+          token,
+          userId: Number(userId), // undefined = root comment
+          comment: comments,
+          parentCommentId: Number(parentCommentId),
+        })
       );
-      console.log(res);
-      if (!res?.ok) {
-        throw new Error("Failed to send comments");
-      }
-      Res = await res.json();
-      if (res.ok) {
-        setCommentData({
-          comment: "",
-        });
-        toast.success("Message sent successfully!");
-        setIsReplying(false);
-      } else {
-        toast.error("Failed to send message. Please try again later.");
-      }
-    } catch (error: any) {
-      setError(error?.message ?? "Failed to send comments");
-      toast.error("Failed to send comments");
-    } finally {
-      setIsReplying(false);
+    };
+
+  const dispatch = useDispatch<AppDispatch>();
+  
+     useEffect(() => {
+    if (token && threads[0]?.ThreadId) {
+      dispatch(
+        fetchComments({
+          ThreadId: Number(threads[0]?.ThreadId),
+          token,
+        })
+      );
     }
-  };
+  }, [token, threads[0]?.ThreadId]);
+
+  const commentsTree = useSelector(
+    (state: RootState) =>
+      state.threadComments.byThread[Number(threads[0]?.ThreadId)]?.tree || []
+  );
+
+  console.log("commentsTree",commentsTree);
+  
 
   const handleCommentLike = async (e: React.MouseEvent<HTMLButtonElement>, commentId: number) => {
     e.preventDefault();
@@ -409,18 +376,22 @@ const ThreadDetails = () => {
                     <h1 className="font-sora font-semibold text-[#1E293B] text-[12px] md:text-lg leading-[30px]">
                       Comments
                     </h1>
-                    <p className="font-sora font-semibold text-[#505050] text-[12px] md:text-lg leading-[30px]">{`${threads[0]?.commentsCount}`}</p>
+                    <p className="font-sora font-semibold text-[#505050] text-[12px] md:text-lg leading-[30px]">{`${commentsTree?.length || 0}`}</p>
                   </div>
                   <div className="w-full h-0.5 border border-[#E2E8F0]"></div>
                   {/* comments card */}
                   <div className="flex flex-col gap-2">
-                    {threads[0]?.comments &&
-                      threads[0]?.comments.map((comment) => (
+                    {commentsTree &&
+                      commentsTree.map((comment) => (
                         <>
                           <CommentsCard
                             key={comment._id}
                             comment={comment}
-                            addReply={handleReply}
+                            addReply={(
+                              e: React.FormEvent<HTMLFormElement>,
+                              reply: string,
+                              parentCommentId: number
+                            ) => handleReply(e, parentCommentId, reply)}
                             isActiveReply={openReplies.has(comment.CommentId)}
                             threadId={Number(ThreadId)}
                           />

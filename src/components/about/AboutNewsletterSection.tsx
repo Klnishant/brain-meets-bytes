@@ -2,6 +2,7 @@
 import { COLORS } from "@/lib/constants";
 import { NextResponse } from "next/server";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const AboutNewsletterSection = () => {
 const [email, setEmail] = useState({
@@ -28,11 +29,11 @@ const [email, setEmail] = useState({
         });
         if (res.ok) {
           setEmail({ email: "" });
-          alert('Subscribed successfully!');
+          toast.success('Subscribed successfully!');
         }
       } catch (error: any) {
         console.log(error?.message,"Subscription failed");
-        alert("Subscription failed");
+        toast.error("Subscription failed");
       }
     }
   return (

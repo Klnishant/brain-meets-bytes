@@ -32,6 +32,8 @@ const CategoryCard = () => {
   const [currentEditCategory, setCurrentEditCategory] = useState<number>();
   const [visibleCategories, setVisibleCategories] = useState<Category[]>([]);
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -89,9 +91,15 @@ const CategoryCard = () => {
 
   useEffect(() => {
     load()
-  }, [token,isEditOpen]);
+  }, [token]);
 
-  const onSuccess = ()=> load();
+  const onDelete = (CategoryId: number)=> {
+    setCategories((prev) => prev.filter((c) => c.CategoryId !== CategoryId));
+  }
+
+  const onSuccess = (data?: Category) => {
+    setCategories((prev) => prev.map((c) => (c.CategoryId === data?.CategoryId ? data : c)));
+  };
 
   useEffect(() => {
     const visibleCategories = () => {
@@ -109,6 +117,7 @@ const CategoryCard = () => {
     CategoryId: number
   ) => {
     e.preventDefault();
+    setIsDeleting(true);
 
     try {
       const res = await fetch(
@@ -125,8 +134,9 @@ const CategoryCard = () => {
         throw new Error("Failed to delete Category");
       }
       if (res.ok) {
+        const data = await res.json();
         toast.success("Category deleted successfully!");
-        onSuccess();
+        onDelete(CategoryId);
       }
     } catch (error: any) {
       console.log(error?.message, "Failed to delete thread");
@@ -166,6 +176,7 @@ const CategoryCard = () => {
           colors={currentCategory?.color || ""}
           images={currentCategory?.imageUrl || ""}
           cateGoryId={currentCategory?.CategoryId || 0}
+          onSuccess={onSuccess}
           isOpen={()=>{setIsEditOpen(!isEditOpen)}}
         />
       </div>

@@ -4,13 +4,13 @@ import { COLORS } from "@/lib/constants";
 import ForumsSection from "@/components/home/ForumsSection";
 import ThreadsCard from "./ThreadsCard";
 import CategoryCard from "./CategoryCard";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import UsersCard from "./UsersCard";
 import CreateThread, { CreatThreadFormRef } from "./CreateThread";
 import CreateCategory from "./CreateCategory";
 import CreateTopic from "./CreateTopic";
-import CreatePoll from "./CreatePoll";
+import CreatePoll, { CreatePollFormRef } from "./CreatePoll";
 import PollCard from "./PollCard";
 import MobileViewBar from "./MobileViewBar";
 import { getAuth } from "@/lib/getAuth";
@@ -32,6 +32,14 @@ type Like = {
   userId: number;
   ThreadId: number;
 };
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
 type Thread = {
   _id: string;
   title: string;
@@ -40,7 +48,7 @@ type Thread = {
   images: Array<string>;
   userId: Number;
   likesCount: number;
-  commentsCount: Number;
+  commentsCount: number;
   createdAt: string;
   updatedAt: string;
   ThreadId: Number;
@@ -51,6 +59,7 @@ type Thread = {
     ProfilePic: string;
   };
   categories: Array<Category>;
+  comments: Array<Comment>;
   likes: Array<Like>;
 };
 
@@ -190,6 +199,10 @@ const ForumsMainSection = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [isCreatingThread, setIsCreatingThread] = useState(false);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
+  const [isMostPopularActive, setIsMostPopularActive] = useState(true);
+  const [isLatestActive, setIsLatestActive] = useState(false);
+  const [isHighestVotedActive, setIsHighestVotedActive] = useState(false);
+  const [isCreatingPoll,setIsCreatingPoll] = useState(false);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -204,72 +217,90 @@ const ForumsMainSection = () => {
   }, []);
 
   const fetchThreads = async () => {
-  if (!token) return;
+    if (!token) return;
 
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!res.ok) {
-      throw new Error("Failed to load threads");
-    }
-
-    const data = (await res.json())?.data as Thread[];
-
-    setThreads(Array.isArray(data) ? data : []);
-  } catch (e: any) {
-    setError(e?.message ?? "Failed to load threads");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-    const fetchTopics = async () => {
-      if (!token) return;
-      try {
-        setIsLoadingTopics(true);
-        setError(null);
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads`,
+        {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        });
-        if (!res.ok) {
-          throw new Error("Failed to load topics");
         }
+      );
 
-        const topicData = (await res.json())?.meta?.data as Topic[];
-       
-        setTopics(Array.isArray(topicData) ? topicData : []);
-        console.log(topicData);
-      } catch (e: any) {
-       
-        setError(e?.message ?? "Failed to load topics");
-      } finally {
-         setIsLoadingTopics(false);
+      if (!res.ok) {
+        throw new Error("Failed to load threads");
       }
+
+      const data = (await res.json())?.data as Thread[];
+
+      const fetchedThreads = Array.isArray(data) ? data : [];
+      const sortedThreads = [...fetchedThreads].sort(
+        (a, b) => b.likesCount - a.likesCount
+      );
+      setThreads(sortedThreads);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load threads");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const fetchTopics = async () => {
+    if (!token) return;
+    try {
+      setIsLoadingTopics(true);
+      setError(null);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to load topics");
+      }
+
+      const topicData = (await res.json())?.meta?.data as Topic[];
+
+      setTopics(Array.isArray(topicData) ? topicData : []);
+      console.log(topicData);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load topics");
+    } finally {
+      setIsLoadingTopics(false);
+    }
+  };
 
   useEffect(() => {
     fetchThreads();
     fetchTopics();
-  },[token]);
-  const onSuccess = () => fetchThreads();
+  }, [token]);
+  const onSuccess = (data: Thread) => {
+    setThreads((prev) => [data, ...prev]);
+    setIsCreatingThread(false);
+    setIsComposerOpen(false);
+    setImages([]);
+    setVideos([]);
+  };
+  const onDelete = (ThreadId: number) =>
+    setThreads((prev) =>
+      prev.filter((thread) => thread?.ThreadId !== ThreadId)
+    );
+  const onEdit = (data: Thread) =>
+    setThreads((prev) =>
+      prev.map((thread) =>
+        thread?.ThreadId === data?.ThreadId ? data : thread
+      )
+    );
   const visibleTopics = topics.slice(0, topicsCount);
 
   const handleTopic = () => {
@@ -302,7 +333,8 @@ const ForumsMainSection = () => {
   const [videos, setVideos] = useState<File[]>([]);
 
   const formRef = useRef<CreatThreadFormRef>(null);
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const pollFormRef = useRef<CreatePollFormRef>(null);
+   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const selectedFiles = Array.from(e.target.files);
@@ -334,12 +366,18 @@ const ForumsMainSection = () => {
 
   const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isComposerOpen) {
     formRef.current?.submit(e);
+  }
+
+  if (isPollOpen) {
+    pollFormRef.current?.submit(e);
+  }
   };
 
   const handleLoading = () => {
     setIsCreatingThread(!isCreatingThread);
-  }
+  };
 
   /* handle poll */
   const [isPollOpen, setIsPollOpen] = useState(false);
@@ -368,13 +406,50 @@ const ForumsMainSection = () => {
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px] md:text-[14px] font-normal font-sora">
-            <button className="flex h-[36px] w-[104px] py-5 md:h-[50px] md:w-[140px] items-center justify-center rounded-[36px] bg-[#023047] text-white">
+            <button
+              onClick={() => {
+                setIsMostPopularActive(true);
+                setIsHighestVotedActive(false);
+                setIsLatestActive(false);
+                setThreads((prev) =>
+                  [...prev].sort((a, b) => b.likesCount - a.likesCount)
+                );
+              }}
+              className={`flex h-[36px] w-[104px] py-5 md:h-[50px] md:w-[140px] items-center justify-center rounded-[36px] ${isMostPopularActive ? "bg-[#023047] text-white" : "bg-white text-[#023047] opacity-70"}`}
+            >
               Most Popular
             </button>
-            <button className="flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] bg-white text-[#023047] opacity-70">
+            <button
+              onClick={() => {
+                setIsMostPopularActive(false);
+                setIsHighestVotedActive(true);
+                setIsLatestActive(false);
+                setThreads((prev) =>
+                  [...prev].sort(
+                    (a, b) =>
+                      b.likesCount +
+                      b.commentsCount -
+                      (a.likesCount + a.commentsCount)
+                  )
+                );
+              }}
+              className={`flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] ${isHighestVotedActive ? "bg-[#023047] text-white" : "bg-white text-[#023047] opacity-70"}`}
+            >
               Highest Voted
             </button>
-            <button className="flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] bg-white text-[#023047] opacity-70">
+            <button
+              onClick={() => {
+                setIsMostPopularActive(false);
+                setIsHighestVotedActive(false);
+                setIsLatestActive(true);
+                setThreads((prev) =>
+                  [...prev].sort(
+                    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
+                  )
+                );
+              }}
+              className={`flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] ${isLatestActive ? "bg-[#023047] text-white" : "bg-white text-[#023047] opacity-70"}`}
+            >
               Latest Tread
             </button>
           </div>
@@ -423,7 +498,11 @@ const ForumsMainSection = () => {
                   </button>
                 </div>
                 <div
-                  onClick={() => setIsComposerOpen(true)}
+                  onClick={() =>{
+                    setIsComposerOpen(true);
+                    setIsPollOpen(false);
+                  }
+                  }
                   className={`${isComposerOpen ? "hidden" : "block"} flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] px-6 py-3`}
                 >
                   <span className="font-sora text-[16px] text-[#64748B]">
@@ -435,12 +514,29 @@ const ForumsMainSection = () => {
               {/* Composer form */}
 
               <div className={`${isComposerOpen ? "block" : "hidden"}`}>
-                <CreateThread images={images} videos={videos} ref={formRef} isOpen={()=>(setIsComposerOpen(!isComposerOpen))} isCreateThread={(key: boolean)=>{setIsCreatingThread(key)}} onSuccess={onSuccess} />
+                <CreateThread
+                  images={images}
+                  videos={videos}
+                  ref={formRef}
+                  isOpen={() => setIsComposerOpen(!isComposerOpen)}
+                  isCreateThread={(key: boolean) => {
+                    setIsCreatingThread(key);
+                  }}
+                  onSuccess={(data: Thread) => {
+                    onSuccess(data);
+                  }}
+                />
               </div>
 
               {/* Polls */}
               <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
-                <CreatePoll handleClick={() => setIsPollOpen(!isPollOpen)} />
+                <CreatePoll
+                ref={pollFormRef}
+                handleClick={() => setIsPollOpen(!isPollOpen)}
+                isCreatePoll={(key: boolean) => {
+                  setIsCreatingPoll(key);
+                }}
+                 />
               </div>
               <form noValidate onSubmit={handleParentSubmit}>
                 <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
@@ -507,7 +603,11 @@ const ForumsMainSection = () => {
                       </label>
                     </div>
                     <button
-                      onClick={() => setIsPollOpen(!isPollOpen)}
+                      type="button"
+                      onClick={() => {
+                        setIsPollOpen(!isPollOpen);
+                        setIsComposerOpen(false);
+                      }}
                       className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2"
                     >
                       <span className=" items-center justify-center ">
@@ -525,10 +625,14 @@ const ForumsMainSection = () => {
 
                   <button
                     type="submit"
-                    disabled={isCreatingThread}
+                    disabled={isCreatingThread || isCreatingPoll || !isComposerOpen && !isPollOpen}
                     className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
                   >
-                    {!isCreatingThread ? "Publish" : (<Loader size={14} className="animate-spin" />)}
+                    {!isCreatingThread ? (
+                      "Publish"
+                    ) : (
+                      <Loader size={14} className="animate-spin" />
+                    )}
                   </button>
                 </div>
               </form>
@@ -578,21 +682,26 @@ const ForumsMainSection = () => {
               </div>
             </div>
 
-            {
-              loading ? (
-                 <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
-              Thread Are Loading...
-            </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {/* Threads cards */}
-            {filteredThreads &&
-              filteredThreads.map((thread) => (
-                <ThreadsCard key={thread._id} thread={thread} onSuccess={onSuccess} />
-              ))}
-                </div>
-              )
-            }
+            {loading ? (
+              <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
+                Thread Are Loading...
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {/* Threads cards */}
+                {filteredThreads &&
+                  filteredThreads.map((thread) => (
+                    <ThreadsCard
+                      key={thread?._id}
+                      thread={thread}
+                      onSuccess={(ThreadId: number | undefined = undefined) => {
+                        onDelete(ThreadId!);
+                      }}
+                      onEdit={(data: Thread) => onEdit(data)}
+                    />
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* Right: sidebars placeholder column */}
@@ -615,28 +724,26 @@ const ForumsMainSection = () => {
                 Recommended Topics
               </h3>
               <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
-                {
-                  isLoadingTopics ? (
-                    <div className="flex items-center justify-center h-full">
-                      <Loader size={24} className="animate-spin" color="black" />
-                    </div>
-                  ) : (
-                    <div className="flex gap-2.5">
-                  {/* topics list */}
-                  {visibleTopics &&
-                    visibleTopics.map((topic) => (
-                      <Link
-                        href={topic.route}
-                        className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
-                      >
-                        <p className="font-inter font-normal text-[#505050] text-sm leading-none">
-                          {topic.title}
-                        </p>
-                      </Link>
-                    ))}
-                </div>
-                  )
-                }
+                {isLoadingTopics ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader size={24} className="animate-spin" color="black" />
+                  </div>
+                ) : (
+                  <div className="flex gap-2.5">
+                    {/* topics list */}
+                    {visibleTopics &&
+                      visibleTopics.map((topic) => (
+                        <Link
+                          href={topic.route}
+                          className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
+                        >
+                          <p className="font-inter font-normal text-[#505050] text-sm leading-none">
+                            {topic.title}
+                          </p>
+                        </Link>
+                      ))}
+                  </div>
+                )}
                 <button
                   onClick={handleTopic}
                   className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"
@@ -646,15 +753,15 @@ const ForumsMainSection = () => {
               </div>
             </div>
 
-            <div className="flex h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            {/* <div className="flex h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 You may know
               </h3>
               {/* users list */}
-              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+            {/* <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
                 <UsersCard />
               </div>
-            </div>
+            </div> */}
 
             <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">

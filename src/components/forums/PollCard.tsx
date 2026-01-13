@@ -28,9 +28,9 @@ const PollCard = () => {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [pollVoteStatus, setPollVoteStatus] = useState<
-    Record<number, { hasVoted: boolean; votedOptionId?: number }>
+    Record<number, { hasVoted: boolean; votedOptionId?: number; votes?: number; }>
   >({});
-  const [leading,setLoading] = useState(false);
+  const [leading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -65,35 +65,29 @@ const PollCard = () => {
 
         const data = await response.json();
         const polls = data?.data ?? [];
-        console.log("polls",polls);
-        
+        console.log("polls", polls);
 
         setPolls(polls);
         setVisiblePolls(polls.length ? [polls[0]] : []);
 
         //BUILD hasVoted MAP
-        const voteStatus: Record<
-          number,
-          { hasVoted: boolean; votedOptionId?: number }
-        > = {};
+        const voteStatus: Record<number, { hasVoted: boolean; votedOptionId?: number; votes?: number; }> = {};
+        polls.forEach((poll: Poll) => {
+          const votedOption = poll.options.find((option) =>
+            option.votedUserIds?.includes(Number(userId))
+          );
 
-       polls.forEach((poll: Poll) => {
-  const votedOption = poll.options.find((option) =>
-    option.votedUserIds?.includes(Number(userId))
-  );
+          console.log("votedOption", { votedOption });
 
-  console.log("votedOption",{votedOption});
-  
-
-  voteStatus[poll.PollId] = {
-    hasVoted: !!votedOption,
-    votedOptionId: votedOption?.OptionId,
-  };
-});
+          voteStatus[poll.PollId] = {
+            hasVoted: !!votedOption,
+            votedOptionId: votedOption?.OptionId,
+            votes: poll.totalVotes,
+          };
+        });
 
         setPollVoteStatus(voteStatus);
         setLoading(false);
-        
       } catch (error) {
         console.error("Error fetching polls:", error);
       }
@@ -131,6 +125,7 @@ const PollCard = () => {
           [PollId]: {
             hasVoted: true,
             votedOptionId: OptionId,
+            votes: (prev[PollId]?.votes ?? 0) + 1,
           },
         }));
         toast.success("You have successfully voted on this poll");
@@ -143,47 +138,49 @@ const PollCard = () => {
 
   return (
     <div className="flex flex-col gap-2 justify-between h-full">
-      {
-        leading ? (
-          <div className="flex items-center justify-center h-full w-full">
-            <Loader size={24} className="animate-spin" color="black" />
-          </div>
-        ): (
-          <div>
-        {visiblePolls?.map((poll) => (
-          <div key={poll?.PollId} className="flex mt-2 flex-col gap-4">
-            <div>
-              <h1 className="font-inter text-[#505050] font-semibold text-base md:text-lg leading-tight tracking-normal">
-                {poll?.title}
-              </h1>
-            </div>
-            <div className="flex flex-col gap-2 items-start justify-center w-full">
-              {poll?.options?.map((option) => (
-                <button
-                  key={option?.OptionId}
-                  {...(pollVoteStatus[Number(poll.PollId)]?.hasVoted
-                    ? { pointerEvents: "none", opacity: 0.6 }
-                    : { cursor: "pointer" })}
-                  onClick={() => handleVote(option?.OptionId, option?.PollId)}
-                  disabled={pollVoteStatus[Number(poll.PollId)]?.hasVoted}
-                  className="flex w-full max-w-[477px] h-6 justify-between items-center rounded-[39px] px-4 py-2 opacity-100 border border-[#E2E8F0] bg-[#FAF9F8]"
-                >
-                  <p className="font-inter font-normal text-[#505050] text-sm leading-tight tracking-normal">
-                    {option?.text}
-                  </p>
-                  <p
-                    className={`${pollVoteStatus[Number(poll.PollId)]?.hasVoted ? "block" : "hidden"} font-inter font-normal text-[#505050] text-sm leading-tight tracking-normal`}
+      {leading ? (
+        <div className="flex items-center justify-center h-full w-full">
+          <Loader size={24} className="animate-spin" color="black" />
+        </div>
+      ) : (
+        <div>
+          {visiblePolls?.map((poll) => (
+            <div key={poll?.PollId} className="flex mt-2 flex-col gap-4">
+              <div>
+                <h1 className="font-inter text-[#505050] font-semibold text-base md:text-lg leading-tight tracking-normal">
+                  {poll?.title}
+                </h1>
+              </div>
+              <div className="flex flex-col gap-2 items-start justify-center w-full">
+                {poll?.options?.map((option) => (
+                  <button
+                    key={option?.OptionId}
+                    {...(pollVoteStatus[Number(poll.PollId)]?.hasVoted
+                      ? { pointerEvents: "none", opacity: 0.6 }
+                      : { cursor: "pointer" })}
+                    onClick={() => handleVote(option?.OptionId, option?.PollId)}
+                    disabled={pollVoteStatus[Number(poll.PollId)]?.hasVoted}
+                    className="flex w-full max-w-[477px] h-6 justify-between items-center rounded-[39px] px-4 py-2 opacity-100 border border-[#E2E8F0] bg-[#FAF9F8]"
                   >
-                    {option?.voteCount}
-                  </p>
-                </button>
-              ))}
+                    <p className="font-inter font-normal text-[#505050] text-sm leading-tight tracking-normal">
+                      {option?.text}
+                    </p>
+                    <p
+                      className={`${pollVoteStatus[Number(poll.PollId)]?.hasVoted ? "block" : "hidden"} font-inter font-normal text-[#505050] text-sm leading-tight tracking-normal`}
+                    >
+                      {
+                        pollVoteStatus[Number(poll.PollId)]?.hasVoted && pollVoteStatus[Number(poll.PollId)]?.votedOptionId === option?.OptionId
+                          ? pollVoteStatus[Number(poll.PollId)]?.votes
+                          : option?.voteCount
+                      }
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-        )
-      }
+          ))}
+        </div>
+      )}
       <button
         onClick={handleAllPolls}
         className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"

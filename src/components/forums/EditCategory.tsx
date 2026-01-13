@@ -7,6 +7,17 @@ import toast from "react-hot-toast";
 import { set } from "sanity";
 import { form } from "sanity/structure";
 
+type Category = {
+  _id: string;
+  CategoryId: number;
+  title: string;
+  route: string;
+  color: string;
+  description: string;
+  threadCount: number;
+  imageUrl: string;
+};
+
 type EditCategoryProps = {
   titles: string;
   routes: string;
@@ -14,6 +25,7 @@ type EditCategoryProps = {
   colors: string;
   images: string| null;
   cateGoryId: number;
+  onSuccess?: ((data: Category) => void) | undefined
   isOpen: ()=>void;
 };
 
@@ -24,6 +36,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
   colors,
   images,
   cateGoryId,
+  onSuccess,
   isOpen
 }) => {
   const [title, setTitle] = useState(titles);
@@ -88,30 +101,34 @@ const EditCategory: React.FC<EditCategoryProps> = ({
       console.log(res);
 
       if (!res.ok) {
-        throw new Error("Failed to edit category");
         toast.error("Failed to edit category");
+        throw new Error("Failed to edit category");
       }
 
       const data = await res.json();
       console.log("Edit category data", data);
-      alert("Category edited successfully");
+      toast.success("Category edited successfully");
       setTitle("");
       setRoute("");
       setDescription("");
       setColor("#2563EB");
       setImage(null);
       setLoading(false);
+      onSuccess && onSuccess(data?.data);
       isOpen();
     } catch (error: any) {
+      setError(error?.message);
       console.error(error?.message, "Failed to edit category");
       toast.error("Failed to edit category");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="rounded-2xl border bg-white  p-5 shadow-sm">
       <h3 className="mb-4 text-lg font-semibold text-slate-900">
-        Create Category
+        Edit Category
       </h3>
 
       <form
@@ -213,6 +230,9 @@ const EditCategory: React.FC<EditCategoryProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Error */}
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
       {/* Submit */}
       <div className="flex justify-end">

@@ -9,15 +9,15 @@ import { set } from "sanity";
 type Comment = {
   sanityPodcastId: string;
   PodcastId: number;
+  CommentId: number;
   userId: number;
   comment: string;
-  parentCommentId: number | null;
-  level: number;
+  parentCommentId?: number | null;
   likeCount: number;
-  dislikeCount: number;
-  CommentId: number;
-  children?: Comment[];
+  likedBy: number[];
+  replies?: Comment[];
   createdAt: string;
+  likedByMe?: boolean;
 };
 
 type User = {
@@ -30,17 +30,15 @@ type User = {
 
 type CommentsCardProps = {
   comment: Comment;
-  addReply: (
-    e: React.FormEvent<HTMLFormElement>,
-    reply: string,
-    parentCommentId: number
-  ) => Promise<any>;
+  addReply: (text: string, parentCommentId?: number) => void;
+  onLike: (commentId: number,isLiked: boolean) => void;
   isActiveReply: boolean;
 };
 
 const PodcastCommentsCard: React.FC<CommentsCardProps> = ({
   comment,
   addReply,
+  onLike,
   isActiveReply,
 }) => {
   const [reply, setReply] = useState({ comment: "" });
@@ -49,9 +47,9 @@ const PodcastCommentsCard: React.FC<CommentsCardProps> = ({
   const [users, setUsers] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  const [replyComment, setReplyComment] = useState<Comment [] | null>(comment?.children || null);
   const [likeCount, setLikeCount] = useState(comment?.likeCount || 0);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyCount, setReplyCount] = useState(comment?.replies?.length || 0);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -68,24 +66,24 @@ const PodcastCommentsCard: React.FC<CommentsCardProps> = ({
   useEffect(() => {
     if (!token) return;
     const user = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    const data = await res.json();
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${comment?.userId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await res.json();
 
-    if (res.ok) {
-      setUsers(data?.data);
-    }
-  };
+      if (res.ok) {
+        setUsers(data?.data);
+      }
+    };
     user();
-  },[token]);
+  }, [token]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -98,76 +96,27 @@ const PodcastCommentsCard: React.FC<CommentsCardProps> = ({
   };
 
   const handleReply = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-
-  const response = await addReply(
-    e,
-    reply.comment,
-    comment.CommentId
-  );
-
-  console.log("parentCommentId:", comment.CommentId);
-  console.log("response:", response);
-  if (response) {
-  setReplyComment(prev => [...prev??[], response.data]);
-}
-};
-
-useEffect(() => {
-    const fetchLikeCount = async () => {
-      if (!token) return;
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}articles/comments/count?CommentId=${comment?.CommentId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setLikeCount(data?.data?.likeCount);
-        const hasLiked = data?.data?.likedUsers?.includes(Number(userId));
-        setIsLiked(hasLiked);
-      }
-    };
-    fetchLikeCount();
-  }, [token]);
-
-const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
-  e.preventDefault();
-  const data = {
-    CommentId: comment?.CommentId,
+    e.preventDefault();
+    try {
+      addReply(reply?.comment, comment?.CommentId);
+      setReplyCount(comment?.replies?.length as number);
+      setReply({ comment: "" });
+    } catch (error: any) {
+      console.log(error?.message, "failed to reply");
+    }
   };
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}articles/comments/like`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
-    if (!res.ok) {
-      console.log("failed to like");
-    }
-    else{
-      isLiked ? setLikeCount((prev) => prev - 1) : setLikeCount((prev) => prev + 1);
-       setIsLiked(!isLiked);
-    }
-    const data2 = await res.json();
-    console.log(data2);
-  } catch (error: any) {
-    console.log(error?.message,"failed to like and dislike");
-    
-  }
-}
 
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const isLiked = comment.likedBy.includes(Number(userId));
+
+    try {
+      console.log(comment?.likeCount);
+      const res = await onLike(comment?.CommentId, isLiked);
+    } catch (error) {
+      
+    }
+  };
 
   const duration = intervalToDuration({
     start: new Date(comment?.createdAt),
@@ -229,15 +178,16 @@ const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
               <div className="w-full flex items-center justify-between gap-3 md:gap-6">
                 <div className="flex items-center gap-3">
                   {/* Like */}
-                  <button 
-                  onClick={handleLike}
-                  className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${isLiked ? "bg-[#1A2A38]" : ""} transition`}>
+                  <button
+                    onClick={handleLike}
+                    className={`flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] ${comment?.likedBy?.includes(Number(userId)) ? "bg-[#1A2A38]" : ""} transition`}
+                  >
                     <img
                       src="/like.png"
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${likeCount}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${comment?.likeCount}`}</span>
                   </button>
 
                   {/* Comments */}
@@ -252,7 +202,7 @@ const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
                       alt=""
                       className="h-3 w-3 md:h-3.5 md:w-3.5"
                     />
-                    <span className="text-[12px] md:text-[14px]">{`${comment?.children?.length}`}</span>
+                    <span className="text-[12px] md:text-[14px]">{`${comment?.replies?.length}`}</span>
                   </button>
                 </div>
               </div>
@@ -265,16 +215,17 @@ const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
           <div>
             <div>
               {areRepliesVisible &&
-                replyComment &&
-                replyComment.length > 0 &&
-                replyComment.map((reply: Comment) => (
+                comment?.replies &&
+                comment?.replies?.length > 0 &&
+                comment?.replies?.map((reply: Comment) => (
                   <div
-                    key={reply?.sanityPodcastId}
+                    key={reply?.CommentId}
                     className="flex flex-col mt-2 pl-4"
                   >
                     <PodcastCommentsCard
                       comment={reply}
-                      addReply={handleReply}
+                      addReply={addReply}
+                      onLike={onLike}
                       isActiveReply={isActiveReply}
                     />
                   </div>
