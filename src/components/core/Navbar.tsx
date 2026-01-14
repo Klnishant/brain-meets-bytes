@@ -93,14 +93,14 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
           </div>
 
           <div className="flex flex-col gap-3">
-            <button className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            <button className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700">
               <User size={16} />
               Profile
             </button>
 
             {/* Admin */}
             <button
-              className="w-fit flex justify-center items-center px-4  py-2 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] bg-gradient-to-r from-[#D62828] to-[#701515] whitespace-nowrap hover:shadow-md"
+              className="w-fit flex justify-center items-center px-4  md:py-2 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] bg-gradient-to-r from-[#D62828] to-[#701515] whitespace-nowrap hover:shadow-md"
               style={{ backgroundColor: COLORS.brandRed }}
             >
               Admin
@@ -117,7 +117,7 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
 
             <button
               onClick={onLogout}
-              className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-red-600"
             >
               <LogOut size={16} />
               Logout
@@ -344,7 +344,7 @@ const Navbar = () => {
             className={`${isOpen ? "bg-[#FAF9F8] border border-[#E2E8F0]  rounded-xl" : "bg-none"}  px-4 py-2`}
           >
             <button
-              className={`lg:hidden focus:outline-none w-full flex justify-end ${"text-slate-800"}`}
+              className={`lg:hidden focus:outline-none w-full flex justify-end ${isForumsPage && !isOpen ? "text-white" : "text-slate-800"}`}
               onClick={() => setIsOpen(!isOpen)}
             >
               <svg
@@ -396,20 +396,11 @@ const Navbar = () => {
                 })}
               </nav>
 
-              {/* Admin */}
-              <button
-                className="flex justify-center items-center px-2  py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] bg-gradient-to-r from-[#D62828] to-[#701515] whitespace-nowrap hover:shadow-md hover:-translate-y-0.5"
-                style={{ backgroundColor: COLORS.brandRed }}
-                onClick={() => setOpenMembership(true)}
-              >
-                Admin
-              </button>
-
               {/* RIGHT SIDE — Search + Membership + Login (desktop) */}
               <div className="flex flex-col items-center gap-3 lg:gap-6 shrink-0 mt-5">
                 {/* Membership */}
                 <button
-                  className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5"
+                  className={`${users ? "hidden" : ""} flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5`}
                   style={{ backgroundColor: COLORS.brandRed }}
                   onClick={() => setOpenMembership(true)}
                 >
@@ -429,16 +420,13 @@ const Navbar = () => {
                     Login
                   </button>
                 ) : (
-                  <button
-                    className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
-                    style={{
-                      borderColor: COLORS.brandNavy,
-                      color: COLORS.brandNavy,
-                    }}
-                    onClick={() => setIsLoggedIn(false)}
-                  >
-                    Logout
-                  </button>
+                  <div>
+                <ProfileDropdown
+                  user={users}
+                  onLogout={handleLogout}
+                  onMembership={(open: boolean) => setOpenMembership(open)}
+                />
+              </div>
                 )}
               </div>
             </div>

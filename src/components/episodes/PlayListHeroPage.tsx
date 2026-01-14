@@ -1,18 +1,9 @@
 "use client";
 import Link from "next/link";
-import { Bookmark, Home, MessageSquare, Share2, ThumbsUp } from "lucide-react";
 import { COLORS } from "@/lib/constants";
-import React, { use, useEffect, useMemo, useRef, useState } from "react";
-import { sanityClient } from "@/lib/sanityClient";
-import { podcast } from "../../../sanity/schemaTypes/podcast";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { set } from "sanity";
-import CommentsCard from "../forums/CommentsCard";
-import { getUser } from "@/lib/getUser";
 import { getAuth } from "@/lib/getAuth";
-import { on } from "events";
-import { get } from "http";
-import toast from "react-hot-toast";
 import PodcastCommentsCard from "../commentsCard/PodcastCommentsCard";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/Redux/store";
@@ -963,7 +954,6 @@ const PlayListHeroPage = () => {
   const [auth, setAuth] = useState<{ token: string; userId: number } | null>(
     null
   );
-  const loadedEpisodesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchAuth = async () => {

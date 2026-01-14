@@ -233,8 +233,6 @@ const EditCategory: React.FC<EditCategoryProps> = ({
 
       {/* Error */}
       {error && <p className="text-sm text-red-500">{error}</p>}
-
-      {/* Submit */}
       <div className="flex justify-end">
         <button
           form="category"

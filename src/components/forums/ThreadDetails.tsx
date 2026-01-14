@@ -276,11 +276,8 @@ const ThreadDetails = () => {
         }
       )
       if (!res.ok) {
-        toast.error("Failed to like comment. Please try again later.");
       }
-      toast.success("Comment liked successfully!");
     } catch (error) {
-      toast.error("Failed to like comment. Please try again later.");
     }
   }
 

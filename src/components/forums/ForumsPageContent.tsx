@@ -16,6 +16,7 @@ import MobileViewBar from "./MobileViewBar";
 import { getAuth } from "@/lib/getAuth";
 import { set } from "sanity";
 import { Loader } from "lucide-react";
+import useInfiniteScroll from "react-infinite-scroll-hook";
 
 type Category = {
   _id: string;
@@ -79,14 +80,58 @@ type User = {
   ProfilePic: string;
 };
 
+type Author = {
+  name: string;
+  content: string;
+  imageUrl: string;
+};
+
+type ForumHeroContent = {
+  heading: string;
+  description: string;
+  authors: Author[];
+  imageUrl: string;
+  date: string;
+  
+};
+
 const ForumsHeroSection = () => {
+  const[content,setContent]=useState<ForumHeroContent | null>(null);
+  const[contentLength,setContentLength]=useState<number>(0);
+  
+    useEffect(() => {
+      let mounted = true;
+  
+      const load = async () => {
+        try {
+          const contentRes = await fetch("/api/forum-hero");
+          if (!contentRes.ok) {
+            throw new Error("Failed to load forum hero content");
+          }
+  
+          const contentData = (await contentRes.json()) as ForumHeroContent;
+          if (!mounted) return;
+          setContent(contentData);
+          setContentLength(contentData?.heading?.length ?? 0);
+        } catch (e: any) {
+          if (!mounted) return;
+          setContent(null);
+        }
+      };
+  
+      void load();
+  
+      return () => {
+        mounted = false;
+      };
+    }, []);
   return (
     <section className="relative w-full bg-[#023047] text-white pb-16 pt-24 md:pb-24 md:pt-28">
       {/* Subtle background image overlay (reusing article bg for now) */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 h-[640px] w-full -translate-x-1/2 opacity-25">
           <img
-            src="/forum-bg.jpg"
+            src={content?.imageUrl ?? "./forums-hero.png"}
             alt="Forums hero background"
             className="h-full w-full object-cover"
           />
@@ -97,19 +142,38 @@ const ForumsHeroSection = () => {
         {/* Left: Heading + copy + CTA */}
         <div className="flex w-full max-w-[875px] flex-col gap-8">
           <div className="flex flex-col gap-4">
-            <h1 className="font-sora text-[34px] leading-[44px] text-[#FAF9F8] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
-              Brain Meets Bytes{" "}
+            <h1 className="font-sora text-[34px] leading-[44px] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
+             {
+              content?.heading ? (
+                <div>
+                    {
+                      content?.heading?.split(" ").map((word, index) => (
+                        <span
+                          key={index}
+                          className={index+1 == 4 ? "text-[#D62828]" : ""}
+                        >
+                          {word}{" "}
+                        </span>
+                      ))
+                    }
+                </div>
+              ) : (
+                <div>
+                   Brain Meets Bytes{" "}
               <span style={{ color: COLORS.brandRed }}>Community</span>
+                </div>
+              )
+             }
             </h1>
             <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#E2E8F0] md:text-[18px] md:leading-[28px]">
-              Breakthroughs don&apos;t happen alone. Connect with fellow
+              {content?.description || `Breakthroughs don&apos;t happen alone. Connect with fellow
               listeners, researchers, and health enthusiasts exploring smarter
-              brain health and longevity together.
+              brain health and longevity together.`}
             </p>
           </div>
 
           <button className="inline-flex h-[50px] w-full md:w-fit items-center justify-center gap-3 rounded-[36px] bg-[#FAF9F8] px-8 text-[18px] font-normal text-[#023047]">
-            <span className="font-sora">Discover all Treads</span>
+            <span className="font-sora">Discover all Threads</span>
             <img
               src="./dropdown-arrow.png"
               alt="More"
@@ -121,10 +185,14 @@ const ForumsHeroSection = () => {
         {/* Right: hero cards row */}
         <div className="mt-8 flex w-full max-w-[824px] flex-row gap-6 overflow-x-auto pb-4 lg:mt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           {/* Card 1 */}
-          <div className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
+          {
+            content?.authors && content?.authors?.map((author, index) => (
+              <div
+              key={index}
+               className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
             <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
               <img
-                src="/forum-hero-1.png"
+                src={`${author.imageUrl}`}
                 alt="Forum hero"
                 className="h-full w-full object-cover"
               />
@@ -132,53 +200,19 @@ const ForumsHeroSection = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
             <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
               <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
-                Lorem ipsum dolor sit amet, sectetur adipiscing elit.
+                {author?.content}
               </p>
               <p className="font-inter text-[14px] font-light leading-[24px] text-white">
-                By Jerry#203
+                By {author?.name}
               </p>
             </div>
           </div>
+            ))
+          }
 
           {/* Card 2 */}
-          <div className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
-            <div className="absolute -left-28 -top-8 h-[409px] w-[716px]">
-              <img
-                src="/forum-hero-2.png"
-                alt="Forum hero"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
-            <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
-              <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
-                Lorem ipsum dolor sit amet, sectetur adipiscing elit.
-              </p>
-              <p className="font-inter text-[14px] font-light leading-[24px] text-white">
-                By Sam#003
-              </p>
-            </div>
-          </div>
 
           {/* Card 3 */}
-          <div className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow">
-            <div className="absolute -left-40 -top-1 h-[321px] w-[482px]">
-              <img
-                src="/forum-hero-3.jpg"
-                alt="Forum hero"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
-            <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
-              <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
-                Lorem ipsum dolor sit amet, sectetur adipiscing elit.
-              </p>
-              <p className="font-inter text-[14px] font-light leading-[24px] text-white">
-                By Rick#883
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -202,7 +236,8 @@ const ForumsMainSection = () => {
   const [isMostPopularActive, setIsMostPopularActive] = useState(true);
   const [isLatestActive, setIsLatestActive] = useState(false);
   const [isHighestVotedActive, setIsHighestVotedActive] = useState(false);
-  const [isCreatingPoll,setIsCreatingPoll] = useState(false);
+  const [isCreatingPoll, setIsCreatingPoll] = useState(false);
+  const [hasnext, setHasNext] = useState(false);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -216,41 +251,47 @@ const ForumsMainSection = () => {
     fetchAuth();
   }, []);
 
-  const fetchThreads = async () => {
-    if (!token) return;
+ const fetchThreads = async () => {
+  if (!token) return;
 
-    try {
-      setLoading(true);
-      setError(null);
+  try {
+    setLoading(true);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to load threads");
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?page=${page}&limit=10`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
       }
+    );
 
-      const data = (await res.json())?.data as Thread[];
+    if (!res.ok) throw new Error("Failed to load threads");
 
-      const fetchedThreads = Array.isArray(data) ? data : [];
-      const sortedThreads = [...fetchedThreads].sort(
-        (a, b) => b.likesCount - a.likesCount
-      );
-      setThreads(sortedThreads);
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to load threads");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const Res = await res.json();
+    const data = Res?.data ?? [];
+
+    setThreads((prev) => [...prev, ...data]);
+    setHasNext(page < Res?.meta?.totalPages);
+  } catch (e) {
+    setError("Failed to load threads");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  useEffect(() => {
+    fetchThreads();
+  }, [token, page]);
+
+  const [infiniteRef, { rootRef }] = useInfiniteScroll({
+    loading,
+    hasNextPage: hasnext,
+    onLoadMore: () => {
+      console.log(" onLoadMore fired");
+      setPage((prev) => prev + 1);
+    },
+    rootMargin: "0px 0px 300px 0px",
+  });
 
   const fetchTopics = async () => {
     if (!token) return;
@@ -279,9 +320,7 @@ const ForumsMainSection = () => {
       setIsLoadingTopics(false);
     }
   };
-
   useEffect(() => {
-    fetchThreads();
     fetchTopics();
   }, [token]);
   const onSuccess = (data: Thread) => {
@@ -334,7 +373,7 @@ const ForumsMainSection = () => {
 
   const formRef = useRef<CreatThreadFormRef>(null);
   const pollFormRef = useRef<CreatePollFormRef>(null);
-   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const selectedFiles = Array.from(e.target.files);
@@ -367,12 +406,12 @@ const ForumsMainSection = () => {
   const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isComposerOpen) {
-    formRef.current?.submit(e);
-  }
+      formRef.current?.submit(e);
+    }
 
-  if (isPollOpen) {
-    pollFormRef.current?.submit(e);
-  }
+    if (isPollOpen) {
+      pollFormRef.current?.submit(e);
+    }
   };
 
   const handleLoading = () => {
@@ -450,7 +489,7 @@ const ForumsMainSection = () => {
               }}
               className={`flex h-[36px] w-[104px] md:h-[50px] md:w-[150px] items-center justify-center rounded-[36px] ${isLatestActive ? "bg-[#023047] text-white" : "bg-white text-[#023047] opacity-70"}`}
             >
-              Latest Tread
+              Latest Thread
             </button>
           </div>
         </div>
@@ -462,7 +501,7 @@ const ForumsMainSection = () => {
             <div className="hidden md:block md:flex items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3">
               <input
                 type="text"
-                placeholder="Search for a tread...."
+                placeholder="Search for a thread...."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="flex-1 bg-transparent outline-none text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
@@ -498,11 +537,10 @@ const ForumsMainSection = () => {
                   </button>
                 </div>
                 <div
-                  onClick={() =>{
+                  onClick={() => {
                     setIsComposerOpen(true);
                     setIsPollOpen(false);
-                  }
-                  }
+                  }}
                   className={`${isComposerOpen ? "hidden" : "block"} flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] px-6 py-3`}
                 >
                   <span className="font-sora text-[16px] text-[#64748B]">
@@ -531,12 +569,12 @@ const ForumsMainSection = () => {
               {/* Polls */}
               <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
                 <CreatePoll
-                ref={pollFormRef}
-                handleClick={() => setIsPollOpen(!isPollOpen)}
-                isCreatePoll={(key: boolean) => {
-                  setIsCreatingPoll(key);
-                }}
-                 />
+                  ref={pollFormRef}
+                  handleClick={() => setIsPollOpen(!isPollOpen)}
+                  isCreatePoll={(key: boolean) => {
+                    setIsCreatingPoll(key);
+                  }}
+                />
               </div>
               <form noValidate onSubmit={handleParentSubmit}>
                 <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
@@ -625,7 +663,11 @@ const ForumsMainSection = () => {
 
                   <button
                     type="submit"
-                    disabled={isCreatingThread || isCreatingPoll || !isComposerOpen && !isPollOpen}
+                    disabled={
+                      isCreatingThread ||
+                      isCreatingPoll ||
+                      (!isComposerOpen && !isPollOpen)
+                    }
                     className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
                   >
                     {!isCreatingThread ? (
@@ -682,26 +724,36 @@ const ForumsMainSection = () => {
               </div>
             </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
-                Thread Are Loading...
+            <div>
+             {
+              loading && page==1 ? (
+                  <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
+              Thread Are Loading...
+            </div>
+              ) : (
+                 <div
+                ref={rootRef}
+                className="h-[1000px] overflow-y-auto scrollbar-hide flex flex-col gap-2"
+              >
+                {filteredThreads.map((thread) => (
+                  <ThreadsCard
+                    key={thread._id}
+                    thread={thread}
+                    onSuccess={(ThreadId) => onDelete(ThreadId!)}
+                    onEdit={(data) => onEdit(data)}
+                  />
+                ))}
+                <div ref={infiniteRef} className="h-[1px]" />
+
+                {hasnext && loading && (
+                  <div className="flex justify-center py-4">
+                    <Loader size={24} className="animate-spin text-black" />
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {/* Threads cards */}
-                {filteredThreads &&
-                  filteredThreads.map((thread) => (
-                    <ThreadsCard
-                      key={thread?._id}
-                      thread={thread}
-                      onSuccess={(ThreadId: number | undefined = undefined) => {
-                        onDelete(ThreadId!);
-                      }}
-                      onEdit={(data: Thread) => onEdit(data)}
-                    />
-                  ))}
-              </div>
-            )}
+              )
+             }
+            </div>
           </div>
 
           {/* Right: sidebars placeholder column */}

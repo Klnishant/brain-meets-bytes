@@ -94,6 +94,9 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess, onEdit }) 
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reason,setReason] = useState('');
   const [likedArray,setLikedArray] = useState<Like[]>([]);
+  const [imageLength, setImageLength] = useState(0);
+
+  const isMySavedThreadPage = pathname === "/forums/MySavedThreads";
 
   useMemo(() => {
     const fetchAuth = async () => {
@@ -110,13 +113,15 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess, onEdit }) 
 
   useEffect(() => {
     if (!userId) return;
-    const normalizedLikes: Like[] = Array.isArray(thread.likes)
-  ? thread.likes
+    const normalizedLikes: Like[] = Array.isArray(thread?.likes)
+  ? thread?.likes
   : [];
 
 const hasLiked = normalizedLikes.some(
-  (like) => like.userId === Number(userId)
+  (like) => like?.userId === Number(userId)
 );
+
+setImageLength(thread?.images?.length);
 
 setHasLiked(hasLiked);
   }, [userId]);
@@ -466,7 +471,7 @@ setHasLiked(hasLiked);
       </div>
       <div className="flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
         <div className="w-full flex flex-col gap-4">
-          <div className="w-full flex  items-center justify-between">
+          <div className={`w-full flex  items-center justify-between ${ isMySavedThreadPage ? "hidden" : "block"}`}>
             <div className="flex gap-3 items-center md:items-start">
               <div className="h-9 w-9 md:h-15 md:w-15 overflow-hidden rounded-full">
                 <img
@@ -487,7 +492,7 @@ setHasLiked(hasLiked);
                 </p>
               </div>
             </div>
-            <div className="flex gap-1 items-center">
+            <div className={`flex gap-1 items-center ${ isMySavedThreadPage ? "hidden" : "block"}`}>
               <button
               disabled={isReporting}
               onClick={()=>setIsReportOpen(!isReportOpen)} 
@@ -542,12 +547,13 @@ setHasLiked(hasLiked);
                 </h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {thread?.images &&
-                    thread?.images.map((image) => (
+                    thread?.images.map((image,indx) => (
                       <>
                         <img
+                        key={indx}
                           src={image}
                           alt=""
-                          className="w-full h-full rounded-xl"
+                          className={`w-full h-full rounded-xl object-cover ${indx+1 == imageLength && imageLength%2 != 0 ? "col-span-2" : ""}`}
                         />
                       </>
                     ))}
@@ -560,7 +566,7 @@ setHasLiked(hasLiked);
           </Link>
           <div>
             {/*BTNS*/}
-            <div className="w-full">
+            <div className={`w-full ${ isMySavedThreadPage ? "hidden" : "block"}`}>
               <div className="w-full flex items-center justify-between gap-3 md:gap-6">
                 <div className="flex items-center gap-3">
                   {/* Like */}

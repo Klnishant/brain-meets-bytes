@@ -7,6 +7,7 @@ import CreatePoll from "./CreatePoll";
 import CategoryCard from "./CategoryCard";
 import PollCard from "./PollCard";
 import UsersCard from "./UsersCard";
+import { set } from "sanity";
 
 const MobileViewBar = ({ className }: { className?: string }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -32,7 +33,6 @@ const MobileViewBar = ({ className }: { className?: string }) => {
 
     setImages((prev) => [...prev, ...selectedFiles]);
 
-    // Reset input so same image can be re-selected
     e.target.value = "";
   };
 
@@ -51,7 +51,6 @@ const MobileViewBar = ({ className }: { className?: string }) => {
 
     setVideos((prev) => [...prev, ...selectedFiles]);
 
-    // Reset input so same image can be re-selected
     e.target.value = "";
   };
 
@@ -64,11 +63,11 @@ const MobileViewBar = ({ className }: { className?: string }) => {
     <div>
       {/* Search Bar */}
       <div
-        className={`${isSearchOpen ? "block" : "hidden"} items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3`}
+        className={`${isSearchOpen ? "block" : "hidden"} flex items-center justify-between gap-4 rounded-[42px] border border-[#E2E8F0] bg-white px-6 py-3`}
       >
         <input
           type="text"
-          placeholder="Search for a tread...."
+          placeholder="Search for a thread...."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 bg-transparent outline-none text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
@@ -270,16 +269,31 @@ const MobileViewBar = ({ className }: { className?: string }) => {
           </div>
       {/* Menu items */}
       <div className={`${isMenuOpen ? "block" : "hidden"} rounded-3xl p-2 flex flex-col gap-2 bg-[#023047]`}>
-        <button onClick={()=>(setIsCategoriesOpen(!isCategoriesOpen))}>
+        <button onClick={()=>{
+          setIsCategoriesOpen(!isCategoriesOpen);
+          setIsTopicsOpen(false);
+          setIsPollsOpen(false);
+          setIsUsersOpen(false);
+        }}>
           Top Categories
         </button>
         <button className="hidden" onClick={()=>(setIsTopicsOpen(!isTopicsOpen))}>
           Recomended Topics
         </button>
-        <button onClick={()=>(setIsUsersOpen(!isUsersOpen))}>
+        <button onClick={()=>{
+          setIsUsersOpen(!isUsersOpen);
+          setIsCategoriesOpen(false);
+          setIsTopicsOpen(false);
+          setIsPollsOpen(false);
+        }}>
           You May Know
         </button>
-        <button onClick={()=>(setIsPollsOpen(!isPollsOpen))}>
+        <button onClick={()=>{
+          setIsPollsOpen(!isPollsOpen);
+          setIsCategoriesOpen(false);
+          setIsTopicsOpen(false);
+          setIsUsersOpen(false);
+        }}>
           Poll
         </button>
       </div>
@@ -289,7 +303,11 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         {/* Icon Buttons */}
         <div className="flex items-center gap-6">
           <button
-            onClick={() => (setIsSearchOpen(!isSearchOpen))}
+            onClick={() => {
+              setIsSearchOpen(!isSearchOpen)
+              setIsComposerOpen(false)
+              setIsMenuOpen(false)
+            }}
             className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center"
           >
             <Search size={"16px"} />
@@ -304,7 +322,11 @@ const MobileViewBar = ({ className }: { className?: string }) => {
           </button>
 
           <button
-            onClick={() => setIsComposerOpen(!isComposerOpen)}
+            onClick={() => {
+              setIsComposerOpen(!isComposerOpen)
+              setIsSearchOpen(false)
+              setIsMenuOpen(false)
+            }}
             className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center"
           >
             <Plus size={"16px"} />
@@ -312,7 +334,11 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         </div>
         {/* Menu Button */}
         <button 
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        onClick={() => {
+          setIsMenuOpen(!isMenuOpen)
+          setIsSearchOpen(false)
+          setIsComposerOpen(false)
+        }}
         className="flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm">
           <Menu size={"18px"} />
           Menu

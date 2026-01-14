@@ -10,6 +10,7 @@ import { aboutMission } from "./aboutMission";
 import { aboutWhatWeExplore } from "./aboutWhatWeExplore";
 import { aboutApproach } from "./aboutApproach";
 import { podcastHero } from "./podcastHero";
+import { forumHero } from "./forumHero";
 
 export const schemaTypes = [
   podcast,
@@ -22,4 +23,5 @@ export const schemaTypes = [
   aboutWhatWeExplore,
   aboutApproach,
   podcastHero,
+  forumHero,
 ];

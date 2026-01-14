@@ -199,7 +199,7 @@ const SelectCategoryCard: React.FC<SelectCategoryCardProps> = ({
               </div>
               <button
                 onClick={() => setOpenCreate(!openCreate)}
-                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50"
+                className="hidden w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50"
               >
                 ➕ Create
               </button>
