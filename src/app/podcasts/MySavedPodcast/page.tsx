@@ -1,8 +1,11 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
+import { sanityClient } from "@/lib/sanityClient";
+import { log } from "console";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { set } from "sanity";
 
 type Podcast = {
   sanityPodcastId: string;
@@ -41,11 +44,34 @@ type SavedPodcast = {
   podcast: Podcast;
 };
 
+const query = `
+*[_type == "episode" && _id in $episodeIds] | order(date desc) {
+  _id,
+  title,
+  "slug": slug.current,
+  kind,
+  date,
+  duration,
+  tags,
+  description,
+  "imageUrl": image.asset->url,
+  "mediaUrl": mediaFile.asset->url,
+  podcast->{
+    _id,
+    title
+  }
+}
+`;
+
+
+
 const MySavedPodcast = () => {
   const [podcasts, setPodcasts] = useState<SavedPodcast[]>([]);
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [podcastId, setPodcastId] = useState<string[] | null>(null);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -80,6 +106,8 @@ const MySavedPodcast = () => {
         const data = await res.json();
         console.log("saved articles", data);
         setPodcasts(data?.data || []);
+        const savedPodcastsIds = data?.data?.map((item: SavedPodcast) => item.sanityPodcastId);
+        setPodcastId(savedPodcastsIds);
       }
     } catch (error: any) {
       console.log(error?.message, "Failed to fetch saved articles");
@@ -88,6 +116,27 @@ const MySavedPodcast = () => {
     }
   };
 
+  const fetchEpisodesFromSanity = async (episodeIds: string[]) => {
+  if (!episodeIds || episodeIds.length === 0) return [];
+
+  const data = await sanityClient.fetch(query, {
+    episodeIds,
+  });
+
+  setEpisodes(data);
+};
+
+useEffect(() => {
+  if (podcastId) {
+    fetchEpisodesFromSanity(podcastId);
+  }
+}, [podcastId]);
+
+useEffect(() => {
+    console.log("Episodes:", episodes);
+  }, [episodes]);
+
+
   useEffect(() => {
     fetchSavedPodcats();
   }, [token]);
@@ -95,10 +144,10 @@ const MySavedPodcast = () => {
     <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
         <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
-          My Saved Articles
+          My Saved Podcasts
         </h1>
         <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
-          Here you can find your saved Articles
+          Here you can find your saved podcasts for easy access and listening.
         </p>
         {loading ? (
           <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
@@ -107,17 +156,17 @@ const MySavedPodcast = () => {
         ) : (
           <div className="flex flex-col gap-2 ">
             {/* Saved Articles */}
-            {podcasts.map((podcast: SavedPodcast) => (
+            {episodes.map((podcast: Episode) => (
               <div
-                key={podcast?.sanityPodcastId}
+                key={podcast?._id}
                 className="flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5"
               >
                 <div className="w-full flex flex-col gap-4">
-                  <Link href={`/podcasts/${String(podcast?.podcast?.name)}`}>
+                  <Link href={`/podcasts/${String(podcast?.title)}`}>
                     <div>
                       <div className="flex flex-col gap-4">
                         <h1 className="font-sora font-semibold text-[#1E293B] text-[16px] md:text-2xl leading-6">
-                          {podcast?.podcast?.name}
+                          {podcast?.title}
                         </h1>
                       </div>
                     </div>

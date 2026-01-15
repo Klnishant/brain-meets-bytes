@@ -1,6 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { use } from "react";
-import { json } from "stream/consumers";
 
 export type Comment = {
   sanityPodcastId: string;

@@ -1,7 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { use } from "react";
-import { json } from "stream/consumers";
-import { article } from "../../../sanity/schemaTypes/article";
 
 export type Comment = {
   sanityArticleId: string;
@@ -140,7 +137,7 @@ export const postComment = createAsyncThunk(
 
       return {
         articleId,
-        comment: data.data, // 👈 VERY IMPORTANT
+        comment: data.data,
       };
     } catch (err: any) {
       return rejectWithValue(err.message);

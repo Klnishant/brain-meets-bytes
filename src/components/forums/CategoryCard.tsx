@@ -204,17 +204,25 @@ const CategoryCard = () => {
                             backgroundColor: category?.color || "black",
                           }}
                         >
-                          <img
+                          {
+                            category?.imageUrl ? (
+                              <img
                             src={category?.imageUrl}
                             alt={category?.title[0]}
                             className=" w-6 h-6 opacity-100 object-cover rounded-full z-5 items-center justify-center"
                           />
+                            ) : (
+                              <span className="font-inter font-bold text-white text-2xl">
+                              {category?.title[0].toUpperCase()}
+                            </span>
+                            )
+                          }
                         </div>
                         <div className="w-full">
                           <div className="w-full flex items-center justify-between gap-1">
                             <div className="">
                               <h1 className="font-inter font-semibold text-[#023047] text-lg leading-7">
-                                {category?.title}
+                                {category?.title}{" "}{category?.imageUrl}
                               </h1>
                             </div>
                             <div className="flex gap-1 items-center">

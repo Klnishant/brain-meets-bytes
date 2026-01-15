@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   console.log("hello");
   
-   const body = await req.json();
-   console.log(body);
+   const {email, password, remeberMe} = await req.json();
+   console.log({email, password, remeberMe});
    
 
    try {
-    if (!body.email || !body.password) {
+    if (!email || !password) {
       return NextResponse.json(
         { message: "Email and password are required" },
         { status: 400 }
@@ -16,10 +16,11 @@ export async function POST(req: Request) {
     }
      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ email, password}),
       })
       console.log(res);
       const result = await res.json();
@@ -38,13 +39,17 @@ export async function POST(req: Request) {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7
+        expires: remeberMe
+    ? new Date(Date.now() + 7 * 24 * 60 * 60)
+    : undefined,
        });
        response.cookies.set("userId", userId, {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7
+        expires: remeberMe
+    ? new Date(Date.now() + 7 * 24 * 60 * 60)
+    : undefined,
        })
        return response
    } catch (err) {

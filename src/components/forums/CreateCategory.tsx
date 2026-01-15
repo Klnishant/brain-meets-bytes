@@ -177,7 +177,17 @@ const CreateCategory = () => {
           className="flex h-10 w-10 items-center justify-center rounded-full text-white"
           style={{ backgroundColor: color }}
         >
-          {title?.[0] || "C"}
+          {image ? (
+            <img
+              src={URL.createObjectURL(image)}
+              alt={title}
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          ) : (
+            <span className="text-lg font-bold">
+              {title ? title.charAt(0).toUpperCase() : "C"}
+            </span>
+          )}
         </div>
 
         <div>
@@ -195,6 +205,7 @@ const CreateCategory = () => {
         <button
           form="category"
           type="submit"
+          disabled={loading}
           className="rounded-full bg-[#023047] px-6 py-2 text-sm font-semibold text-white"
         >
            {!loading ? "Create Category" : (<Loader size={14} className="animate-spin" />)}

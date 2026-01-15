@@ -17,6 +17,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
   const [signInData, setSignInData] = useState({
     email: "",
     password: "",
+    remeberMe: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,14 +36,14 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
     setError(null);
     // Handle form submission logic here
     if (!signInData.email || !signInData.password) {
+      setError("Please fill in all the required fields.");
       return;
     }
-    // Perform login logic here
     try {
-      // Perform login logic here
       const body = {
         "email": signInData.email,
-        "password": signInData.password 
+        "password": signInData.password,
+        "remeberMe": signInData.remeberMe
       }
       console.log(body);
       
@@ -62,6 +63,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
         setSignInData({
           email: "",
           password: "",
+          remeberMe: false,
         });
         handleIsLoggedIn && handleIsLoggedIn();
         onClose && onClose();
@@ -139,7 +141,14 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
           {/* Remember Me */}
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-[#64748B]">
-            <input type="checkbox" className="rounded border-[#E2E8F0]" />
+            <input
+             name="remeberMe"
+              checked={signInData.remeberMe}
+              onChange={(e) => setSignInData((prev) => ({
+                ...prev,
+                remeberMe: e.target.checked,
+              }))}
+             type="checkbox" className="rounded border-[#E2E8F0]" />
             Remember me
           </label>
             <p

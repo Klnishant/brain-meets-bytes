@@ -1,7 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { use } from "react";
-import { json } from "stream/consumers";
-import { article } from "../../../sanity/schemaTypes/article";
 import toast from "react-hot-toast";
 
 export type Comment = {
