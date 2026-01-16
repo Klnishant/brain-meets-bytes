@@ -1,9 +1,15 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
-import { Loader } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Loader, SquarePen } from "lucide-react";
+import React, { use, useEffect, useId, useState } from "react";
 import toast from "react-hot-toast";
+import EditPoll from "./EditPoll";
+import { getUser } from "@/lib/getUser";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPolls } from "@/Redux/slices/PollSlice";
+import { current } from "@reduxjs/toolkit";
 
 type Option = {
   votedUserIds: number[];
@@ -14,6 +20,7 @@ type Option = {
 };
 
 type Poll = {
+  userId: number | null;
   PollId: number;
   title: string;
   description: string;
@@ -22,15 +29,34 @@ type Poll = {
 };
 
 const PollCard = () => {
-  const [polls, setPolls] = useState<Poll[]>([]);
+  //const [polls, setPolls] = useState<Poll[]>([]);
   const [isVoted, setIsVoted] = useState(false);
   const [visiblePolls, setVisiblePolls] = useState<Poll[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [pollVoteStatus, setPollVoteStatus] = useState<
-    Record<number, { hasVoted: boolean; votedOptionId?: number; votes?: number; }>
+    Record<
+      number,
+      { hasVoted: boolean; votedOptionId?: number; votes?: number }
+    >
   >({});
   const [leading, setLoading] = useState(false);
+  const [currentPoll, setCurrentPoll] = useState<Poll | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [currentEditPoll, setCurrentEditPoll] = useState<number>();
+  const [isPollEditing, setIspollEditing] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getUser();
+      if (user) {
+        setUser(user);
+      }
+      console.log(user);
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -43,58 +69,51 @@ const PollCard = () => {
     };
     fetchAuth();
   }, []);
+
+  const dispatch = useDispatch<AppDispatch>();
+  
   useEffect(() => {
-    const fetchPolls = async () => {
-      if (!token || !userId) return;
+    if (!token) return;
+    dispatch(fetchPolls({ token }));
+  }, [token, userId]);
 
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}polls`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+  const polls = useSelector((state: RootState) => state.polls.polls);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch polls");
-        }
+  useEffect(() => {
+     if (visiblePolls.length === 0 && polls.length > 0) {
+    setVisiblePolls([polls[0]]);
+  }
+  setVisiblePolls(polls);
+  }, [polls, visiblePolls.length]);
 
-        const data = await response.json();
-        const polls = data?.data ?? [];
-        console.log("polls", polls);
-
-        setPolls(polls);
-        setVisiblePolls(polls.length ? [polls[0]] : []);
-
-        //BUILD hasVoted MAP
-        const voteStatus: Record<number, { hasVoted: boolean; votedOptionId?: number; votes?: number; }> = {};
+  useEffect(() => {
+    //BUILD hasVoted MAP
+        const voteStatus: Record<
+          number,
+          { hasVoted: boolean; votedOptionId?: number; votes?: number }
+        > = {};
         polls.forEach((poll: Poll) => {
-          const votedOption = poll.options.find((option) =>
+          const votedOption = poll?.options?.find((option) =>
             option.votedUserIds?.includes(Number(userId))
           );
 
           console.log("votedOption", { votedOption });
 
-          voteStatus[poll.PollId] = {
+          voteStatus[poll?.PollId] = {
             hasVoted: !!votedOption,
             votedOptionId: votedOption?.OptionId,
-            votes: poll.totalVotes,
+            votes: poll?.totalVotes,
           };
         });
 
         setPollVoteStatus(voteStatus);
         setLoading(false);
-      } catch (error) {
-        console.error("Error fetching polls:", error);
-      }
-    };
+  }, [polls, userId]);
 
-    fetchPolls();
-  }, [token, userId]);
+  useEffect(() => {
+    console.log("voteStatus",pollVoteStatus);
+    
+  }, [polls, pollVoteStatus]);
 
   const handleAllPolls = () => {
     setVisiblePolls(polls);
@@ -136,8 +155,47 @@ const PollCard = () => {
     }
   };
 
+  const handleEdit = (key: boolean) => {
+    setIsEditOpen(key);
+  };
+
+  useEffect(() => {
+    console.log("current Poll",currentPoll);
+    
+  }, [currentPoll]);
+
   return (
     <div className="flex flex-col gap-2 justify-between h-full">
+      <div
+
+        className={` text-[#505050] ${isEditOpen && currentEditPoll === currentPoll?.PollId ? "block" : "hidden"} z-10 w-full absolute top-0 left-0`}
+      >
+        <div className="w-full flex justify-end">
+          <button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+              onClick={() => setIsEditOpen(false)}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        </div>
+        <EditPoll
+          pollId={Number(currentPoll?.PollId)}
+          pollQuestion={currentPoll?.title ?? ""}
+          pollOptions={currentPoll?.options ?? []}
+          isCreatePoll={handleEdit}
+        />
+      </div>
       {leading ? (
         <div className="flex items-center justify-center h-full w-full">
           <Loader size={24} className="animate-spin" color="black" />
@@ -146,10 +204,22 @@ const PollCard = () => {
         <div>
           {visiblePolls?.map((poll) => (
             <div key={poll?.PollId} className="flex mt-2 flex-col gap-4">
-              <div>
+              <div className="flex gap-2 items-center justify-between w-full">
                 <h1 className="font-inter text-[#505050] font-semibold text-base md:text-lg leading-tight tracking-normal">
                   {poll?.title}
                 </h1>
+                  <button
+                    onClick={() => {
+                      setIsEditOpen(!isEditOpen);
+                      setCurrentEditPoll(poll?.PollId);
+                      setCurrentPoll(poll);
+                    }}
+                    className={`w-4 h-4 text-[#505050] ${userId == poll?.userId ? "block" : "hidden"}`}
+                  >
+                    <SquarePen
+                      className={`w-4 h-4 text-[#505050] ${userId == poll?.userId ? "block" : "hidden"}`}
+                    />
+                  </button>
               </div>
               <div className="flex flex-col gap-2 items-start justify-center w-full">
                 {poll?.options?.map((option) => (
@@ -168,11 +238,11 @@ const PollCard = () => {
                     <p
                       className={`${pollVoteStatus[Number(poll.PollId)]?.hasVoted ? "block" : "hidden"} font-inter font-normal text-[#505050] text-sm leading-tight tracking-normal`}
                     >
-                      {
-                        pollVoteStatus[Number(poll.PollId)]?.hasVoted && pollVoteStatus[Number(poll.PollId)]?.votedOptionId === option?.OptionId
-                          ? pollVoteStatus[Number(poll.PollId)]?.votes
-                          : option?.voteCount
-                      }
+                      {pollVoteStatus[Number(poll.PollId)]?.hasVoted &&
+                      pollVoteStatus[Number(poll.PollId)]?.votedOptionId ===
+                        option?.OptionId
+                        ? pollVoteStatus[Number(poll.PollId)]?.votes
+                        : option?.voteCount}
                     </p>
                   </button>
                 ))}

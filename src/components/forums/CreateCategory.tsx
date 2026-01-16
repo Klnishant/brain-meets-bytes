@@ -1,9 +1,12 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
+import { createCategory, updateCategory } from "@/Redux/slices/CategorySlice";
+import { AppDispatch } from "@/Redux/store";
 import { Loader } from "lucide-react";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import { set } from "sanity";
 import { form } from "sanity/structure";
 
@@ -29,17 +32,16 @@ const CreateCategory = () => {
     };
     fetchAuth();
   }, []);
-  const fileToBase64 = async (file: File): Promise<string> => {
+  const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
     const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
-    const result: string = await new Promise((resolve, reject) => {
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("File reading failed"));
-      reader.readAsDataURL(file);
-    });
+  const dispatch = useDispatch<AppDispatch>();
 
-    return result;
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,22 +56,25 @@ const CreateCategory = () => {
       imageUrl: image ? await fileToBase64(image) : null,
     };
 
+    let base64Image: string | null = null;
+
+  if (image) {
+    base64Image = await fileToBase64(image);
+  }
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
 
-      if (!res.ok) {
-        throw new Error("Failed to create category");
-      }
-
-      const data = await res.json();
-      console.log(data);
+      if (!token) throw new Error("User not authenticated");
+      dispatch(
+            createCategory({
+                token,
+                  title: title,
+                  route: route,
+                  color: color,
+                  description: description,
+                  image: base64Image,
+              })
+            );
       toast.success("Category created successfully");
       setTitle("");
       setRoute("");

@@ -8,6 +8,9 @@ import Link from "next/link";
 import React, { use, useEffect, useState } from "react";
 import EditCategory from "./EditCategory";
 import toast from "react-hot-toast";
+import { deleteCategory, fetchCategories } from "@/Redux/slices/CategorySlice";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
 
 type Category = {
   _id: string;
@@ -21,9 +24,9 @@ type Category = {
 };
 
 const CategoryCard = () => {
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+ //const [error, setError] = useState<string | null>(null);
+  //const [loading, setLoading] = useState(false);
+  //const [categories, setCategories] = useState<Category[]>([]);
   const [visibleCount, setVisibleCount] = useState(4);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
@@ -61,45 +64,34 @@ const CategoryCard = () => {
   console.log("token:", token);
 
   
-    const load = async () => {
-      if (!token) return;
-      try {
-        setLoading(true);
-        setError(null);
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        console.log(res);
-
-        if (!res.ok) {
-          throw new Error("Failed to load threads");
-        }
-
-        const data = (await res.json())?.data as Category[];
-        setCategories(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        setError(e?.message ?? "Failed to load threads");
-      } finally {
-      setLoading(false);
-      }
-    };
+ const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    load()
-  }, [token]);
+      if (!token) return;
+    dispatch(fetchCategories({ token }));
+  }, [dispatch, token]);
 
-  const onDelete = (CategoryId: number)=> {
-    setCategories((prev) => prev.filter((c) => c.CategoryId !== CategoryId));
-  }
+  const categories = useSelector(
+  (state: RootState) => state.categories.list
+);
 
-  const onSuccess = (data?: Category) => {
-    setCategories((prev) => prev.map((c) => (c.CategoryId === data?.CategoryId ? data : c)));
-  };
+const loading = useSelector(
+  (state: RootState) => state.categories.loading
+);
+
+const error = useSelector(
+  (state: RootState) => state.categories.error
+);
+  
+
+  // const onDelete = (CategoryId: number)=> {
+  //   setCategories((prev) => prev.filter((c) => c.CategoryId !== CategoryId));
+  // }
+
+  // const onSuccess = (data?: Category) => {
+  //   setCategories((prev) => prev.map((c) => (c.CategoryId === data?.CategoryId ? data : c)));
+  // };
 
   useEffect(() => {
     const visibleCategories = () => {
@@ -116,35 +108,19 @@ const CategoryCard = () => {
     e: React.MouseEvent<HTMLButtonElement>,
     CategoryId: number
   ) => {
+    if(!token) return;
     e.preventDefault();
     setIsDeleting(true);
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}category?CategoryId=${CategoryId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!res?.ok) {
-        throw new Error("Failed to delete Category");
-      }
-      if (res.ok) {
-        const data = await res.json();
-        toast.success("Category deleted successfully!");
-        onDelete(CategoryId);
-      }
-    } catch (error: any) {
-      console.log(error?.message, "Failed to delete thread");
-      toast.error("Failed to delete category");
-    }
+   dispatch(
+      deleteCategory({
+        categoryId: Number(CategoryId),
+        token,
+      })
+    );
   };
   return (
-    <div className="flex flex-col justify-between h-full gap-2 relative">
+    <div className="flex flex-col justify-between h-full gap-2">
       <div
         key={currentCategory?._id}
         className={`w-7 h-7 text-[#505050] ${isEditOpen && currentEditCategory === currentCategory?.CategoryId ? "block" : "hidden"} z-10 w-full absolute top-0 left-0`}
@@ -176,7 +152,6 @@ const CategoryCard = () => {
           colors={currentCategory?.color || ""}
           images={currentCategory?.imageUrl || ""}
           cateGoryId={currentCategory?.CategoryId || 0}
-          onSuccess={onSuccess}
           isOpen={()=>{setIsEditOpen(!isEditOpen)}}
         />
       </div>
@@ -281,3 +256,11 @@ const CategoryCard = () => {
 };
 
 export default CategoryCard;
+  function useAppDispatch() {
+    throw new Error("Function not implemented.");
+  }
+
+  function useAppSelector(arg0: (state: any) => any): { list: any; loading: any; error: any; } {
+    throw new Error("Function not implemented.");
+  }
+

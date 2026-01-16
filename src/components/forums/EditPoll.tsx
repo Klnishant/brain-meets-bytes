@@ -1,28 +1,40 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
-import { createPoll } from "@/Redux/slices/PollSlice";
+import { updatePoll } from "@/Redux/slices/PollSlice";
 import { AppDispatch } from "@/Redux/store";
+import { Loader } from "lucide-react";
 import React, { useEffect, useImperativeHandle, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { set } from "sanity";
 
-export type CreatePollFormRef = {
-  submit: (e: React.FormEvent<HTMLFormElement>) => void;
-}
-type CreatePollProps = {
-  handleClick: () => void;
+type Option = {
+  votedUserIds: number[];
+  OptionId: number;
+  PollId: number;
+  text: string;
+  voteCount: number;
+};
+type EditPollProps = {
+  pollId: number;
+  pollQuestion: string;
+  pollOptions: Option[];
   isCreatePoll: (key: boolean) => void;
 };
 
-const CreatePoll = React.forwardRef<CreatePollFormRef, CreatePollProps>(
-  ({ handleClick,isCreatePoll }, ref) => {
+const EditPoll: React.FC<EditPollProps> = ({
+  isCreatePoll,
+  pollId,
+  pollQuestion,
+  pollOptions,
+}) => {
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState<string[]>(["", "", "", ""]);
+  const [options, setOptions] = useState<Option[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchAuth = async () => {
@@ -35,16 +47,21 @@ const CreatePoll = React.forwardRef<CreatePollFormRef, CreatePollProps>(
     };
     fetchAuth();
   }, []);
+  useEffect(() => {
+    setQuestion(pollQuestion);
+    setOptions(pollOptions);
+  }, [pollQuestion, pollOptions]);
   const updateOption = (index: number, value: string) => {
     const updated = [...options];
-    updated[index] = value;
+    updated[index] = { ...updated[index], text: value };
     setOptions(updated);
   };
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleCreatePoll = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEditPoll = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     isCreatePoll(true);
     setError(null);
     if (!token) return;
@@ -55,28 +72,32 @@ const CreatePoll = React.forwardRef<CreatePollFormRef, CreatePollProps>(
         options: options,
       };
 
-      dispatch(createPoll({
-        title: data.title,
-        description: data.description,
-        options: data.options,
-        token: token,
-      }))
-      toast.success("Poll created successfully!");
-      handleClick();
+     dispatch(updatePoll(
+      {
+        PollId: pollId,
+        title: question,
+        description: "",
+        options:  options.map(option => option.text),
+        token,
+      }
+     ))
+      toast.success("Poll Edited successfully!");
+      isCreatePoll(false);
     } catch (error: any) {
       setError(error?.message);
-      console.log(error?.message, "Failed to create poll");
-      toast.error("Failed to create poll");
+      console.log(error?.message, "Failed to Edit poll");
+      toast.error("Failed to edit poll");
     } finally {
-      isCreatePoll(false);
+        setLoading(false);
     }
   };
-
-  useImperativeHandle(ref, () => ({
-        submit: handleCreatePoll,
-      }));
   return (
-    <form method="post" noValidate onSubmit={handleCreatePoll}>
+    <form
+      method="post"
+      noValidate
+      onSubmit={handleEditPoll}
+      className="flex w-full justify-center py-10"
+    >
       <div className="w-full max-w-xl rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
         {/* Header */}
         <h2 className="mb-4 text-xl font-semibold text-[#023047]">
@@ -112,7 +133,7 @@ const CreatePoll = React.forwardRef<CreatePollFormRef, CreatePollProps>(
               <input
                 type="text"
                 placeholder={`Option ${index + 1}`}
-                value={option}
+                value={option?.text}
                 onChange={(e) => updateOption(index, e.target.value)}
                 className="flex-1 rounded-lg border border-[#E2E8F0] px-4 py-2 text-[#64748B] text-sm outline-none"
               />
@@ -124,13 +145,18 @@ const CreatePoll = React.forwardRef<CreatePollFormRef, CreatePollProps>(
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
 
         {/* Actions */}
-        <div className="mt-6 flex justify-end gap-3">
-          
-        </div>
+        <div className="flex justify-end">
+        <button
+          disabled={loading}
+          type="submit"
+          className="rounded-full bg-[#023047] px-6 py-2 text-sm font-semibold text-white"
+        >
+          {!loading ? "Edit Poll" : (<Loader size={14} className="animate-spin" />)}
+        </button>
+      </div>
       </div>
     </form>
   );
-}
-);
+};
 
-export default CreatePoll;
+export default EditPoll;

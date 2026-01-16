@@ -1,11 +1,12 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
+import { updateCategory } from "@/Redux/slices/CategorySlice";
+import { AppDispatch } from "@/Redux/store";
 import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { set } from "sanity";
-import { form } from "sanity/structure";
+import { useDispatch } from "react-redux";
 
 type Category = {
   _id: string;
@@ -25,7 +26,6 @@ type EditCategoryProps = {
   colors: string;
   images: string| null;
   cateGoryId: number;
-  onSuccess?: ((data: Category) => void) | undefined
   isOpen: ()=>void;
 };
 
@@ -36,7 +36,6 @@ const EditCategory: React.FC<EditCategoryProps> = ({
   colors,
   images,
   cateGoryId,
-  onSuccess,
   isOpen
 }) => {
   const [title, setTitle] = useState(titles);
@@ -71,42 +70,25 @@ const EditCategory: React.FC<EditCategoryProps> = ({
 
     return result;
   };
+  
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    if (!token) return
 
-    const body = {
-      title: title,
-      route: route,
-      description: description,
-      color: color,
-      imageUrl: image ? await fileToBase64(image) : null,
-    };
-
-    console.log("categoryId", cateGoryId);
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}category?CategoryId=${cateGoryId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }
+    dispatch(
+        updateCategory({
+          categoryId: cateGoryId,
+          token,
+            title: title,
+            route: route,
+            color: color,
+            description: description,
+            image: image ? await fileToBase64(image) : null,
+        })
       );
-      console.log(res);
-
-      if (!res.ok) {
-        toast.error("Failed to edit category");
-        throw new Error("Failed to edit category");
-      }
-
-      const data = await res.json();
-      console.log("Edit category data", data);
       toast.success("Category edited successfully");
       setTitle("");
       setRoute("");
@@ -114,15 +96,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
       setColor("#2563EB");
       setImage(null);
       setLoading(false);
-      onSuccess && onSuccess(data?.data);
       isOpen();
-    } catch (error: any) {
-      setError(error?.message);
-      console.error(error?.message, "Failed to edit category");
-      toast.error("Failed to edit category");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (

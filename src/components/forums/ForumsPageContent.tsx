@@ -758,7 +758,7 @@ const ForumsMainSection = () => {
 
           {/* Right: sidebars placeholder column */}
           <div className="mt-6 flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
-            <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Top Categories
               </h3>
@@ -815,7 +815,7 @@ const ForumsMainSection = () => {
               </div>
             </div> */}
 
-            <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Latest Poll
               </h3>

@@ -3,12 +3,16 @@ import { commentsReducer } from "./slices/PodcastCommentSlice";
 import { article } from "../../sanity/schemaTypes/article";
 import { articleCommentsReducer } from "./slices/ArticleCommentSlice";
 import { threadCommentsReducer } from "./slices/ThreadCommentSlice";
+import { categoriesReducer } from "./slices/CategorySlice";
+import { pollsReducer } from "./slices/PollSlice";
 
 export const store = configureStore({
   reducer: {
     comments: commentsReducer,
     articleComments: articleCommentsReducer,
     threadComments: threadCommentsReducer,
+    categories: categoriesReducer,
+    polls: pollsReducer,
   },
 });
 
