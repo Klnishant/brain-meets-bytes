@@ -80,10 +80,9 @@ const PollCard = () => {
   const polls = useSelector((state: RootState) => state.polls.polls);
 
   useEffect(() => {
-     if (visiblePolls.length === 0 && polls.length > 0) {
+     if (visiblePolls.length <= 1 && polls.length > 0) {
     setVisiblePolls([polls[0]]);
   }
-  setVisiblePolls(polls);
   }, [polls, visiblePolls.length]);
 
   useEffect(() => {

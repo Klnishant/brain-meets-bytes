@@ -1,5 +1,7 @@
 "use client";
 
+import Footer from "@/components/core/Footer";
+import Navbar from "@/components/core/Navbar";
 import { getAuth } from "@/lib/getAuth";
 import { sanityClient } from "@/lib/sanityClient";
 import { log } from "console";
@@ -211,7 +213,9 @@ const MySavedArticle = () => {
     }
   }, [token, articleIds]);
   return (
-    <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
+    <main className="min-h-screen bg-[#FAF9F8] relative">
+      <Navbar />
+      <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
         <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
           My Saved Articles
@@ -227,7 +231,7 @@ const MySavedArticle = () => {
           <div className="grid grid-cols-3 gap-4 ">
             {/* Saved Articles */}
             {articles.length === 0 ? (
-              <div>No saved articles found.</div>
+              <h2 className="w-full flex items-center justify-center text-[#1E293B]">No saved articles found.</h2>
             ) : (
               articles.map((article) => (
                 <ArticleCard key={article._id} article={article} />
@@ -237,6 +241,9 @@ const MySavedArticle = () => {
         )}
       </div>
     </section>
+    <Footer />
+
+    </main>
   );
 };
 

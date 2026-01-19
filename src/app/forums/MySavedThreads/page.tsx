@@ -1,5 +1,7 @@
 "use client";
 
+import Footer from "@/components/core/Footer";
+import Navbar from "@/components/core/Navbar";
 import ThreadsCard from "@/components/forums/ThreadsCard";
 import { getAuth } from "@/lib/getAuth";
 import { useEffect, useState } from "react";
@@ -125,7 +127,9 @@ const MySavedThreads = () => {
     console.log(data);
   };
   return (
-    <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
+    <main className="min-h-screen bg-[#FAF9F8] relative">
+      <Navbar />
+      <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
         <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
           My Saved Threads
@@ -155,6 +159,8 @@ const MySavedThreads = () => {
         )}
       </div>
     </section>
+    <Footer />
+    </main>
   );
 };
 
