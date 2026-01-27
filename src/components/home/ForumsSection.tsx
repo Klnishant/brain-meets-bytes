@@ -1,11 +1,59 @@
+'use client';
+
 import { COLORS } from "@/lib/constants";
+import { useEffect, useState } from "react";
+
+type ForumContent = {
+  _id: string;
+  heading: string;
+  description: string;
+  Card: {
+    title: string;
+    description: string;
+    user: string;
+    role: string;
+    tags: string[];
+    date: string;
+    repliesCount: number;
+    reactionCount: number;
+    profileImageUrl: string;
+  }
+};
 
 type ForumCardProps = {
   faded?: boolean;
   className?: string;
+  Card: {
+    title: string;
+    description: string;
+    user: string;
+    role: string;
+    tags: string[];
+    date: string;
+    repliesCount: number;
+    reactionCount: number;
+    profileImageUrl: string;
+  }
 };
 
-const ForumCard = ({ faded, className }: ForumCardProps) => {
+const FALL_BACK_CONTENT: ForumContent = {
+  _id: "",
+  heading: "",
+  description: "",
+  Card: {
+    title: "",
+    description: "",
+    user: "",
+    role: "",
+    tags: [],
+    date: "",
+    repliesCount: 0,
+    reactionCount: 0,
+    profileImageUrl: "",
+  },
+};
+
+const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
   return (
     <div
       className={`rounded-2xl border border-[#E2E8F0] bg-white shadow-md px-6 md:px-8 py-6 md:py-8 flex flex-col gap-6 ${
@@ -18,7 +66,7 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full border-2 border-[#F77F00] overflow-hidden">
               <img
-                src="/forum-user-1.jpg"
+                src={Card?.profileImageUrl}
                 alt="Sara Jones avatar"
                 className="w-full h-full object-cover"
               />
@@ -26,21 +74,21 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
                 <span className="font-inter text-base font-normal text-[#1E293B]">
-                  Sara Jones
+                  {Card?.user}
                 </span>
                 <span className="inline-block w-px h-4 bg-[#64748B] rounded-full" />
                 <span className="font-inter text-sm font-light text-[#64748B]">3 days ago</span>
               </div>
-              <span className="font-inter text-xs font-semibold text-[#505050]">Member</span>
+              <span className="font-inter text-xs font-semibold text-[#505050]">{Card?.role}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#64748B] text-[11px] text-white font-inter">
-              Episode Discussion
+              {Card?.tags.join(", ")}
             </span>
             <span className="inline-flex items-center justify-center px-3 py-1 rounded-full border border-[#64748B] text-[11px] text-[#64748B] font-inter">
-              18 replies
+             {Card?.repliesCount} replies
             </span>
           </div>
         </div>
@@ -53,12 +101,10 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
       {/* Title + body */}
       <div className="flex flex-col gap-3">
         <h3 className="font-sora text-xl md:text-2xl font-semibold text-black">
-          Key takeaways from The Future of Cognitive Enhancement
+          {Card?.title}
         </h3>
         <p className="font-inter text-sm md:text-base text-[#333333] leading-7">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum egestas eleifend.
-          Nulla est tortor, iaculis eu iaculis ut, congue at sapien. Mauris gravida congue
-          vulputate. Suspendisse vitae magna at sem vehicula porttitor.
+          {Card?.description}
         </p>
       </div>
 
@@ -71,7 +117,7 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
               alt="Comments"
               className="w-3.5 h-3.5 object-contain"
             />
-            <span className="font-inter text-xs md:text-sm text-[#64748B]">245</span>
+            <span className="font-inter text-xs md:text-sm text-[#64748B]">{Card?.repliesCount}</span>
           </button>
 
           {/* Upvote / downvote pill */}
@@ -81,7 +127,7 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
               alt="Upvote"
               className="w-3.5 h-3.5 object-contain"
             />
-            <span className="font-inter text-xs md:text-sm text-[#64748B]">6</span>
+            <span className="font-inter text-xs md:text-sm text-[#64748B]">{Card?.reactionCount}</span>
             <img
               src="/vote-arrow.png"
               alt="Downvote"
@@ -104,31 +150,47 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
 };
 
 const ForumsSection = () => {
+  const [content, setContent] = useState<ForumContent | null>(null);
+  
+  useEffect(() => {
+    const fetchContent = async () => {
+      const response = await fetch("/api/home-forum");
+      const data = await response.json() as ForumContent;
+      setContent(data);
+      console.log(data);
+      
+    };
+    fetchContent();
+  }, []);
   return (
     <section className="w-full py-16 md:py-20 lg:py-24">
       <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col lg:flex-row items-center gap-50 lg:gap-20">
         {/* Left: stacked forum cards */}
         <div className="relative w-full max-w-2xl h-[360px] md:h-[420px]">
           {/* Back top card */}
-          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 -top-22 md:-top-20 scale-95" />
+          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 -top-22 md:-top-20 scale-95" Card={content?.Card || FALL_BACK_CONTENT.Card} />
 
           {/* Back bottom card */}
-          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 top-20 md:top-16 scale-95" />
+          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 top-20 md:top-16 scale-95" Card={content?.Card || FALL_BACK_CONTENT.Card} />
 
           {/* Front main card */}
-          <ForumCard className="relative z-10" />
+          <ForumCard className="relative z-10" Card={content?.Card || FALL_BACK_CONTENT.Card} />
         </div>
 
         {/* Right: text + CTA */}
-        <div className="w-full max-w-md flex flex-col md:items-start gap-8">
+        <div className="w-full max-w-lg flex flex-col md:items-start gap-8">
           <div className="flex flex-col gap-4">
             <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold text-[#1E293B]">
-              Join the Brain Meets Bytes <span style={{ color: COLORS.brandRed }}>Community</span>
+              {
+                content?.heading?.split(" ")?.map((word, index) => (
+                  <span key={index} className={`${index  === 5 ? "text-[#D62828]" : ""}`}>
+                    {word}{" "}
+                  </span>
+                ))
+              }
             </h2>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              Connect with listeners, researchers, and practitioners who care about brain health
-              and longevity. Ask questions, share ideas, and continue the conversations that start
-              in each episode.
+              {content?.description}
             </p>
           </div>
 

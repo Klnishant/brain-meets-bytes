@@ -13,6 +13,8 @@ import {
   postComment,
   toggleCommentLike,
 } from "@/Redux/slices/PodcastCommentSlice";
+import { on } from "events";
+import { podcast } from "../../../sanity/schemaTypes/podcast";
 
 type Podcast = {
   _id: string;
@@ -46,6 +48,18 @@ type Episode = {
   mimeType?: string;
 };
 
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
+};
+
 type Comment = {
   sanityPodcastId: string;
   PodcastId: number;
@@ -61,8 +75,8 @@ type Comment = {
 };
 
 type EpisodeCardProps = {
+  user: User | null;
   episode: Episode;
-  podcast: Podcast;
   index: number;
   isPlaying: boolean;
   isLiked: boolean;
@@ -77,6 +91,7 @@ type EpisodeCardProps = {
 };
 
 type PlayerCardProps = {
+  user: User | null;
   episode: Episode;
   index: number;
   isLike: boolean;
@@ -195,6 +210,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
 };
 
 const PlayerCard: React.FC<PlayerCardProps> = ({
+  user,
   episode,
   index,
   isLike,
@@ -212,7 +228,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const podcast = episode?.podcast;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [error, setError] = useState("");
   const [commentData, setCommentData] = useState({ comment: "" });
@@ -232,7 +247,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setCommentData((prev) => ({
@@ -250,7 +265,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
   const comments = useSelector(
-    (state: RootState) => state.comments.byEpisode[episode?._id]?.tree || []
+    (state: RootState) => state.comments.byEpisode[episode?._id]?.tree || [],
   );
 
   console.log("comments Tree", comments);
@@ -310,6 +325,22 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   };
 
+useEffect(() => {
+  const audio = audioRef.current;
+  if (!audio) return;
+
+  const onEnded = () => {
+    onNext(); // autoplay next episode
+  };
+
+  audio.addEventListener("ended", onEnded);
+
+  return () => {
+    audio.removeEventListener("ended", onEnded);
+  };
+}, [onNext]);
+
+
   const seek = (value: number) => {
     if (!audioRef.current) return;
     audioRef.current.currentTime = value;
@@ -338,13 +369,13 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                 className="font-sora font-bold w-full text-[20px] md:text-[36px] text-[#1E293B] leading-[100%] tracking-[0%] shrink-0
 "
               >
-                {podcast?.author || "Unknown Author"}
+                {episode?.podcast?.author || "Unknown Author"}
               </h1>
               <p
                 className="font-inter font-normal text-[10px] md:text-[18px] leading-7 text-[#505050] tracking-[0%]
 "
               >
-                {<>{podcast?.description || "Podcast author"}</>}
+                {<>{episode?.podcast?.description || "Podcast author"}</>}
               </p>
             </div>
           </div>
@@ -385,7 +416,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                       className="font-inter text-xs md:text-sm"
                       style={{ color: COLORS.brandMutedText }}
                     >
-                      {podcast?.author || "Ki Siadatan"}
+                      {episode?.podcast?.author || "Ki Siadatan"}
                     </p>
                   </div>
                 </div>
@@ -614,7 +645,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                 >
                   <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828] shrink-0">
                     <img
-                      src="/forum-user-1.jpg"
+                      src={user?.ProfilePic}
                       alt="Current user"
                       className="h-full w-full shrink-0 object-cover"
                     />
@@ -643,22 +674,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     </form>
                   </div>
                 </div>
-                {/* Comments */}
-                {comments && comments.length > 0 && (
-                  <div
-                    className={`${isCommentOpen ? "block" : "hidden"} mt-2 flex flex-col gap-8 z-10`}
-                  >
-                    {comments.map((comment) => (
-                      <PodcastCommentsCard
-                        key={comment?.sanityPodcastId}
-                        comment={comment}
-                        addReply={onComment}
-                        onLike={onCommentLike}
-                        isActiveReply={false}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -669,8 +684,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 };
 
 const EpisodeCard: React.FC<EpisodeCardProps> = ({
+  user,
   episode,
-  podcast,
   index,
   isPlaying,
   onSelect,
@@ -701,7 +716,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setCommentData((prev) => ({
@@ -716,13 +731,12 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
     const response = onComment(commentData.comment);
     console.log(response);
-    
 
     setCommentData({ comment: "" });
   };
 
   const comments = useSelector(
-    (state: RootState) => state.comments.byEpisode[episode?._id]?.tree || []
+    (state: RootState) => state.comments.byEpisode[episode?._id]?.tree || [],
   );
 
   console.log("comments Tree", comments);
@@ -749,7 +763,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
     }
   };
   const handleClick = (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
     onSelect();
   };
@@ -796,7 +810,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
                     className="font-inter text-xs md:text-sm"
                     style={{ color: COLORS.brandMutedText }}
                   >
-                    {podcast?.author || "Ki Siadatan"}
+                    {episode?.podcast?.author || "Ki Siadatan"}
                   </p>
                 </div>
               </div>
@@ -890,7 +904,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
       >
         <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
           <img
-            src="/forum-user-1.jpg"
+            src={user?.ProfilePic}
             alt="Current user"
             className="h-full w-full object-cover"
           />
@@ -948,33 +962,60 @@ const PlayListHeroPage = () => {
   const [action, setAction] = useState({});
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [episodeActions, setEpisodeActions] = useState<
     Record<string, EpisodeActionState>
   >({});
-  const [auth, setAuth] = useState<{ token: string; userId: number } | null>(
-    null
-  );
+  const [currentIndex, setCurrentIndex] = useState(0);
+const [isShuffle, setIsShuffle] = useState(false);
+const [playOrder, setPlayOrder] = useState<number[]>([]);
+
+
+  const auth = useSelector((state: RootState) => state.auth);
+  
+    useEffect(() => {
+      setToken(auth?.auth?.token);
+      setUserId(auth?.auth?.userId);
+    }, [auth]);
+  
 
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-        setAuth(auth);
+    const user = async () => {
+      if (!token) return;
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser(data?.data);
       }
-      console.log("auth", auth);
     };
-    fetchAuth();
-  }, []);
+    user();
+  }, [token]);
 
-  const params = useParams<{ title: string }>();
-  const title = params.title;
+  const params = useParams<{ slug: string }>();
+  const slug = params.slug;
 
-  let currentEpisode = useMemo(
-    () => episode[episodeNumber - 1] ?? null,
-    [episode, episodeNumber]
-  );
+  useEffect(() => {
+  if (episode.length && playOrder.length === 0) {
+    setPlayOrder(episode.map((_, i) => i));
+  }
+}, [episode]); // safe
+
+
+  let currentEpisode = useMemo(() => {
+  // if (!episode.length || !playOrder.length) return null;
+  return episode[playOrder[currentIndex]];
+}, [episode, playOrder, currentIndex]);
+
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -982,21 +1023,20 @@ const PlayListHeroPage = () => {
     if (!episode || !token) return;
 
     episode.forEach((episode) => {
-       dispatch(fetchComments({ episodeId: episode?._id, token }))
-      .unwrap()
-      .then((res) => {
-        res.comments.forEach((c: Comment) => {
-          dispatch(
-            fetchCommentLikes({
-              episodeId: episode?._id,
-              commentId: c.CommentId,
-              token,
-            })
-          );
+      dispatch(fetchComments({ episodeId: episode?._id, token }))
+        .unwrap()
+        .then((res) => {
+          res.comments.forEach((c: Comment) => {
+            dispatch(
+              fetchCommentLikes({
+                episodeId: episode?._id,
+                commentId: c.CommentId,
+                token,
+              }),
+            );
+          });
         });
-      });
-    })
-   
+    });
   }, [episode, token]);
 
   useEffect(() => {
@@ -1007,7 +1047,7 @@ const PlayListHeroPage = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`/api/related-episodes/${title}`);
+        const res = await fetch(`/api/related-episodes/${slug}`);
         if (!res.ok) {
           throw new Error("Failed to load podcasts");
         }
@@ -1024,14 +1064,14 @@ const PlayListHeroPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`/api/episodes/${title}`);
+        const res = await fetch(`/api/episodes/${slug}`);
         if (!res.ok) {
           throw new Error("Failed to load episode");
         }
         const data = (await res.json()) as Episode[];
         if (!mounted) return;
         setEpisode(Array.isArray(data) ? data : []);
-        currentEpisode = episode[episodeNumber - 1] || null;
+        currentEpisode = episode[currentIndex] || null;
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message ?? "Failed to load podcasts");
@@ -1062,7 +1102,7 @@ const PlayListHeroPage = () => {
   const fetchLikedCount = async (episodeId: string) => {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/like?sanityPodcastId=${episodeId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     if (!res.ok) return;
@@ -1081,7 +1121,7 @@ const PlayListHeroPage = () => {
   const fetchSaved = async (episodeId: string) => {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}podcasts/getSavedUsersFrPodcast?sanityPodcastId=${episodeId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     if (!res.ok) return;
@@ -1093,7 +1133,7 @@ const PlayListHeroPage = () => {
         ...prev[episodeId],
         isSaved: data?.data?.some(
           (item: { savedBy: { userId: number } }) =>
-            item.savedBy.userId === Number(userId)
+            item.savedBy.userId === Number(userId),
         ),
       },
     }));
@@ -1119,7 +1159,7 @@ const PlayListHeroPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
-      }
+      },
     );
     console.log(res);
 
@@ -1148,7 +1188,7 @@ const PlayListHeroPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ sanityPodcastId: episodeId }),
-      }
+      },
     );
 
     console.log(res);
@@ -1167,7 +1207,7 @@ const PlayListHeroPage = () => {
   const handleComment = (
     episodeId: string,
     text: string,
-    parentCommentId?: number
+    parentCommentId?: number,
   ) => {
     if (!episodeId || !token) return;
 
@@ -1177,14 +1217,14 @@ const PlayListHeroPage = () => {
         token,
         comment: text,
         parentCommentId, // undefined = root comment
-      })
+      }),
     );
   };
 
   const handleCommentLike = (
     episodeId: string,
     commentId: number,
-    isLiked: boolean
+    isLiked: boolean,
   ) => {
     if (!currentEpisode?._id || !token || !userId) return;
 
@@ -1195,7 +1235,7 @@ const PlayListHeroPage = () => {
         token,
         isLiked,
         userId: Number(userId),
-      })
+      }),
     );
   };
 
@@ -1207,8 +1247,8 @@ const PlayListHeroPage = () => {
     const syncEpisodes = async () => {
       await Promise.all(
         episode.map((ep) =>
-          Promise.all([fetchLikedCount(ep._id), fetchSaved(ep._id)])
-        )
+          Promise.all([fetchLikedCount(ep._id), fetchSaved(ep._id)]),
+        ),
       );
     };
 
@@ -1216,16 +1256,39 @@ const PlayListHeroPage = () => {
   }, [isReady]);
 
   const handleNext = () => {
-    setEpisodeNumber((prev) => (prev < episode.length ? prev + 1 : 1));
-  };
+  setCurrentIndex((i) =>
+    i + 1 < playOrder.length ? i + 1 : 0
+  );
+};
 
-  const handlePrev = () => {
-    setEpisodeNumber((prev) => (prev > 1 ? prev - 1 : episode.length));
-  };
+const handlePrev = () => {
+  setCurrentIndex((i) =>
+    i - 1 >= 0 ? i - 1 : playOrder.length - 1
+  );
+};
 
-  const handleShuffle = () => {
-    setEpisodeNumber(Math.floor(Math.random() * episode.length));
-  };
+
+  const shuffleArray = (arr: number[]) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
+const handleShuffle = () => {
+  setIsShuffle((prev) => {
+    if (!prev) {
+      setPlayOrder((order) => shuffleArray(order));
+    } else {
+      setPlayOrder(episode.map((_, i) => i));
+      setCurrentIndex(0);
+    }
+    return !prev;
+  });
+};
+
 
   return (
     <div className="w-full  bg-[#FAF9F8] px-8 xl:px-16">
@@ -1249,8 +1312,8 @@ const PlayListHeroPage = () => {
 
         {/* Current Page Title */}
         <span className="flex items-center gap-2">
-          <span className="font-medium cursor-pointer md:text-[20px]">
-            {title || "Podcast Title"}
+          <span className="font-medium cursor-pointer md:text-[20px] max-w-[700px] overflow-hidden">
+            {episode[0]?.podcast?.title || "Podcast Title"}
           </span>
           <h1 className="md:text-xl">›</h1>
         </span>
@@ -1264,8 +1327,9 @@ const PlayListHeroPage = () => {
       {/* player card */}
       {currentEpisode && (
         <PlayerCard
+          user={user}
           episode={currentEpisode}
-          index={episodeNumber}
+          index={playOrder[currentIndex] + 1}
           isLike={getEpisodeAction(currentEpisode?._id)?.isLiked}
           likeCount={getEpisodeAction(currentEpisode?._id)?.likesCount}
           isSaved={getEpisodeAction(currentEpisode?._id)?.isSaved}
@@ -1295,9 +1359,9 @@ const PlayListHeroPage = () => {
           </div>
           {episode.map((ep, index) => (
             <EpisodeCard
+              user={user}
               key={ep._id}
               episode={ep}
-              podcast={podcasts[0]}
               index={index + 1}
               isPlaying={episodeNumber === index + 1}
               isLiked={getEpisodeAction(ep?._id)?.isLiked}

@@ -2,11 +2,11 @@
 
 import { getAuth } from "@/lib/getAuth";
 import { updateCategory } from "@/Redux/slices/CategorySlice";
-import { AppDispatch } from "@/Redux/store";
+import { AppDispatch, RootState } from "@/Redux/store";
 import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 type Category = {
   _id: string;
@@ -48,28 +48,12 @@ const EditCategory: React.FC<EditCategoryProps> = ({
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
-  const fileToBase64 = async (file: File): Promise<string> => {
-    const reader = new FileReader();
-
-    const result: string = await new Promise((resolve, reject) => {
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("File reading failed"));
-      reader.readAsDataURL(file);
-    });
-
-    return result;
-  };
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
   
   const dispatch = useDispatch<AppDispatch>();
 
@@ -86,15 +70,10 @@ const EditCategory: React.FC<EditCategoryProps> = ({
             route: route,
             color: color,
             description: description,
-            image: image ? await fileToBase64(image) : null,
+            image: image || null,
         })
       );
       toast.success("Category edited successfully");
-      setTitle("");
-      setRoute("");
-      setDescription("");
-      setColor("#2563EB");
-      setImage(null);
       setLoading(false);
       isOpen();
   };

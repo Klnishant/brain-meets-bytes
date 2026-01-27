@@ -2,10 +2,10 @@
 
 import { getAuth } from "@/lib/getAuth";
 import { createPoll } from "@/Redux/slices/PollSlice";
-import { AppDispatch } from "@/Redux/store";
+import { AppDispatch, RootState } from "@/Redux/store";
 import React, { useEffect, useImperativeHandle, useState } from "react";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { set } from "sanity";
 
 export type CreatePollFormRef = {
@@ -24,17 +24,12 @@ const CreatePoll = React.forwardRef<CreatePollFormRef, CreatePollProps>(
   const [userId, setUserId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
   const updateOption = (index: number, value: string) => {
     const updated = [...options];
     updated[index] = value;

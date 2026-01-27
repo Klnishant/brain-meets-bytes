@@ -35,6 +35,7 @@ type Thread = {
   content: string;
   CategoryId: Array<Number>;
   images: Array<string>;
+  videos: Array<string>;
   userId: Number;
   likesCount: number;
   commentsCount: number;
@@ -51,8 +52,6 @@ type Thread = {
   comments: Array<Comment>;
   likes: Array<Like>;
 };
-
-
 
 type savedThread = {
   ThreadId: number;
@@ -95,7 +94,7 @@ const MySavedThreads = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!res.ok) {
@@ -121,7 +120,7 @@ const MySavedThreads = () => {
 
   const onDelete = (ThreadId: number) =>
     setThreads((prev) =>
-      prev.filter((thread) => thread?.ThreadId !== ThreadId)
+      prev.filter((thread) => thread?.ThreadId !== ThreadId),
     );
   const onEdit = (data: Thread) => {
     console.log(data);
@@ -130,36 +129,51 @@ const MySavedThreads = () => {
     <main className="min-h-screen bg-[#FAF9F8] relative">
       <Navbar />
       <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
-        <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
-          My Saved Threads
-        </h1>
-        <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
-          Here you can find your saved threads
-        </p>
-        {loading ? (
-          <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
-            Loading...
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2 ">
-            {/* Threads cards */}
-            {threads &&
-              threads.map((thread) => (
-                <ThreadsCard
-                  key={thread?.thread?._id}
-                  thread={thread?.thread}
-                  onSuccess={(ThreadId: number | undefined = undefined) => {
-                    onDelete(ThreadId!);
-                  }}
-                  onEdit={(data: Thread) => onEdit(data)}
-                />
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
+          <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
+            My Saved Threads
+          </h1>
+          <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
+            Here you can find your saved threads
+          </p>
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="w-full mx-auto bg-white rounded-xl p-6 animate-pulse"
+                >
+                  {/* Header */}
+                  {/* Post title skeleton */}
+                  <div className="h-7 w-40 bg-gray-200 rounded mb-4"></div>
+
+                  {/* Image skeleton */}
+                  <div className="w-full h-96 bg-gray-200 rounded-2xl mb-4"></div>
+
+                  {/* Caption skeleton */}
+                  <div className="h-4 w-36 bg-gray-200 rounded mb-6"></div>
+                </div>
               ))}
-          </div>
-        )}
-      </div>
-    </section>
-    <Footer />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 ">
+              {/* Threads cards */}
+              {threads &&
+                threads.map((thread) => (
+                  <ThreadsCard
+                    key={thread?.thread?._id}
+                    thread={thread?.thread}
+                    onSuccess={(ThreadId: number | undefined = undefined) => {
+                      onDelete(ThreadId!);
+                    }}
+                    onEdit={(data: Thread) => onEdit(data)}
+                  />
+                ))}
+            </div>
+          )}
+        </div>
+      </section>
+      <Footer />
     </main>
   );
 };

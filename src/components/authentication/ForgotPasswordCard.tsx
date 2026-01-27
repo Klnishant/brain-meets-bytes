@@ -89,6 +89,7 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({onClose,handleRe
                 type="email"
                 placeholder="Email Address"
                 name="email"
+                required={true}
                 value={email.email}
                 onChange={handleInputChange}
                 className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"

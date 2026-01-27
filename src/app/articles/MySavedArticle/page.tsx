@@ -68,7 +68,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
         {/* Author + date */}
         <div className="flex items-center gap-4 text-xs text-[#505050]">
           <span className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]">
-            {authors &&  authors.map((author) => author.name).join(", ")}
+            {authors && authors.map((author) => author.name).join(", ")}
           </span>
           <span className="text-[11px] text-[#505050]">
             {formatDate(date || "")}
@@ -168,7 +168,7 @@ const MySavedArticle = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       console.log(res);
 
@@ -176,7 +176,7 @@ const MySavedArticle = () => {
         const data = await res.json();
         console.log("saved articles", data);
         const articleIds = data?.data.map(
-          (article: any) => article.sanityArticleId
+          (article: any) => article.sanityArticleId,
         );
         setArticleIds(articleIds);
         console.log(articleIds);
@@ -216,33 +216,75 @@ const MySavedArticle = () => {
     <main className="min-h-screen bg-[#FAF9F8] relative">
       <Navbar />
       <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
-        <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
-          My Saved Articles
-        </h1>
-        <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
-          Here you can find your saved Articles
-        </p>
-        {loading ? (
-          <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
-            Loading...
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4 ">
-            {/* Saved Articles */}
-            {articles.length === 0 ? (
-              <h2 className="w-full flex items-center justify-center text-[#1E293B]">No saved articles found.</h2>
-            ) : (
-              articles.map((article) => (
-                <ArticleCard key={article._id} article={article} />
-              ))
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-    <Footer />
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
+          <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
+            My Saved Articles
+          </h1>
+          <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
+            Here you can find your saved Articles
+          </p>
+          {loading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                  {/* Image skeleton */}
+                  <div className="w-full h-48 bg-gray-200"></div>
 
+                  {/* Content section */}
+                  <div className="p-5">
+                    {/* Date skeleton */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+                      <div className="h-3 w-20 bg-gray-200 rounded"></div>
+                    </div>
+
+                    {/* Title skeleton */}
+                    <div className="space-y-2 mb-4">
+                      <div className="h-5 w-full bg-gray-200 rounded"></div>
+                      <div className="h-5 w-full bg-gray-200 rounded"></div>
+                      <div className="h-5 w-3/4 bg-gray-200 rounded"></div>
+                    </div>
+
+                    {/* Tags skeleton */}
+                    <div className="flex gap-2 mb-4">
+                      <div className="h-7 w-24 bg-gray-200 rounded-full"></div>
+                      <div className="h-7 w-16 bg-gray-200 rounded-full"></div>
+                      <div className="h-7 w-20 bg-gray-200 rounded-full"></div>
+                    </div>
+
+                    {/* Description skeleton */}
+                    <div className="space-y-2 mb-5">
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-5/6 bg-gray-200 rounded"></div>
+                    </div>
+
+                    {/* Read More button skeleton */}
+                    <div className="h-10 w-28 bg-gray-200 rounded-full"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 ">
+              {/* Saved Articles */}
+              {articles.length === 0 ? (
+                <h2 className="w-full flex items-center justify-center text-[#1E293B]">
+                  No saved articles found.
+                </h2>
+              ) : (
+                articles.map((article) => (
+                  <ArticleCard key={article._id} article={article} />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+      <Footer />
     </main>
   );
 };

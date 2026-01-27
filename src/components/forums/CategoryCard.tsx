@@ -20,7 +20,7 @@ type Category = {
   color: string;
   description: string;
   threadCount: number;
-  imageUrl: string;
+  image: string;
 };
 
 const CategoryCard = () => {
@@ -49,17 +49,12 @@ const CategoryCard = () => {
     fetchUser();
   }, []);
 
+  const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   console.log("token:", token);
 
@@ -123,7 +118,7 @@ const error = useSelector(
     <div className="flex flex-col justify-between h-full gap-2">
       <div
         key={currentCategory?._id}
-        className={`w-7 h-7 text-[#505050] ${isEditOpen && currentEditCategory === currentCategory?.CategoryId ? "block" : "hidden"} z-10 w-full absolute top-0 left-0`}
+        className={` text-[#505050] ${isEditOpen && currentEditCategory === currentCategory?.CategoryId ? "block" : "hidden"} z-10 absolute top-0 left-0`}
       >
         <div className="w-full flex justify-end">
           <button>
@@ -150,7 +145,7 @@ const error = useSelector(
           routes={currentCategory?.route || ""}
           descriptions={currentCategory?.description || ""}
           colors={currentCategory?.color || ""}
-          images={currentCategory?.imageUrl || ""}
+          images={currentCategory?.image || ""}
           cateGoryId={currentCategory?.CategoryId || 0}
           isOpen={()=>{setIsEditOpen(!isEditOpen)}}
         />
@@ -180,11 +175,11 @@ const error = useSelector(
                           }}
                         >
                           {
-                            category?.imageUrl ? (
+                            category?.image ? (
                               <img
-                            src={category?.imageUrl}
+                            src={category?.image}
                             alt={category?.title[0]}
-                            className=" w-6 h-6 opacity-100 object-cover rounded-full z-5 items-center justify-center"
+                            className=" w-8 h-8 opacity-100 object-cover rounded-full z-5 items-center justify-center"
                           />
                             ) : (
                               <span className="font-inter font-bold text-white text-2xl">
@@ -197,7 +192,7 @@ const error = useSelector(
                           <div className="w-full flex items-center justify-between gap-1">
                             <div className="">
                               <h1 className="font-inter font-semibold text-[#023047] text-lg leading-7">
-                                {category?.title}{" "}{category?.imageUrl}
+                                {category?.title}
                               </h1>
                             </div>
                             <div className="flex gap-1 items-center">

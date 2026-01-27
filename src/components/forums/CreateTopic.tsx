@@ -1,8 +1,10 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
+import { RootState } from "@/Redux/store";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 import { set } from "sanity";
 
 export default function CreateTopic() {
@@ -14,18 +16,12 @@ export default function CreateTopic() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+   const auth = useSelector((state: RootState) => state.auth);
 
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);

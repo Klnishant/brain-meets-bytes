@@ -1,7 +1,55 @@
+'use client';
+
+import { useEffect, useState } from "react";
 import AudioCard from "./AudioCard";
 import { COLORS } from "@/lib/constants";
 
+type homeHero = {
+  _id: string;
+  heading: string;
+  description: string;
+  tag: string;
+};
+
+const FALL_BACK_CONTENT : homeHero = {
+  _id: "",
+  heading: "Exploring the Breakthroughs Advancing Brain Health & Longevity.",
+  description: "Conversations with the world’s leading experts in brain health and human longevity distilled into insights you can trust.",
+  tag: "Cutting-edge Brain Science & Longevity"
+}
+
 const Hero = () => {
+  const[content,setContent]=useState<homeHero | null>(null);
+  
+    useEffect(() => {
+      let mounted = true;
+  
+      const load = async () => {
+        try {
+          const contentRes = await fetch("/api/homeHero");
+          if (!contentRes.ok) {
+            throw new Error("Failed to load podcast hero content");
+          }
+  
+          const contentData = (await contentRes.json()) as homeHero;
+          console.log(contentData);
+          
+          if (!mounted) return;
+          setContent(contentData);
+          console.log(contentData);
+          
+        } catch (e: any) {
+          if (!mounted) return;
+          setContent(null);
+        }
+      };
+  
+      void load();
+  
+      return () => {
+        mounted = false;
+      };
+    }, []);
   return (
     <section
       className="py-20  bg-[url('/hero-bg-wave.png')]
@@ -22,28 +70,33 @@ const Hero = () => {
             className="inline-flex items-center justify-center px-7 py-2.5 rounded-full text-sm md:text-base font-light"
             style={{ backgroundColor: COLORS.badgeBg, color: COLORS.brandMutedText }}
           >
-            Cutting-edge Brain Science &amp; Longevity
+            {content?.tag ?? FALL_BACK_CONTENT.tag}
           </button>
 
           {/* HEADING */}
           <div className="flex-col gap-3">
             <h1 className="font-sora font-bold  text-[32px] md:text-2xl lg:text-5xl leading-snug md:leading-[3.2rem] lg:leading-tight text-[#1E293B]">
-              <span className="block">Exploring the Breakthroughs</span>
-              <span className="block">
-                Advancing <span className="text-[#D62828]">Brain Health</span>
-                <span> &amp; Longevity.</span>
-              </span>
+              {
+                content?.heading.split(" ")?.map((word, index) => (
+                  <span key={index} className={`${index  === 4 || index === 5 ? "text-[#D62828]" : ""}`}>
+                    {word}{" "}
+                  </span>
+                )) ?? FALL_BACK_CONTENT.heading.split(" ")?.map((word, index) => (
+                  <span key={index} className={`${index  === 4 || index === 5 ? "text-[#D62828]" : ""}`}>
+                    {word}{" "}
+                  </span>
+                ))
+              }
             </h1>
 
             {/* PARAGRAPH */}
             <p className="font-inter max-w-2xl text-xs md:text-sm lg:text-base leading-7 text-[#505050]">
-              Conversations with the world’s leading experts in brain health and
-              human longevity distilled into insights you can trust.
+              {content?.description ?? FALL_BACK_CONTENT.description}
             </p>
           </div>
 
           {/* CTA BUTTONS */}
-          <div className="flex md:flex-col sm:flex-row items-start gap-3 md:gap-5">
+          <div className="flex  sm:flex-row items-start gap-3 md:gap-5">
             {/* PRIMARY CTA BUTTON */}
             <button
               className="inline-flex items-center justify-between gap-3 text-white rounded-full pl-4 md:pl-6 pr-1.5 md:pr-2 py-2 shadow-sm hover:shadow-md transition-shadow"

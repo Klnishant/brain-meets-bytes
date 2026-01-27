@@ -7,6 +7,7 @@ import Link from "next/link";
 
 type Podcast = {
   _id: string;
+  slug?: string;
   title?: string;
   author?: string;
   date?: string;
@@ -16,7 +17,7 @@ type Podcast = {
 };
 
 const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
-  const { title, author, date, imageUrl, tags = [], podcastCount } = podcast;
+  const { title, author, date, imageUrl, tags = [], podcastCount, slug } = podcast;
 
   const formattedDate = useMemo(() => {
     if (!date) return "";
@@ -86,7 +87,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
           {/* When multiple episodes, keep compact button and show episode count label */}
           {podcastCount && podcastCount > 1 && (
             <>
-              <Link href={`/podcasts/${title}`}>
+              <Link href={`/podcasts/${slug}`}>
                 <button className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
                   <span>Listen</span>
                   <span className="inline-flex items-center justify-center w-4 h-4">
@@ -168,7 +169,7 @@ const PodcastsMainSection = () => {
     if (activeTag !== "all") {
       base = base.filter(
         (podcast) =>
-          Array.isArray(podcast?.tags) && podcast?.tags.includes(activeTag)
+          Array.isArray(podcast?.tags) && podcast?.tags.includes(activeTag),
       );
     }
 
@@ -192,8 +193,6 @@ const PodcastsMainSection = () => {
   const startIndex = (safeCurrentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginated = filteredAndSorted.slice(startIndex, endIndex);
-
-  
 
   // Unique tags for filter chips
   const allTags = useMemo(() => {
@@ -246,14 +245,18 @@ const PodcastsMainSection = () => {
                 type="button"
                 className="flex items-center justify-center gap-2.5 px-3 lg:px-8 h-[36px] lg:w-[232px] lg:h-[50px] md:h-[50px] md:w-[50px] text-[#023047] border border-[#023047] rounded-full"
                 onClick={() => {
-                  setSortBy((prev) => (prev === "recent" ? "oldest" : "recent"));
+                  setSortBy((prev) =>
+                    prev === "recent" ? "oldest" : "recent",
+                  );
                   setCurrentPage(1);
                 }}
               >
                 <div className="flex items-center justify-center gap-0">
                   <img src="/sort 1.png" alt="" />
                 </div>
-                <span className="hidden lg:block">Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}</span>
+                <span className="hidden lg:block">
+                  Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}
+                </span>
               </button>
               <button
                 type="button"
@@ -268,12 +271,14 @@ const PodcastsMainSection = () => {
             </div>
           </div>
         </div>
-          
-          {filterOpen && (
+
+        {filterOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
             <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-lg">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-sora text-lg font-semibold text-[#1E293B]">Filter by topic</h3>
+                <h3 className="font-sora text-lg font-semibold text-[#1E293B]">
+                  Filter by topic
+                </h3>
                 <button
                   className="text-sm text-[#64748B] hover:text-[#1E293B]"
                   onClick={() => setFilterOpen(false)}
@@ -283,7 +288,9 @@ const PodcastsMainSection = () => {
               </div>
 
               {allTags.length === 0 ? (
-                <p className="text-sm text-[#64748B]">No topics available yet.</p>
+                <p className="text-sm text-[#64748B]">
+                  No topics available yet.
+                </p>
               ) : (
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -341,9 +348,41 @@ const PodcastsMainSection = () => {
         )}
         <div className="w-full">
           {loading && (
-            <p className="text-center text-sm text-[#64748B]">
-              Loading featured podcasts...
-            </p>
+            <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse max-w-xl"
+                >
+                  {/* Image Skeleton */}
+                  <div className="w-full h-64 bg-gray-200"></div>
+
+                  {/* Content Section */}
+                  <div className="p-5 space-y-4">
+                    {/* Author and Date */}
+                    <div className="flex items-center gap-3">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-4 bg-gray-200 rounded w-28"></div>
+                    </div>
+
+                    {/* Title Skeleton */}
+                    <div className="space-y-2">
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+
+                    {/* Tag Skeleton */}
+                    <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
+
+                    {/* Listen Button and Episodes */}
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="h-11 w-32 bg-gray-200 rounded-full"></div>
+                      <div className="h-5 bg-gray-200 rounded w-24"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
           {error && !loading && (
             <div>
@@ -357,10 +396,10 @@ const PodcastsMainSection = () => {
                 <PodcastCard key={podcast._id} podcast={podcast} />
               ))}
               {!loading && !error && totalItems === 0 && (
-              <p className="col-span-full text-center text-sm text-[#64748B]">
-                No podcasts match your search.
-              </p>
-            )}
+                <p className="col-span-full text-center text-sm text-[#64748B]">
+                  No podcasts match your search.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -394,7 +433,7 @@ const PodcastsMainSection = () => {
                   >
                     {page}
                   </button>
-                )
+                ),
               )}
             </div>
 

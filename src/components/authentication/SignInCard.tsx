@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { X, Eye, EyeOff, Loader } from "lucide-react";
 import { set } from "sanity";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/Redux/store";
+import { fetchAuth } from "@/Redux/slices/AuthSlice";
 
 type SignInCardProps = {
     onClose?: () => void;
@@ -29,6 +32,8 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
       [name]: value,
     }));
   };
+
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -59,6 +64,10 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
       if (res.ok) {
         const data = await res.json();
         console.log(data);
+
+        dispatch(
+          fetchAuth()
+        )
 
         setSignInData({
           email: "",
@@ -114,6 +123,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
             type="email"
             placeholder="Email Address"
             name="email"
+            required={true}
             value={signInData.email}
             onChange={handleInputChange}
             className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
@@ -125,6 +135,7 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               name="password"
+              required={true}
               value={signInData.password}
               onChange={handleInputChange}
               className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"

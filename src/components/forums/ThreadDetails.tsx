@@ -15,7 +15,12 @@ import toast from "react-hot-toast";
 import { set } from "sanity";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/Redux/store";
-import { fetchComments, postComment, replyComment } from "@/Redux/slices/ThreadCommentSlice";
+import {
+  fetchComments,
+  postComment,
+  replyComment,
+} from "@/Redux/slices/ThreadCommentSlice";
+import { log } from "console";
 
 type Category = {
   _id: string;
@@ -38,6 +43,7 @@ type Thread = {
   content: string;
   CategoryId: Array<Number>;
   images: Array<string>;
+  videos: Array<string>;
   userId: Number;
   likesCount: number;
   commentsCount: number;
@@ -97,21 +103,16 @@ const ThreadDetails = () => {
   const [topicsCount, setTopicsCount] = useState(5);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  const [isTopicLoading,setIsTopicLoading] = useState(true);
-  const [isCommentLoading,setIsCommentLoading] = useState(true);
+  const [isTopicLoading, setIsTopicLoading] = useState(true);
+  const [isCommentLoading, setIsCommentLoading] = useState(true);
   const [isReplying, setIsReplying] = useState(false);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   const params = useParams();
   const ThreadId = params?.threadId;
@@ -135,21 +136,22 @@ const ThreadDetails = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
         if (!res.ok) {
           throw new Error("Failed to load threads");
         }
 
         const data = (await res.json())?.data as Thread[];
+        console.log("Thread Data:", data);
 
         if (!mounted) return;
         setThreads(Array.isArray(data) ? data : []);
         setHasLiked(data[0].likes);
         setLiked(
           hasLiked.some(
-            (like) => like.userId === Number(localStorage.getItem("userId"))
-          )
+            (like) => like.userId === Number(localStorage.getItem("userId")),
+          ),
         );
       } catch (e: any) {
         if (!mounted) return;
@@ -193,7 +195,7 @@ const ThreadDetails = () => {
   console.log(threads[0]?.comments);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setCommentData((prev) => ({
@@ -203,67 +205,67 @@ const ThreadDetails = () => {
   };
   console.log(commentData.comment);
 
-  const handleComment = (
-      e: React.FormEvent<HTMLFormElement>,
-    ) => {
-      if ( !token) return;
-      e.preventDefault();
-    
-      dispatch(
-        postComment({
-          ThreadId: Number(ThreadId),
-          token,
-          comments: commentData.comment,
-          userId: Number(userId), // undefined = root comment
-        })
-      );
-    };
+  const handleComment = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!token) return;
+    e.preventDefault();
+
+    dispatch(
+      postComment({
+        ThreadId: Number(ThreadId),
+        token,
+        comments: commentData.comment,
+        userId: Number(userId), // undefined = root comment
+      }),
+    );
+  };
   const handleReply = (
-      e: React.FormEvent<HTMLFormElement>,
-      parentCommentId: number,
-      comments: string
-    ) => {
-      if ( !token) return;
-      e.preventDefault();
-    
-      dispatch(
-        replyComment({
-          ThreadId: Number(ThreadId),
-          token,
-          userId: Number(userId), // undefined = root comment
-          comment: comments,
-          parentCommentId: Number(parentCommentId),
-        })
-      );
-    };
+    e: React.FormEvent<HTMLFormElement>,
+    parentCommentId: number,
+    comments: string,
+  ) => {
+    if (!token) return;
+    e.preventDefault();
+
+    dispatch(
+      replyComment({
+        ThreadId: Number(ThreadId),
+        token,
+        userId: Number(userId), // undefined = root comment
+        comment: comments,
+        parentCommentId: Number(parentCommentId),
+      }),
+    );
+  };
 
   const dispatch = useDispatch<AppDispatch>();
-  
-     useEffect(() => {
+
+  useEffect(() => {
     if (token && threads[0]?.ThreadId) {
       dispatch(
         fetchComments({
           ThreadId: Number(threads[0]?.ThreadId),
           token,
-        })
+        }),
       );
     }
   }, [token, threads[0]?.ThreadId]);
 
   const commentsTree = useSelector(
     (state: RootState) =>
-      state.threadComments.byThread[Number(threads[0]?.ThreadId)]?.tree || []
+      state.threadComments.byThread[Number(threads[0]?.ThreadId)]?.tree || [],
   );
 
-  console.log("commentsTree",commentsTree);
-  
+  console.log("commentsTree", commentsTree);
 
-  const handleCommentLike = async (e: React.MouseEvent<HTMLButtonElement>, commentId: number) => {
+  const handleCommentLike = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    commentId: number,
+  ) => {
     e.preventDefault();
     try {
       const body = {
-        "userId": userId
-      }
+        userId: userId,
+      };
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}threads/comments/like?ThreadId=${ThreadId}&CommentId=${commentId}`,
         {
@@ -273,13 +275,12 @@ const ThreadDetails = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(body),
-        }
-      )
+        },
+      );
       if (!res.ok) {
       }
-    } catch (error) {
-    }
-  }
+    } catch (error) {}
+  };
 
   const visibleTopics = topics.slice(0, topicsCount);
 
@@ -289,15 +290,7 @@ const ThreadDetails = () => {
   return (
     <>
       <section className="w-full bg-[#FAF9F8] pb-24 pt-5 md:pb-28 md:pt-10">
-        {
-          loading ? (
-            <>
-            <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
-              Thread Are Loading...
-            </div>
-            </>
-          ) : (
-            <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
           {/* Breadcrumbs */}
           <div className="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 text-sm text-[#1E293B]">
             {/* Home Icon */}
@@ -313,95 +306,210 @@ const ThreadDetails = () => {
             </span>
             {/* Username and ThreadId */}
             <span className="flex items-center gap-2">
-              <span className="font-medium cursor-pointer md:text-[20px] ">
-                {`${threads[0]?.user?.name}#${ThreadId}`}
-              </span>
+              {loading ? (
+                <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              ) : (
+                <span className="font-medium cursor-pointer md:text-[20px] ">
+                  {`${threads[0]?.user?.name}#${ThreadId}`}
+                </span>
+              )}
               <h1 className=" md:text-xl">›</h1>
             </span>
 
             {/* Current Page Title */}
             <span className="flex items-center gap-2">
-              <span className="font-medium cursor-pointer md:text-[20px]">
-                {threads[0]?.title}
-              </span>
+              {loading ? (
+                <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              ) : (
+                <span className="font-medium cursor-pointer md:text-[20px]">
+                  {threads[0]?.title}
+                </span>
+              )}
             </span>
           </div>
           <div className="flex w-full flex-col gap-8 lg:flex-row">
             {/* Left: search, composer, posts */}
-            <div className="flex w-full max-w-[1059px] flex-col gap-6">
-              {/* Threads cards */}
-              <ThreadsCard key={threads[0]?._id} thread={threads[0]} onSuccess={()=>{}} />
+            {loading ? (
+              <div className="flex w-full max-w-[1059px] flex-col gap-6">
+                <div className="w-full max-w-4xl mx-auto bg-white rounded-lg p-6 animate-pulse">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar skeleton */}
+                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
 
-              <div className="flex flex-col-reverse md:flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
-                {/* Comments bar */}
-                <div className="flex items-center gap-2 md:gap-4">
-                  <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
-                    <img
-                      src="/forum-user-1.jpg"
-                      alt="Current user"
-                      className="h-full w-full object-cover"
-                    />
+                      <div className="flex flex-col gap-2">
+                        {/* Title skeleton */}
+                        <div className="h-6 w-32 bg-gray-200 rounded"></div>
+                        {/* Time skeleton */}
+                        <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+
+                    {/* Report button skeleton */}
+                    <div className="h-10 w-24 bg-gray-200 rounded-full"></div>
                   </div>
-                  <div className="w-full ">
-                    <form
-                      className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
-                      method="post"
-                      noValidate
-                      onSubmit={handleComment}
-                    >
-                      <textarea
-                        name="comment"
-                        rows={1}
-                        value={commentData.comment}
-                        onChange={handleInputChange}
-                        placeholder="Make a comment…"
-                        className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
-                      />
-                      <button
-                        type="submit"
-                        className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
-                      >
-                        Comment
-                      </button>
-                    </form>
+
+                  {/* Tags skeleton */}
+                  <div className="flex gap-2 mb-4">
+                    <div className="h-8 w-24 bg-gray-200 rounded-full"></div>
+                    <div className="h-8 w-24 bg-gray-200 rounded-full"></div>
+                  </div>
+
+                  {/* Post title skeleton */}
+                  <div className="h-7 w-40 bg-gray-200 rounded mb-4"></div>
+
+                  {/* Image skeleton */}
+                  <div className="w-full h-96 bg-gray-200 rounded-2xl mb-4"></div>
+
+                  {/* Caption skeleton */}
+                  <div className="h-4 w-36 bg-gray-200 rounded mb-6"></div>
+
+                  {/* Action buttons skeleton */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-3">
+                      {/* Like button skeleton */}
+                      <div className="h-10 w-16 bg-gray-200 rounded-full"></div>
+                      {/* Comment button skeleton */}
+                      <div className="h-10 w-16 bg-gray-200 rounded-full"></div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      {/* Share button skeleton */}
+                      <div className="h-10 w-20 bg-gray-200 rounded-full"></div>
+                      {/* Save button skeleton */}
+                      <div className="h-10 w-20 bg-gray-200 rounded-full"></div>
+                    </div>
                   </div>
                 </div>
+                <div className="flex flex-col-reverse md:flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 animate-pulse">
+                    <div className="flex items-start gap-3">
+                      {/* Avatar Skeleton */}
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0"></div>
 
-                <div className="flex flex-col gap-4">
-                  {/* Comments */}
-                  <div className="flex gap-2.5">
-                    <h1 className="font-sora font-semibold text-[#1E293B] text-[12px] md:text-lg leading-[30px]">
-                      Comments
-                    </h1>
-                    <p className="font-sora font-semibold text-[#505050] text-[12px] md:text-lg leading-[30px]">{`${commentsTree?.length || 0}`}</p>
+                      <div className="flex-1 flex items-center gap-3">
+                        {/* Input Field Skeleton */}
+                        <div className="flex-1 h-12 bg-gray-200 rounded-lg"></div>
+                        {/* Button Skeleton */}
+                        <div className="h-12 w-28 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-full h-0.5 border border-[#E2E8F0]"></div>
-                  {/* comments card */}
-                  <div className="flex flex-col gap-2">
-                    {commentsTree &&
-                      commentsTree.map((comment) => (
-                        <>
-                          <CommentsCard
-                            key={comment._id}
-                            comment={comment}
-                            addReply={(
-                              e: React.FormEvent<HTMLFormElement>,
-                              reply: string,
-                              parentCommentId: number
-                            ) => handleReply(e, parentCommentId, reply)}
-                            isActiveReply={openReplies.has(comment.CommentId)}
-                            threadId={Number(ThreadId)}
-                          />
-                        </>
-                      ))}
+                  <div className="flex flex-col gap-4">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
+                        {/* User Info Section */}
+                        <div className="flex items-start gap-3 mb-4">
+                          {/* Avatar Skeleton */}
+                          <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0"></div>
+
+                          <div className="flex-1">
+                            {/* Username Skeleton */}
+                            <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+                            {/* Timestamp Skeleton */}
+                            <div className="h-4 bg-gray-200 rounded w-24"></div>
+                          </div>
+                        </div>
+
+                        {/* Comment Text Skeleton */}
+                        <div className="mb-4 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-full"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+
+                        {/* Action Buttons Skeleton */}
+                        <div className="flex items-center gap-3">
+                          {/* Like Button Skeleton */}
+                          <div className="h-9 w-16 bg-gray-200 rounded-full"></div>
+                          {/* Reply Button Skeleton */}
+                          <div className="h-9 w-16 bg-gray-200 rounded-full"></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex w-full max-w-[1059px] flex-col gap-6">
+                {/* Threads cards */}
+                <ThreadsCard
+                  key={threads[0]?._id}
+                  thread={threads[0]}
+                  onSuccess={() => {}}
+                />
+
+                <div className="flex flex-col-reverse md:flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+                  {/* Comments bar */}
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828] shrink-0">
+                      <img
+                        src={threads[0]?.user?.ProfilePic || "/forum-user.png"}
+                        alt="Current user"
+                        className="h-full w-full object-cover shrink-0"
+                      />
+                    </div>
+                    <div className="w-full">
+                      <form
+                        className="flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] pl-3 md:pl-6 pr-2 py-2 md:py-3"
+                        method="post"
+                        noValidate
+                        onSubmit={handleComment}
+                      >
+                        <textarea
+                          name="comment"
+                          rows={1}
+                          value={commentData.comment}
+                          onChange={handleInputChange}
+                          placeholder="Make a comment…"
+                          className="flex-1 bg-transparent outline-none items-center text-[12px] md:text-base text-[#1E293B] placeholder-[#64748B]"
+                        />
+                        <button
+                          type="submit"
+                          className="flex h-[30px]  md:h-11 w-[134px] items-center justify-center rounded-[34px] bg-[#023047] text-[12px] md:text-[16px] text-white"
+                        >
+                          Comment
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    {/* Comments */}
+                    <div className="flex gap-2.5">
+                      <h1 className="font-sora font-semibold text-[#1E293B] text-[12px] md:text-lg leading-[30px]">
+                        Comments
+                      </h1>
+                      <p className="font-sora font-semibold text-[#505050] text-[12px] md:text-lg leading-[30px]">{`${commentsTree?.length || 0}`}</p>
+                    </div>
+                    <div className="w-full h-0.5 border border-[#E2E8F0]"></div>
+                    {/* comments card */}
+                    <div className="flex flex-col gap-2">
+                      {commentsTree &&
+                        commentsTree.map((comment) => (
+                          <>
+                            <CommentsCard
+                              key={comment._id}
+                              comment={comment}
+                              addReply={(
+                                e: React.FormEvent<HTMLFormElement>,
+                                reply: string,
+                                parentCommentId: number,
+                              ) => handleReply(e, parentCommentId, reply)}
+                              isActiveReply={openReplies.has(comment.CommentId)}
+                              threadId={Number(ThreadId)}
+                            />
+                          </>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Right: sidebars placeholder column */}
             <div className="hidden mt-6 md:flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
-              <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+              <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
                 <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                   Top Categories
                 </h3>
@@ -439,15 +547,15 @@ const ThreadDetails = () => {
                 </div>
               </div>
 
-              <div className="flex min-h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+              {/* <div className="flex min-h-[414px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
                 <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                   You may know
                 </h3>
-                {/* users list */}
+                {/* users list *
                 <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
                   <UsersCard />
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
                 <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
@@ -461,8 +569,6 @@ const ThreadDetails = () => {
             </div>
           </div>
         </div>
-          )
-        }
       </section>
     </>
   );

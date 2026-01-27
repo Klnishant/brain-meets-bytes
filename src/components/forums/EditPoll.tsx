@@ -2,11 +2,11 @@
 
 import { getAuth } from "@/lib/getAuth";
 import { updatePoll } from "@/Redux/slices/PollSlice";
-import { AppDispatch } from "@/Redux/store";
+import { AppDispatch, RootState } from "@/Redux/store";
 import { Loader } from "lucide-react";
 import React, { useEffect, useImperativeHandle, useState } from "react";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { set } from "sanity";
 
 type Option = {
@@ -36,17 +36,13 @@ const EditPoll: React.FC<EditPollProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
+  
   useEffect(() => {
     setQuestion(pollQuestion);
     setOptions(pollOptions);

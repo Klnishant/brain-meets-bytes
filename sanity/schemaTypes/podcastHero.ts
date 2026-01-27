@@ -18,6 +18,16 @@ export const podcastHero = defineType({
         initialValue: "Brain Meets Bytes explores breakthroughs in neuroscience, healthy aging, and human longevity—translating emerging science into insights that help us all live longer, healthier, and sharper lives.",
     }),
     defineField({
+      name: "slug",
+      title: "Slug",
+      type: "slug",
+      options: {
+        source: "newReleasePodcastTitle",
+        maxLength: 96,
+      },
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: "newReleasePodcastTitle",
       title: "New Release Podcast Title",
       type: "string",

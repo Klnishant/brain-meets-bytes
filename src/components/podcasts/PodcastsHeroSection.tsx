@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { COLORS } from "@/lib/constants";
+import Link from "next/link";
 
 type Podcast = {
   _id: string;
@@ -16,6 +17,7 @@ type Podcast = {
 type PodcastHeroContent = {
   heading: string;
   description: string;
+  slug?: string;
   newReleasePodcastTitle: string;
   author: string;
   imageUrl: string;
@@ -51,6 +53,8 @@ const PodcastsHeroSection = () => {
         const contentData = (await contentRes.json()) as PodcastHeroContent;
         if (!mounted) return;
         setContent(contentData);
+        console.log(contentData);
+        
       } catch (e: any) {
         if (!mounted) return;
         setContent(null);
@@ -64,7 +68,15 @@ const PodcastsHeroSection = () => {
     };
   }, []);
 
-  
+  const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+
+
+  const { newReleasePodcastTitle, author, date, imageUrl, tags = [], podcastCount } = content || {};
 
   const newLocal = "flex items-center gap-3";
   return (
@@ -169,13 +181,15 @@ const PodcastsHeroSection = () => {
               </div>
               {/* Play Now button */}
               <div className="w-full flex justify-center">
-                <button className="inline-flex items-center justify-center gap-4 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-[16px] font-normal text-[#D62828] w-full md:w-fit">
+                <Link href={`/podcasts/${content?.slug}`}>
+                  <button className="inline-flex items-center justify-center gap-4 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-[16px] font-normal text-[#D62828] w-full md:w-fit">
                   <span>Play Now!</span>
                   <span
                     className="inline-block w-2.5 h-3.5 [clip-path:polygon(0%_0%,100%_50%,0%_100%)]"
                     style={{ backgroundColor: COLORS.brandRed }}
                   />
                 </button>
+                </Link>
               </div>
             </div>
           </div>

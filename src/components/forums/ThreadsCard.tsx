@@ -11,6 +11,8 @@ import EditThread from "./EditThreads";
 import { getAuth } from "@/lib/getAuth";
 import toast from "react-hot-toast";
 import { on } from "events";
+import { useSelector } from "react-redux";
+import { RootState } from "@/Redux/store";
 
 type Category = {
   _id: string;
@@ -37,6 +39,7 @@ type Thread = {
   content: string;
   CategoryId: Array<Number>;
   images: Array<string>;
+  videos: Array<string>;
   userId: Number;
   likesCount: number;
   commentsCount: number;
@@ -52,6 +55,18 @@ type Thread = {
   categories: Array<Category>;
   comments: Array<Comment>;
   likes: Array<Like>;
+};
+
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
 };
 
 
@@ -95,21 +110,39 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess, onEdit }) 
   const [reason,setReason] = useState('');
   const [likedArray,setLikedArray] = useState<Like[]>([]);
   const [imageLength, setImageLength] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
 
   const isMySavedThreadPage = pathname === "/forums/MySavedThreads";
+  const isGetReportsPage = pathname === "/forums/Thread/GetReports";
 
-  useMemo(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-        //setHasLiked(thread?.likes.some((like) => like.userId === Number(userId)));
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+   const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
+
+  useEffect(() => {
+      const user = async () => {
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await res.json();
+  
+        if (res.ok) {
+          setUser(data?.data);
+        }
+      };
+      user();
+    }, [token]);
 
   useEffect(() => {
     if (!userId) return;
@@ -410,6 +443,7 @@ setHasLiked(hasLiked);
             type="text"
             placeholder="Reason for reporting"
             name="reason"
+            required={true}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
@@ -473,11 +507,11 @@ setHasLiked(hasLiked);
         <div className="w-full flex flex-col gap-4">
           <div className={`w-full flex  items-center justify-between ${ isMySavedThreadPage ? "hidden" : "block"}`}>
             <div className="flex gap-3 items-center md:items-start">
-              <div className="h-9 w-9 md:h-15 md:w-15 overflow-hidden rounded-full">
+              <div className="h-9 w-9 md:h-15 md:w-15 overflow-hidden rounded-full shrink-0">
                 <img
-                  src={"./ki.png"}
+                  src={thread?.user?.ProfilePic || "./ki.png"}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover shrink-0"
                 />
               </div>
               <div>
@@ -492,7 +526,7 @@ setHasLiked(hasLiked);
                 </p>
               </div>
             </div>
-            <div className={`flex gap-1 items-center ${ isMySavedThreadPage ? "hidden" : "block"}`}>
+            <div className={`flex gap-1 items-center ${ isMySavedThreadPage || isGetReportsPage ? "hidden" : "block"}`}>
               <button
               disabled={isReporting}
               onClick={()=>setIsReportOpen(!isReportOpen)} 
@@ -512,10 +546,10 @@ setHasLiked(hasLiked);
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) ? "block" : "hidden"}`}
+                className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) || isGetReportsPage ? "block" : "hidden"}`}
               >
                 <Trash2
-                  className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) ? "block" : "hidden"}`}
+                  className={`w-7 h-7 text-[#505050] ${thread?.user?.userId === Number(userId) || user?.RoleId === 2 ? "block" : "hidden"}`}
                 />
               </button>
 
@@ -553,7 +587,20 @@ setHasLiked(hasLiked);
                         key={indx}
                           src={image}
                           alt=""
-                          className={`w-full h-full rounded-xl object-cover ${indx+1 == imageLength && imageLength%2 != 0 ? "col-span-2" : ""}`}
+                          className={`w-full h-full max-h-[500px] rounded-xl object-cover ${indx+1 == imageLength && imageLength%2 != 0 ? "col-span-2" : ""}`}
+                        />
+                      </>
+                    ))}
+                </div>
+                <div className=" hidden grid-cols-1 md:grid-cols-2 gap-4">
+                  {thread?.videos &&
+                    thread?.videos?.map((video,indx) => (
+                      <>
+                        <video
+                        key={indx}
+                          src={video}
+                          controls
+                          className={`w-full h-full rounded-xl object-cover `}
                         />
                       </>
                     ))}
@@ -566,7 +613,7 @@ setHasLiked(hasLiked);
           </Link>
           <div>
             {/*BTNS*/}
-            <div className={`w-full ${ isMySavedThreadPage ? "hidden" : "block"}`}>
+            <div className={`w-full ${ isMySavedThreadPage || isGetReportsPage ? "hidden" : "block"}`}>
               <div className="w-full flex items-center justify-between gap-3 md:gap-6">
                 <div className="flex items-center gap-3">
                   {/* Like */}
@@ -637,7 +684,7 @@ setHasLiked(hasLiked);
       >
         <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
           <img
-            src="/forum-user-1.jpg"
+            src={thread?.user?.ProfilePic || "/forum-user.png"}
             alt="Current user"
             className="h-full w-full object-cover"
           />

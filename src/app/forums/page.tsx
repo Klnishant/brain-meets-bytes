@@ -8,9 +8,6 @@ const ForumsPage = () => {
     <main className="min-h-screen bg-[#FAF9F8] relative">
       <Navbar />
       <ForumsPageContent />
-      <div className="absolute lg:hidden bottom-20 z-10 mx-auto w-full flex justify-center" >
-        <MobileViewBar />
-      </div>
       <Footer />
     </main>
   );

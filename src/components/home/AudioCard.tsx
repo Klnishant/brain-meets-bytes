@@ -1,6 +1,108 @@
+"use client";
+
 import { COLORS } from "@/lib/constants";
+import { useEffect, useRef, useState } from "react";
+
+type Podcast = {
+  _id: string;
+  title?: string;
+  author?: string;
+  date?: string;
+  imageUrl?: string;
+  tags?: string[];
+  podcastCount?: number;
+};
+type Episode = {
+  _id: string;
+  title?: string;
+  date?: string;
+  tags?: string[];
+  kind?: string;
+  duration?: number;
+  description?: string;
+  media: string;
+  slug?: {
+    current: string;
+  };
+  podcast: {
+    title?: string;
+    author?: string;
+    imageUrl?: string;
+    description?: Text;
+    authorImageUrl?: string;
+  };
+  imageUrl?: string;
+  mimeType?: string;
+};
+
+type FALL_BACK_CONTENT = {
+  title: string;
+  author: string;
+  imageUrl: string;
+  duration: number;
+};
+
+const FALL_BACK_CONTENT: FALL_BACK_CONTENT = {
+  title:
+    "Neurotrack’s Bet on Digital Brain Health Meets a Market Ready for Change",
+  author: "Ki Siadatan",
+  imageUrl: "./ki.png",
+  duration: 40,
+};
 
 const AudioCard = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [episode, setEpisode] = useState<Episode | null>(null);
+
+  useEffect(() => {
+    const fetchEpisode = async () => {
+      const res = await fetch("/api/home-audio");
+      const data = await res.json();
+      setEpisode(data);
+    };
+    fetchEpisode();
+  }, []);
+
+  useEffect(() => {
+    if (!audioRef?.current) return;
+    audioRef.current?.load();
+    audioRef.current.currentTime = 0;
+    setCurrentTime(0);
+  }, [episode]);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+
+    setIsPlaying(!isPlaying);
+  };
+
+  const onTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const onLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef?.current?.duration || 0);
+    }
+  };
+
+  const seek = (value: number) => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = value;
+    setCurrentTime(value);
+  };
+
   return (
     <div className="relative w-full h-auto flex justify-end mt-10 overflow-hidden">
       {/* Background Wave — decorative */}
@@ -49,37 +151,68 @@ const AudioCard = () => {
         {/* PROFILE + TEXT */}
         <div className="flex items-center gap-4 mt-2">
           <img
-            src="/ki.png"
+            src={episode?.imageUrl ?? FALL_BACK_CONTENT.imageUrl}
             alt="Speaker"
             className="w-[70px] h-[70px] md:w-[110px] md:h-[110px] rounded-full object-cover border border-[#E2E8F0]"
           />
 
           <div className="flex flex-col justify-center items-start gap-2 w-[260px]">
             <h3 className="font-sora text-[16px] md:text-[18px] font-semibold leading-[24px] text-gray-900">
-              Neurotrack’s Bet on Digital Brain Health Meets a Market
-              Ready for Change
+              {episode?.title ?? FALL_BACK_CONTENT.title}
             </h3>
 
             <p
               className="font-inter text-xs md:text-sm"
               style={{ color: COLORS.brandMutedText }}
             >
-              Ki Siadatan
+              {episode?.podcast?.author ?? FALL_BACK_CONTENT.author}
             </p>
           </div>
+        </div>
+        {/* Audio Player */}
+        <div>
+          <audio
+            ref={audioRef}
+            onTimeUpdate={onTimeUpdate}
+            onLoadedMetadata={onLoadedMetadata}
+            onPlay={() => {
+              setIsPlaying(true);
+            }}
+            onPause={() => {
+              setIsPlaying(false);
+            }}
+          >
+            <source src={episode?.media || ""} type={episode?.mimeType} />
+          </audio>
         </div>
 
         {/* SLIDER WITH TIME */}
         <div className="w-full mt-3">
           <input
             type="range"
+            min={0}
+            max={duration || 0}
+            value={currentTime}
+            onChange={(e) => {
+              seek(Number(e.target.value));
+            }}
             className="w-full accent-red-600"
             defaultValue={40}
           />
 
           <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mt-1">
-            <span>12:30</span>
-            <span>32:30</span>
+            <span>
+              {Math.floor(currentTime / 3600)} :{" "}
+              {Math.floor((currentTime % 3600) / 60)} :{" "}
+              {Math.floor(currentTime % 60)}
+            </span>
+            {(duration && (
+              <span>
+                {Math.floor(duration / 3600)} :{" "}
+                {Math.floor((duration % 3600) / 60)} :{" "}
+                {Math.floor(duration % 60)}
+              </span>
+            )) ?? <span>{FALL_BACK_CONTENT.duration}</span>}
           </div>
         </div>
 
@@ -147,6 +280,7 @@ const AudioCard = () => {
             </button>
 
             <button
+              onClick={togglePlay}
               className="
     w-10 h-10 
     rounded-full 
@@ -156,7 +290,7 @@ const AudioCard = () => {
     hover:brightness-110
   "
             >
-              ▶
+              {isPlaying ? "❚❚" : "▶"}
             </button>
 
             <button
@@ -184,12 +318,7 @@ const AudioCard = () => {
 
           {/* Heart Icon */}
           <button className="flex items-center justify-center">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 20.25C12 20.25 4.5 15 4.5 9.75C4.5 6.85 6.85 4.5 9.75 4.5C11.18 4.5 12.51 5.11 13.5 6.1C14.49 5.11 15.82 4.5 17.25 4.5C20.15 4.5 22.5 6.85 22.5 9.75C22.5 15 15 20.25 15 20.25H12Z"
                 stroke={COLORS.brandMutedText}

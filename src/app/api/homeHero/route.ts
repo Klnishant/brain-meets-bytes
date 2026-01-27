@@ -3,17 +3,11 @@ import { sanityClient } from "@/lib/sanityClient";
 
 export const revalidate = 300;
 
-const query = `*[_type == "podcastHero"][0]{
+const query = `*[_type == "homeHero"][0]{
   _id,
   heading,
   description,
-  "slug": slug.current,
-  newReleasePodcastTitle,
-  author,
-  "imageUrl": image.asset->url,
-  date,
-  tags,
-  "podcastCount": count(*[_type == "podcast"]),
+  tag,
 }`;
 
 export async function GET() {
@@ -21,9 +15,9 @@ export async function GET() {
     const data = await sanityClient.fetch(query);
     return NextResponse.json(data ?? null);
   } catch (err) {
-    console.error("Error fetching Podcast hero from Sanity", err);
+    console.error("Error fetching Home hero from Sanity", err);
     return NextResponse.json(
-      { message: "Failed to load Podcast hero content" },
+      { message: "Failed to load Home hero content" },
       { status: 500 }
     );
   }

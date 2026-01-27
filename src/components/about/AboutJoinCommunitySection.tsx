@@ -1,12 +1,62 @@
+'use client';
+
 import { COLORS } from "@/lib/constants";
 import { ThumbsUp } from "lucide-react";
+import { useEffect, useState } from "react";
+
+type ForumContent = {
+  _id: string;
+  heading: string;
+  descriptionTag: string;
+  description: string;
+  Card: {
+    title: string;
+    description: string;
+    user: string;
+    role: string;
+    tags: string[];
+    date: string;
+    repliesCount: number;
+    reactionCount: number;
+    profileImageUrl: string;
+  }
+};
 
 type ForumCardProps = {
   faded?: boolean;
   className?: string;
+  Card: {
+    title: string;
+    description: string;
+    user: string;
+    role: string;
+    tags: string[];
+    date: string;
+    repliesCount: number;
+    reactionCount: number;
+    profileImageUrl: string;
+  }
 };
 
-const ForumCard = ({ faded, className }: ForumCardProps) => {
+const FALL_BACK_CONTENT: ForumContent = {
+  _id: "",
+  heading: "",
+  descriptionTag: "",
+  description: "",
+  Card: {
+    title: "",
+    description: "",
+    user: "",
+    role: "",
+    tags: [],
+    date: "",
+    repliesCount: 0,
+    reactionCount: 0,
+    profileImageUrl: "",
+  },
+}
+
+const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
   return (
     <div
       className={`rounded-2xl border border-[#E2E8F0] bg-white shadow-md px-4 md:px-8 py-4 md:py-8 flex flex-col gap-3 md:gap-6 ${
@@ -19,7 +69,7 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 md:w-12 md:h-12 rounded-full border-2 border-[#F77F00] overflow-hidden">
               <img
-                src="/forum-user-1.jpg"
+                src={`${Card?.profileImageUrl}`}
                 alt="Sara Jones avatar"
                 className="w-full h-full object-cover"
               />
@@ -27,21 +77,21 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
                 <span className="font-inter text-base font-normal text-[#1E293B]">
-                  Sara Jones
+                 {Card?.user}
                 </span>
                 <span className="hidden md:inline-block w-px h-4 bg-[#64748B] rounded-full" />
                 <span className="hidden md:block font-inter text-sm font-light text-[#64748B]">3 days ago</span>
               </div>
-              <span className="font-inter text-xs font-semibold text-[#505050]">Member</span>
+              <span className="font-inter text-xs font-semibold text-[#505050]">{Card?.role}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             <span className="inline-flex items-center justify-center px-2.5 md:px-3 py-1 rounded-full bg-[#64748B] text-[10px] md:text-[11px] text-white font-inter">
-              Episode Discussion
+              {Card?.tags?.join(", ")}
             </span>
             <span className="inline-flex items-center justify-center px-2.5 md:px-3 py-1 rounded-full border border-[#64748B] text-[10px] md:text-[11px] text-[#64748B] font-inter">
-              18 replies
+              {Card?.repliesCount} replies
             </span>
           </div>
         </div>
@@ -54,13 +104,16 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
       {/* Title + body */}
       <div className="flex flex-col gap-2 md:gap-3">
         <h3 className="font-sora text-[16px] md:text-2xl font-semibold text-black">
-          Key takeaways from 
-          <span className="italic">“The Future of Cognitive Enhancement”</span>
+          {
+            Card?.title?.split(" ").map((word, index) => (
+              <span key={index} className={`${index >= 2 ? "italic" : ""}`}>
+                {word}{" "}
+              </span>
+            ))
+          }
         </h3>
         <p className="font-inter text-xs md:text-base text-[#333333] md:leading-7 line-clamp-7">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum egestas eleifend.
-          Nulla est tortor, iaculis eu iaculis ut, congue at sapien. Mauris gravida congue
-          vulputate. Suspendisse vitae magna at sem vehicula porttitor.
+          {Card?.description}
         </p>
       </div>
 
@@ -71,7 +124,7 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
             <ThumbsUp
               className="w-2.5 h-2.5 text-[#64748B] md:w-3.5 md:h-3.5 object-contain"
             />
-            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">245</span>
+            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">{Card?.reactionCount}</span>
           </button>
 
           <button className="inline-flex items-center gap-2 px-3 md:px-4 py-1 md:py-2 rounded-full border border-[#64748B] bg-white">
@@ -80,7 +133,7 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
               alt="Comments"
               className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 object-contain"
             />
-            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">245</span>
+            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">{Card?.repliesCount}</span>
           </button>
         </div>
 
@@ -98,6 +151,18 @@ const ForumCard = ({ faded, className }: ForumCardProps) => {
 };
 
 const AboutJoinCommunitySection = () => {
+  const [content, setContent] = useState<ForumContent | null>(null);
+    
+    useEffect(() => {
+      const fetchContent = async () => {
+        const response = await fetch("/api/about-forum");
+        const data = await response.json() as ForumContent;
+        setContent(data);
+        console.log(data);
+        
+      };
+      fetchContent();
+    }, []);
   return (
     <section className="w-full bg-[#FAF9F8] py-20 md:py-30 lg:py-40">
       <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20">
@@ -105,15 +170,19 @@ const AboutJoinCommunitySection = () => {
         <div className="w-full max-w-xl flex flex-col items-start gap-8 order-1 lg:order-0">
           <div className="flex flex-col gap-4">
             <h2 className="font-sora text-2xl md:text-3xl lg:text-4xl font-bold text-black">
-              Join the <span style={{ color: COLORS.brandRed }}>Conversation</span>
+              {
+                content?.heading?.split(" ").map((word, index) => (
+                  <span key={index} className={`${index  === 1 ? "text-[#D62828]" : ""}`}>
+                    {word}{" "}
+                  </span>
+                ))
+              }
             </h2>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              Breakthroughs don&apos;t happen alone.
+              {content?.descriptionTag}
             </p>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              Join a community of curious minds, health innovators, and lifelong learners who are
-              passionate about advancing smarter brain health and longevity. Share ideas, ask
-              questions, and grow together as we shape the future of human health.
+              {content?.description}
             </p>
           </div>
 
@@ -131,17 +200,20 @@ const AboutJoinCommunitySection = () => {
           <ForumCard
             faded
             className="absolute top-0 -left-1.5 md:left-10 w-[276px] md:w-full max-w-sm scale-90"
+            Card={content?.Card || FALL_BACK_CONTENT.Card}
           />
 
           {/* Back right card */}
           <ForumCard
             faded
             className="absolute top-0 -right-1 md:right-10 w-[276px] md:h-auto md:w-full max-w-sm scale-90"
+            Card={content?.Card || FALL_BACK_CONTENT.Card}
           />
 
           {/* Front center card */}
           <ForumCard
             className="absolute top-0 left-1/2 -translate-x-1/2 w-[276px] md:w-full max-w-sm z-10"
+            Card={content?.Card || FALL_BACK_CONTENT.Card}
           />
         </div>
       </div>

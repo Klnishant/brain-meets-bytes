@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { form } from "sanity/structure";
 
 type Category = {
   _id: string;
@@ -8,7 +9,7 @@ type Category = {
   color: string;
   description: string;
   threadCount: number;
-  imageUrl: string;
+  image: string;
 };
 
 type CategoriesState = {
@@ -60,27 +61,28 @@ export const createCategory = createAsyncThunk(
       route: string;
       description: string;
       color: string;
-      image: string | null;
+      image: File | null;
       token: string;
     },
     { rejectWithValue }
   ) => {
     try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("route", route);
+      formData.append("description", description);
+      formData.append("color", color);
+      if (image) {
+        formData.append("image", image);
+      }
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}category`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            title,
-            route,
-            description,
-            color,
-            image,
-          }),
+          body: formData,
         }
       );
 
@@ -111,27 +113,28 @@ export const updateCategory = createAsyncThunk(
       route: string;
       description: string;
       color: string;
-      image: string | null;
+      image: File | null;
       token: string;
     },
     { rejectWithValue }
   ) => {
     try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("route", route);
+      formData.append("description", description);
+      formData.append("color", color);
+      if (image) {
+        formData.append("image", image);
+      }
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}category?CategoryId=${categoryId}`,
         {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            title,
-            route,
-            description,
-            color,
-            image,
-          }),
+          body: formData,
         }
       );
 

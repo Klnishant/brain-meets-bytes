@@ -6,7 +6,12 @@ export const revalidate = 60;
 const query = `*[_type == "article"] | order(date desc)[0...100]{
   _id,
   title,
-  author,
+  authors[]{
+    name,
+    role,
+    bio,
+    "imageUrl": image.asset->url
+  },
   date,
   "imageUrl": image.asset->url,
   tags,

@@ -1,23 +1,91 @@
 "use client";
 
-import { Search, Bell, MessageCircle, Plus, Menu } from "lucide-react";
-import { useState, useRef, FormEvent } from "react";
-import CreateThread from "./CreateThread";
-import CreatePoll from "./CreatePoll";
+import { Search, Bell, MessageCircle, Plus, Menu, Loader } from "lucide-react";
+import { useState, useRef, FormEvent, useEffect } from "react";
+import CreateThread, { CreatThreadFormRef } from "./CreateThread";
+import CreatePoll, { CreatePollFormRef } from "./CreatePoll";
 import CategoryCard from "./CategoryCard";
 import PollCard from "./PollCard";
 import UsersCard from "./UsersCard";
 import { set } from "sanity";
 
-const MobileViewBar = ({ className }: { className?: string }) => {
+type User = {
+  _id: string;
+  name: string;
+  role: string;
+  userId: number;
+  ProfilePic: string;
+};
+
+type Category = {
+  _id: string;
+  CategoryId: number;
+  title: string;
+  route: string;
+  color: string;
+  description: string;
+  threadCount: number;
+  imageUrl: string;
+};
+
+type Like = {
+  userId: number;
+  ThreadId: number;
+};
+
+type Comment = {
+  _id: string;
+  userId: number;
+  comment: string;
+  CommentId: number;
+  createdAt: string;
+  replies: Array<Comment>;
+};
+type Thread = {
+  _id: string;
+  title: string;
+  content: string;
+  CategoryId: Array<Number>;
+  images: Array<string>;
+  videos: Array<string>;
+  userId: Number;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  ThreadId: Number;
+  user: {
+    userId: Number;
+    name: string;
+    email: string;
+    ProfilePic: string;
+  };
+  categories: Array<Category>;
+  comments: Array<Comment>;
+  likes: Array<Like>;
+};
+type MobileViewBarProps = {
+  className?: string;
+  user: User | null;
+  onSuccess: (data: Thread) => void;
+  handleSearch: (searchText: string) => void;
+};
+
+const MobileViewBar: React.FC<MobileViewBarProps> = ({
+  className,
+  user,
+  onSuccess,
+  handleSearch,
+}) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const formRef = useRef<HTMLFormElement | null>(null);
+  const formRef = useRef<CreatThreadFormRef>(null);
+    const pollFormRef = useRef<CreatePollFormRef>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [isPollOpen, setIsPollOpen] = useState(false);
   const [images, setImages] = useState<File[]>([]);
-  const [videos,setVideos] = useState<File[]>([]);
+  const [videos, setVideos] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isTopicsOpen, setIsTopicsOpen] = useState(false);
@@ -25,6 +93,16 @@ const MobileViewBar = ({ className }: { className?: string }) => {
   const [isUsersOpen, setIsUsersOpen] = useState(false);
   const [isCreatingThread, setIsCreatingThread] = useState(false);
   const [isCreatingPoll, setIsCreatingPoll] = useState(false);
+  const [isCreatePollOpen, setIsCreatePollOpen] = useState(false);
+  const [isCreateThread, setIsCreateThread] = useState(false);
+
+  const handleSearchInputChange = (searchText?: string) => {
+    handleSearch(searchText!);
+  };
+
+  useEffect(() => {
+    handleSearchInputChange(search);
+  },[search]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -55,9 +133,15 @@ const MobileViewBar = ({ className }: { className?: string }) => {
   };
 
   const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    formRef.current?.submit();
-  };
+      e.preventDefault();
+      if (isComposerOpen) {
+        formRef.current?.submit(e);
+      }
+  
+      if (isPollOpen) {
+        pollFormRef.current?.submit(e);
+      }
+    };
 
   return (
     <div>
@@ -88,23 +172,41 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         <div className="flex items-center gap-4">
           <div className="h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-[#D62828] shrink-0">
             <img
-              src="/forum-user-1.jpg"
+              src={user?.ProfilePic || "/forum-user.png"}
               alt="Current user"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover shrink-0"
             />
           </div>
           <div
             className={`${isComposerOpen ? "block" : "hidden"} flex justify-end w-full`}
           >
-            <button
+            {
+              isCreateThread ? (
+                <button
               onClick={() => setIsComposerOpen(false)}
               className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
             >
               Cancel
             </button>
+
+              ) : (
+                <button
+              onClick={() => {
+                setIsCreateThread(true)
+                setIsCreatePollOpen(false)
+              }}
+              className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
+            >
+              Create Thread
+            </button>
+              )
+            }
           </div>
           <div
-            onClick={() => setIsComposerOpen(true)}
+            onClick={() => {
+              setIsComposerOpen(true);
+              setIsPollOpen(false);
+            }}
             className={`${isComposerOpen ? "hidden" : "block"} flex flex-1 items-center gap-3 rounded-[42px] border border-[#E2E8F0] bg-[#FAF9F8] px-6 py-3`}
           >
             <span className="font-sora text-[16px] text-[#64748B]">
@@ -115,76 +217,100 @@ const MobileViewBar = ({ className }: { className?: string }) => {
 
         {/* Composer form */}
 
-        <div className={`${isComposerOpen ? "block" : "hidden"}`}>
-          <CreateThread images={images} ref={formRef} videos={videos} isOpen={()=>(setIsComposerOpen(!isComposerOpen))} isCreateThread={(key: boolean)=>{setIsCreatingThread(key)}} onSuccess={()=>{}} />
+        <div className={`${isCreateThread ? "block" : "hidden"}`}>
+          <CreateThread
+            images={images}
+            videos={videos}
+            ref={formRef}
+            isOpen={() => setIsCreateThread(!isCreateThread)}
+            isCreateThread={(key: boolean) => {
+              setIsCreatingThread(key);
+            }}
+            onSuccess={(data: Thread) => {
+              onSuccess(data);
+            }}
+          />
         </div>
 
         {/* Polls */}
-        <div className={`${isPollOpen ? "block" : "hidden"} z-10`}>
-          <CreatePoll handleClick={() => setIsPollOpen(!isPollOpen) } isCreatePoll={(key: boolean)=>{setIsCreatingPoll(key)}} />
+        <div className={`${isCreatePollOpen ? "block" : "hidden"} z-10`}>
+          <CreatePoll
+            handleClick={() => setIsCreatePollOpen(!isCreatePollOpen)}
+            isCreatePoll={(key: boolean) => {
+              setIsCreatingPoll(key);
+            }}
+          />
         </div>
         <form noValidate onSubmit={handleParentSubmit}>
           <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-1 md:gap-3">
+            <div className="flex flex-wrap items-center gap-3 w-full">
               {/* Image Upload */}
-              <div className="flex items-center md:gap-4">
+              <div className="flex items-center gap-4">
                 <label
                   htmlFor="image-upload"
                   className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
                 >
-                  <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2 font-sora text-[14px] text-[#023047]"
-                  >
-                    <img src="/image.png" className="h-4 w-4 object-contain" />
-                    Images
-                  </button>
+                  <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                    <span className=" items-center justify-center ">
+                      <img
+                        src="/image.png"
+                        alt="Images"
+                        className="h-4 w-4 object-contain"
+                      />
+                    </span>
+                    <span className="font-sora text-[14px] text-[#023047]">
+                      Images
+                    </span>
+                  </div>
                   <input
                     id="image-upload"
                     name="image-upload"
                     type="file"
                     multiple
-                    ref={inputRef}
                     hidden
+                    disabled={!isComposerOpen}
                     accept="image/*"
                     onChange={handleImageChange}
                   />
                 </label>
               </div>
-               {/* video Upload */}
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="video-upload"
-                      className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
-                    >
-                      <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-                        <span className=" items-center justify-center ">
-                          <img
-                            src="/video.png"
-                            alt="Images"
-                            className="h-4 w-4 object-contain"
-                          />
-                        </span>
-                        <span className="font-sora text-[14px] text-[#023047]">
-                          Videos
-                        </span>
-                      </div>
-                      <input
-                        id="video-upload"
-                        name="video-upload"
-                        type="file"
-                        multiple
-                        hidden
-                        disabled={!isComposerOpen}
-                        accept="video/*"
-                        capture="environment"
-                        onChange={handleVideoChange}
+              {/* video Upload */}
+              <div aria-disabled={true} className="hidden items-center gap-4">
+                <label
+                  htmlFor="video-upload"
+                  className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+                >
+                  <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
+                    <span className=" items-center justify-center ">
+                      <img
+                        src="/video.png"
+                        alt="Images"
+                        className="h-4 w-4 object-contain"
                       />
-                    </label>
+                    </span>
+                    <span className="font-sora text-[14px] text-[#023047]">
+                      Videos
+                    </span>
                   </div>
+                  <input
+                    id="video-upload"
+                    name="video-upload"
+                    type="file"
+                    multiple
+                    hidden
+                    disabled={!isComposerOpen}
+                    accept="video/*"
+                    capture="environment"
+                    onChange={handleVideoChange}
+                  />
+                </label>
+              </div>
               <button
-                onClick={() => setIsPollOpen(!isPollOpen)}
+                type="button"
+                onClick={() => {
+                  setIsCreatePollOpen(!isCreatePollOpen);
+                  setIsCreateThread(false);
+                }}
                 className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2"
               >
                 <span className=" items-center justify-center ">
@@ -200,29 +326,40 @@ const MobileViewBar = ({ className }: { className?: string }) => {
               </button>
             </div>
 
-            <button
+            <div className="w-full flex items-center justify-end">
+              <button
               type="submit"
+              disabled={
+                isCreatingThread ||
+                isCreatingPoll ||
+                (!isComposerOpen && !isPollOpen)
+              }
               className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
             >
-              Publish
+              {!isCreatingThread ? (
+                "Publish"
+              ) : (
+                <Loader size={14} className="animate-spin" />
+              )}
             </button>
+            </div>
           </div>
         </form>
         {/* Image Preview */}
-        <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4 shrink-0">
           {images.map((file, index) => (
             <div key={index} className="relative group">
               <img
                 src={URL.createObjectURL(file)}
                 alt="preview"
-                className="h-24 w-full rounded-lg object-cover"
+                className="h-24 w-full rounded-lg object-cover shrink-0"
               />
 
               {/* Remove Button */}
               <button
                 type="button"
                 onClick={() => removeImage(index)}
-                className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white group-hover:block"
+                className="absolute right-2 top-2 hidden rounded-full bg-black/60 p-1 text-white group-hover:block"
               >
                 ✕
               </button>
@@ -231,69 +368,84 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         </div>
       </div>
       {/* Menu */}
-       <div className={`${isMenuOpen ? "block" : "hidden"}`}>
-            <div className={`${isCategoriesOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}>
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
-                Top Categories
-              </h3>
+      <div className={`${isMenuOpen ? "block" : "hidden"}`}>
+        <div
+          className={`${isCategoriesOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}
+        >
+          <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+            Top Categories
+          </h3>
 
-              {/* categories list */}
-              <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
-                <div className="flex flex-col gap-2 h-full">
-                  <CategoryCard />
-                </div>
-              </div>
-            </div>
-
-            
-
-            <div className={`${isUsersOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}>
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
-                You may know
-              </h3>
-              {/* users list */}
-              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
-                <UsersCard />
-              </div>
-            </div>
-
-            <div className={`${isPollsOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}>
-              <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
-                Latest Poll
-              </h3>
-              {/* poll card */}
-              <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
-                <PollCard />
-              </div>
+          {/* categories list */}
+          <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
+            <div className="flex flex-col gap-2 h-full">
+              <CategoryCard />
             </div>
           </div>
+        </div>
+
+        <div
+          className={`${isUsersOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}
+        >
+          <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+            You may know
+          </h3>
+          {/* users list */}
+          <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+            <UsersCard />
+          </div>
+        </div>
+
+        <div
+          className={`${isPollsOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}
+        >
+          <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+            Latest Poll
+          </h3>
+          {/* poll card */}
+          <div className="flex flex-col gap-2 h-full overflow-x-auto scrollbar-hide">
+            <PollCard />
+          </div>
+        </div>
+      </div>
       {/* Menu items */}
-      <div className={`${isMenuOpen ? "block" : "hidden"} rounded-3xl p-2 flex flex-col gap-2 bg-[#023047]`}>
-        <button onClick={()=>{
-          setIsCategoriesOpen(!isCategoriesOpen);
-          setIsTopicsOpen(false);
-          setIsPollsOpen(false);
-          setIsUsersOpen(false);
-        }}>
+      <div
+        className={`${isMenuOpen ? "block" : "hidden"} rounded-3xl p-2 flex flex-col gap-2 bg-[#023047]`}
+      >
+        <button
+          onClick={() => {
+            setIsCategoriesOpen(!isCategoriesOpen);
+            setIsTopicsOpen(false);
+            setIsPollsOpen(false);
+            setIsUsersOpen(false);
+          }}
+        >
           Top Categories
         </button>
-        <button className="hidden" onClick={()=>(setIsTopicsOpen(!isTopicsOpen))}>
+        <button
+          className="hidden"
+          onClick={() => setIsTopicsOpen(!isTopicsOpen)}
+        >
           Recomended Topics
         </button>
-        <button onClick={()=>{
-          setIsUsersOpen(!isUsersOpen);
-          setIsCategoriesOpen(false);
-          setIsTopicsOpen(false);
-          setIsPollsOpen(false);
-        }}>
+        <button
+          onClick={() => {
+            setIsUsersOpen(!isUsersOpen);
+            setIsCategoriesOpen(false);
+            setIsTopicsOpen(false);
+            setIsPollsOpen(false);
+          }}
+        >
           You May Know
         </button>
-        <button onClick={()=>{
-          setIsPollsOpen(!isPollsOpen);
-          setIsCategoriesOpen(false);
-          setIsTopicsOpen(false);
-          setIsUsersOpen(false);
-        }}>
+        <button
+          onClick={() => {
+            setIsPollsOpen(!isPollsOpen);
+            setIsCategoriesOpen(false);
+            setIsTopicsOpen(false);
+            setIsUsersOpen(false);
+          }}
+        >
           Poll
         </button>
       </div>
@@ -304,9 +456,9 @@ const MobileViewBar = ({ className }: { className?: string }) => {
         <div className="flex items-center gap-6">
           <button
             onClick={() => {
-              setIsSearchOpen(!isSearchOpen)
-              setIsComposerOpen(false)
-              setIsMenuOpen(false)
+              setIsSearchOpen(!isSearchOpen);
+              setIsComposerOpen(false);
+              setIsMenuOpen(false);
             }}
             className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center"
           >
@@ -323,9 +475,9 @@ const MobileViewBar = ({ className }: { className?: string }) => {
 
           <button
             onClick={() => {
-              setIsComposerOpen(!isComposerOpen)
-              setIsSearchOpen(false)
-              setIsMenuOpen(false)
+              setIsComposerOpen(!isComposerOpen);
+              setIsSearchOpen(false);
+              setIsMenuOpen(false);
             }}
             className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center"
           >
@@ -333,13 +485,14 @@ const MobileViewBar = ({ className }: { className?: string }) => {
           </button>
         </div>
         {/* Menu Button */}
-        <button 
-        onClick={() => {
-          setIsMenuOpen(!isMenuOpen)
-          setIsSearchOpen(false)
-          setIsComposerOpen(false)
-        }}
-        className="flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm">
+        <button
+          onClick={() => {
+            setIsMenuOpen(!isMenuOpen);
+            setIsSearchOpen(false);
+            setIsComposerOpen(false);
+          }}
+          className="flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm"
+        >
           <Menu size={"18px"} />
           Menu
         </button>

@@ -2,24 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { sanityClient } from "@/lib/sanityClient";
 
 export const revalidate = 60; // ISR-style caching
-
-// interface ArticlePageProps {
-//   params: Promise<{
-//     title: string;
-//   }>;
-// }
-interface Context{
-  params: {
-    title: string;
-  }
-}
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ title: string }> },
 ) {
-  const {title} = await params;
 
-  const query = `*[_type == "episode" && podcast->title == "${title}" ] {
+  const query = `*[_type == "episode"][0] {
   _id,
     title,
     slug,

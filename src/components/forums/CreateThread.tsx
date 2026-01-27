@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import SelectCategoryCard from "./SelectCategoryCard";
 import { form } from "sanity/structure";
 import { set } from "sanity";
 import { getAuth } from "@/lib/getAuth";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { RootState } from "@/Redux/store";
 
 export type CreatThreadFormRef = {
   submit: (e: React.FormEvent<HTMLFormElement>) => void;
 };
-
 
 type Like = {
   userId: number;
@@ -31,6 +39,7 @@ type Thread = {
   content: string;
   CategoryId: Array<Number>;
   images: Array<string>;
+  videos: Array<string>;
   userId: Number;
   likesCount: number;
   commentsCount: number;
@@ -48,11 +57,10 @@ type Thread = {
   likes: Array<Like>;
 };
 
-
 type CreateThreadProps = {
   images: File[];
   videos: File[];
-  isOpen: ()=>void;
+  isOpen: () => void;
   isCreateThread: (key: boolean) => void;
   onSuccess: (data: Thread) => void;
 };
@@ -72,7 +80,7 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<Category[]>(
-      []
+      [],
     );
     const [query, setQuery] = useState("");
     const [token, setToken] = useState<string | null>(null);
@@ -80,59 +88,17 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-      const fetchAuth = async () => {
-        const auth = await getAuth();
-        if (auth) {
-          setToken(auth.token);
-          setUserId(auth.userId);
-        }
-        console.log("auth", auth);
-      };
-      fetchAuth();
-    }, []);
+     const auth = useSelector((state: RootState) => state.auth);
 
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleCategoryChange = useCallback((categories: Category[]) => {
-  setSelectedCategories(categories);
-}, []);
-
-    const filesToBase64 = async (files: File[]): Promise<string[]> => {
-      const base64Images: string[] = [];
-
-      for (const file of files) {
-        const reader = new FileReader();
-
-        const base64 = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error("File reading failed"));
-          reader.readAsDataURL(file);
-        });
-
-        base64Images.push(base64);
-      }
-
-      return base64Images;
-    };
-
-    const videosToBase64 = async (files: File[]): Promise<string[]> => {
-      const base64Videos: string[] = [];
-
-      for (const file of files) {
-        const reader = new FileReader();
-
-        const base64 = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error("File reading failed"));
-          reader.readAsDataURL(file);
-        });
-
-        base64Videos.push(base64);
-      }
-
-      return base64Videos;
-    };
+      setSelectedCategories(categories);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -140,26 +106,28 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
       isCreateThread(true);
       setError(null);
 
-      const base64Images = await filesToBase64(images);
-      const base64Videos = await videosToBase64(videos);
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      formData.append("userId", userId?.toString() || "");
+      formData.append(
+        "CategoryId",
+        selectedCategories.map((category) => category.CategoryId).join(","),
+      );
+      images.forEach((image) => {
+  formData.append("images", image);
+});
 
-      const data = {
-        title: title,
-        content: content,
-        userId: userId,
-        CategoryId: selectedCategories.map((category) => category.CategoryId),
-        images: base64Images,
-        videos: base64Videos,
-      };
-
+videos.forEach((video) => {
+  formData.append("videos", video);
+});
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}threads`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: formData,
         });
 
         if (!res.ok) {
@@ -181,7 +149,7 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
         setError(error?.message);
         console.log(error?.message, "Failed to create Thread");
         toast.error("Failed to create Thread");
-      } finally{
+      } finally {
         isCreateThread(false);
       }
     };
@@ -192,8 +160,9 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
 
     return (
       <div
-      aria-disabled={loading}
-       className="rounded-2xl border bg-white p-5 shadow-sm">
+        aria-disabled={loading}
+        className="rounded-2xl border bg-white p-5 shadow-sm"
+      >
         <h3 className="mb-4 text-lg font-semibold text-slate-900">
           Create Thread
         </h3>
@@ -233,7 +202,7 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 export default CreateThread;

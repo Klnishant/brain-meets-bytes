@@ -1,10 +1,12 @@
 "use client";
 
 import { getAuth } from "@/lib/getAuth";
+import { RootState } from "@/Redux/store";
 import { intervalToDuration } from "date-fns";
 import { ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 import { set } from "sanity";
 
 type Comment = {
@@ -61,17 +63,12 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
 
+  const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   const user = async () => {
     if (!comment) return;
@@ -94,7 +91,7 @@ const CommentsCard: React.FC<CommentsCardProps> = ({
 
   useEffect(() => {
     user();
-  }, [comment]);
+  }, [comment,token]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

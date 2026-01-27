@@ -2,9 +2,11 @@
 
 import { COLORS } from "@/lib/constants";
 import { getAuth } from "@/lib/getAuth";
+import { RootState } from "@/Redux/store";
 import { Loader } from "lucide-react";
 import Link from "next/link";
 import React, { use, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { set } from "sanity";
 
 type User = {
@@ -24,17 +26,12 @@ const UsersCard = () => {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
   useEffect(() => {
     let mounted = true;
 

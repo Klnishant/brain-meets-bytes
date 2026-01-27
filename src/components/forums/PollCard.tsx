@@ -10,6 +10,7 @@ import { AppDispatch, RootState } from "@/Redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPolls } from "@/Redux/slices/PollSlice";
 import { current } from "@reduxjs/toolkit";
+import { set } from "sanity";
 
 type Option = {
   votedUserIds: number[];
@@ -46,6 +47,7 @@ const PollCard = () => {
   const [currentEditPoll, setCurrentEditPoll] = useState<number>();
   const [isPollEditing, setIspollEditing] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [currentPollIndex, setCurrentPollIndex] = useState(0);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -58,17 +60,12 @@ const PollCard = () => {
     fetchUser();
   }, []);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   const dispatch = useDispatch<AppDispatch>();
   
@@ -79,11 +76,23 @@ const PollCard = () => {
 
   const polls = useSelector((state: RootState) => state.polls.polls);
 
+useEffect(() => {
+  if (!polls || polls.length === 0) return;
+
+  const interval = setInterval(() => {
+    setCurrentPollIndex(prevIndex =>
+      (prevIndex + 1) % polls.length
+    );
+  }, 10000);
+
+  return () => clearInterval(interval);
+}, [polls]);
+
+
   useEffect(() => {
-     if (visiblePolls.length <= 1 && polls.length > 0) {
-    setVisiblePolls([polls[0]]);
-  }
-  }, [polls, visiblePolls.length]);
+  if (!polls || polls.length === 0) return;
+  setVisiblePolls([polls[currentPollIndex]]);
+}, [polls, currentPollIndex]);
 
   useEffect(() => {
     //BUILD hasVoted MAP
@@ -202,7 +211,7 @@ const PollCard = () => {
       ) : (
         <div>
           {visiblePolls?.map((poll) => (
-            <div key={poll?.PollId} className="flex mt-2 flex-col gap-4">
+            <div key={poll?.PollId} className="flex mt-2 flex-col gap-4 animate-fadeIn hover:[animation-play-state:paused]">
               <div className="flex gap-2 items-center justify-between w-full">
                 <h1 className="font-inter text-[#505050] font-semibold text-base md:text-lg leading-tight tracking-normal">
                   {poll?.title}
@@ -250,12 +259,6 @@ const PollCard = () => {
           ))}
         </div>
       )}
-      <button
-        onClick={handleAllPolls}
-        className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"
-      >
-        See All Polls
-      </button>
     </div>
   );
 };

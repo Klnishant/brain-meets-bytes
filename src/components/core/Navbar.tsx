@@ -2,25 +2,30 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef, use, useMemo } from "react";
 import { NAV_LINKS, COLORS } from "@/lib/constants";
 import { Sign } from "crypto";
 import SignupCard from "../authentication/SignupCard";
 import SignInCard from "../authentication/SignInCard";
 import MembershipCard from "../authentication/MembershipCard";
 import { getUser } from "@/lib/getUser";
-import { profile } from "console";
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { clear, profile } from "console";
+import { ChevronDown, LogOut, Router, SquarePen, User } from "lucide-react";
 import { getAuth } from "@/lib/getAuth";
 import { set } from "sanity";
 import ResetPasswordCard from "../authentication/ResetPasswordCard";
 import ForgotPasswordCard from "../authentication/ForgotPasswordCard";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { clearAuth, fetchAuth } from "@/Redux/slices/AuthSlice";
+import UpdateProfile from "../authentication/UpdateProfile";
 
 type User = {
   _id: string;
   name: string;
   email: string;
   role: string;
+  RoleId: number;
   Rolename: string;
   hasmembership: boolean;
   userId: number;
@@ -31,6 +36,7 @@ type profileDropdownProp = {
   user: User | null;
   onLogout: () => void;
   onMembership: (open: boolean) => void;
+  handleUpdate: () => void;
 };
 
 const linkToHref = (label: string) => {
@@ -44,6 +50,7 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
   user,
   onLogout,
   onMembership,
+  handleUpdate,
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -68,7 +75,7 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
  px-4 py-2 text-white shadow-md hover:bg-[#9E0F22] transition"
       >
         <div className="relative h-[34px] w-[34px] border-[2px] bg-[#FAF9F8]  overflow-hidden rounded-full">
-          <img src={user?.ProfilePic} className="object-cover" />
+          <img src={user?.ProfilePic} className="h-full w-full object-cover" />
         </div>
 
         <span
@@ -88,23 +95,60 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
       {open && (
         <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden z-50">
           <div className="px-4 py-3 border-b">
-            <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-gray-900">
+                {user?.name}
+              </p>
+              <p className="text-sm font-semibold text-[#D62828]">
+                <span className="text-gray-900">{"Role: "}</span>
+                {user?.RoleId === 2 ? "Admin" : "User"}
+              </p>
+              <button
+                onClick={handleUpdate}
+                className={`w-4 h-4 text-[#505050]`}
+              >
+                <SquarePen
+                  className={`w-4 h-4 text-[#505050]`}
+                />
+              </button>
+            </div>
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <button className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700">
-              <User size={16} />
-              Profile
-            </button>
-
-            {/* Admin */}
-            <button
-              className="w-fit flex justify-center items-center px-4  md:py-2 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] bg-gradient-to-r from-[#D62828] to-[#701515] whitespace-nowrap hover:shadow-md"
-              style={{ backgroundColor: COLORS.brandRed }}
-            >
-              Admin
-            </button>
+            {/* Saved Pages */}
+            <div>
+              <Link
+                href="/forums/MySavedThreads"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700"
+              >
+                My Saved Threads
+              </Link>
+              <Link
+                href="/articles/MySavedArticle"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700"
+              >
+                My Saved Articles
+              </Link>
+              <Link
+                href="/podcasts/MySavedPodcast"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700"
+              >
+                My Saved Episodes
+              </Link>
+              <Link
+                href="/forums/Thread/GetReports"
+                className={`flex items-center gap-3 px-4 py-2 text-sm text-gray-700 ${user?.RoleId === 2 ? "block" : "hidden"}`}
+              >
+                Reported Threads
+              </Link>
+              <Link
+                href="/admin/createCategory"
+                className={`flex items-center gap-3 px-4 py-2 text-sm text-gray-700 ${user?.RoleId === 2 ? "block" : "hidden"}`}
+              >
+                Create Category
+              </Link>
+            </div>
 
             {/* Membership */}
             <button
@@ -142,20 +186,18 @@ const Navbar = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [openResetPassword, setOpenResetPassword] = useState(false);
   const [openForgotPassword, setOpenForgotPassword] = useState(false);
+  const [openUpdate, setOpenUpdate] = useState(false);
 
   const router = useRouter();
 
+  const dispatch = useDispatch<AppDispatch>();
+
+  const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   useEffect(() => {
     const user = async () => {
@@ -168,7 +210,7 @@ const Navbar = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       const data = await res.json();
 
@@ -188,8 +230,16 @@ const Navbar = () => {
     if (res.ok) {
       setIsLoggedIn(false);
       setUser(null);
-      router.refresh();
+      window.location.reload();
     }
+  };
+
+  const handleUpdate = (data: User) => {
+    setUser(data);
+  };
+
+  const handleOpenUpdate = () => {
+    setOpenUpdate((prev) => !prev);
   };
 
   return (
@@ -303,6 +353,7 @@ const Navbar = () => {
                   user={users}
                   onLogout={handleLogout}
                   onMembership={(open: boolean) => setOpenMembership(open)}
+                  handleUpdate={handleOpenUpdate}
                 />
               </div>
             )}
@@ -421,12 +472,13 @@ const Navbar = () => {
                   </button>
                 ) : (
                   <div>
-                <ProfileDropdown
-                  user={users}
-                  onLogout={handleLogout}
-                  onMembership={(open: boolean) => setOpenMembership(open)}
-                />
-              </div>
+                    <ProfileDropdown
+                      user={users}
+                      onLogout={handleLogout}
+                      onMembership={(open: boolean) => setOpenMembership(open)}
+                      handleUpdate={handleOpenUpdate}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -472,27 +524,35 @@ const Navbar = () => {
       {/* Reset Password Modal */}
       {openResetPassword && (
         <ResetPasswordCard
-         onClose={() => setOpenResetPassword(false)}
-         handleSignIn={
-          () => {
+          onClose={() => setOpenResetPassword(false)}
+          handleSignIn={() => {
             setOpenResetPassword(false);
             setOpenLogIn(true);
-          }
-         }
-          />
+          }}
+        />
       )}
 
       {/* Forgot Password Modal */}
       {openForgotPassword && (
         <ForgotPasswordCard
-         onClose={() => setOpenForgotPassword(false)}
-         handleResetPassword={
-          () => {
+          onClose={() => setOpenForgotPassword(false)}
+          handleResetPassword={() => {
             setOpenForgotPassword(false);
             setOpenResetPassword(true);
-          }
-         }
-          />
+          }}
+        />
+      )}
+
+      {/* Update Profile Modal */}
+      {openUpdate && (
+        <UpdateProfile
+        name={users?.name ?? null}
+        email={users?.email ?? null}
+        ProfilePic={users?.ProfilePic ?? null}
+          onClose={handleOpenUpdate}
+          userId={Number(users?.userId)}
+          handleUpdate={handleUpdate}
+        />
       )}
     </header>
   );

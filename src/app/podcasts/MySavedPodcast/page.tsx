@@ -27,17 +27,14 @@ export type Episode = {
   kind?: "audio" | "video";
   duration?: number;
   description?: string;
-
-  // from GROQ aliases
   imageUrl?: string;
   mediaUrl?: string;
-
-  // slug is STRING because of `"slug": slug.current`
   slug?: string;
 
   podcast?: {
     _id: string;
     title?: string;
+    author?: string;
   };
 };
 
@@ -64,14 +61,13 @@ const query = `
   "mediaUrl": mediaFile.asset->url,
   podcast->{
     _id,
-    title
+    title,
+    author
   }
 }
 `;
 
-const PlayerCard: React.FC<PlayerCardProps> = ({
-  episode,
-}) => {
+const PlayerCard: React.FC<PlayerCardProps> = ({ episode }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -95,7 +91,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setCommentData((prev) => ({
@@ -177,37 +173,42 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     <div className="w-full flex items-center justify-center">
       <div className="w-full flex items-center justify-center">
         <div
-          className=" rounded-3xl opacity-100 p-2 xl:p-8 gap-4 xl:gap-6 w-full flex flex-col md:flex-row items-start  justify-start md:justify-center bg-white
-                          shadow-[0px_0px_4px_rgba(0,0,0,0.2)]
-                          rounded-2xl 
+          className=" rounded-3xl opacity-100 p-2 px-4  w-full flex flex-col md:flex-row  bg-white
+                          shadow-[0px_0px_4px_rgba(0,0,0,0.2)] 
 "
         >
           <div className="w-full">
             <div
-              className="w-full opacity-100
+              className="w-full  opacity-100
  flex  overflow-hidden"
             >
               {/* CARD */}
               <div
                 className="
                           flex flex-col
-                          justify-between w-full
+                          justify-center w-full
                         "
               >
                 {/* PROFILE + TEXT */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                   <img
                     src={episode?.imageUrl || "/ki.png"}
                     alt="Speaker"
                     className="shrink-0 h-[70px] w-[70px] md:w-[90px] md:h-[90px] xl:w-[120px] xl:h-[115px] rounded-full object-cover border border-[#E2E8F0]"
                   />
 
-                  <div className="flex flex-col justify-center items-start gap-3 md:max-w-[600px] lg:w-[900px] md:h-[211px]">
+                  <div className="flex flex-col justify-center items-start gap-3 ">
                     <h3 className="font-sora text-[14px] md:text-[24px] lg:text-[36px] font-semibold leading-8 text-gray-900">
                       {episode?.title ||
                         "The New Light Frontier: How Photonic Computing Could Transform Brain Health and the Future of Care"}
                     </h3>
 
+                    <p
+                      className="font-inter text-xs md:text-sm"
+                      style={{ color: COLORS.brandMutedText }}
+                    >
+                      {episode?.podcast?.author || "Ki Siadatan"}
+                    </p>
                   </div>
                 </div>
                 {/* AUDIO PLAYER */}
@@ -223,48 +224,46 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                       setIsPlaying(false);
                     }}
                   >
-                    <source
-                      src={episode?.mediaUrl || ""}
-                    />
+                    <source src={episode?.mediaUrl || ""} />
                   </audio>
                 </div>
                 <div className="w-full flex items-center justify-center gap-2">
                   {/* SLIDER WITH TIME */}
-                <div className="w-full mt-5">
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={(e) => {
-                      seek(Number(e.target.value));
-                    }}
-                    className="w-full accent-red-600"
-                    defaultValue={40}
-                  />
+                  <div className="w-full mt-5">
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 0}
+                      value={currentTime}
+                      onChange={(e) => {
+                        seek(Number(e.target.value));
+                      }}
+                      className="w-full accent-red-600"
+                      defaultValue={40}
+                    />
 
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>
-                      {Math.floor(currentTime / 3600)} :{" "}
-                      {Math.floor((currentTime % 3600) / 60)} :{" "}
-                      {Math.floor(currentTime % 60)}
-                    </span>
-                    <span>
-                      {Math.floor(duration / 3600)} :{" "}
-                      {Math.floor((duration % 3600) / 60)} :{" "}
-                      {Math.floor(duration % 60)}
-                    </span>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>
+                        {Math.floor(currentTime / 3600)} :{" "}
+                        {Math.floor((currentTime % 3600) / 60)} :{" "}
+                        {Math.floor(currentTime % 60)}
+                      </span>
+                      <span>
+                        {Math.floor(duration / 3600)} :{" "}
+                        {Math.floor((duration % 3600) / 60)} :{" "}
+                        {Math.floor(duration % 60)}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* PLAYER CONTROLS */}
-                <div
-                  className="flex items-center justify-between"
-                  style={{ color: COLORS.brandRed }}
-                >
-                  {/* Repeat Icon */}
-                  <button
-                    className="
+                  {/* PLAYER CONTROLS */}
+                  <div
+                    className="flex items-center justify-between"
+                    style={{ color: COLORS.brandRed }}
+                  >
+                    {/* Repeat Icon */}
+                    <button
+                      className="
                     text-(--Muted-Text,#64748B)
                     hover:text-red-500
                     w-[22px]
@@ -272,17 +271,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     hidden items-center justify-center
                     opacity-100
                   "
-                  >
-                    <img
-                      src="/suffle-icon.png"
-                      alt=""
-                      className="h-[16px] w-[16px]"
-                    />
-                  </button>
+                    >
+                      <img
+                        src="/suffle-icon.png"
+                        alt=""
+                        className="h-[16px] w-[16px]"
+                      />
+                    </button>
 
-                  <div className="flex items-center gap-4 text-xl">
-                    <button
-                      className="
+                    <div className="flex items-center gap-4 text-xl">
+                      <button
+                        className="
                     w-4 h-4
                     md:w-8 md:h-8 
                     bg-transparent
@@ -292,22 +291,22 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     hover:bg-gray-100
                     transition
                   "
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="30"
-                        height="30"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
                       >
-                        <rect x="3" y="4" width="2" height="16" rx="1"></rect>
-                        <path d="M21 5v14L9 12l12-7z"></path>
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="30"
+                          height="30"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <rect x="3" y="4" width="2" height="16" rx="1"></rect>
+                          <path d="M21 5v14L9 12l12-7z"></path>
+                        </svg>
+                      </button>
 
-                    <button
-                      onClick={togglePlay}
-                      className="
+                      <button
+                        onClick={togglePlay}
+                        className="
                     w-5 h-5
                     md:w-30 md:h-10 
                     rounded-full 
@@ -316,12 +315,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     bg-[linear-gradient(180deg,#700000_0%,#D62828_100%)]
                     hover:brightness-110
                   "
-                    >
-                      {isPlaying ? "❚❚" : "▶"}
-                    </button>
+                      >
+                        {isPlaying ? "❚❚" : "▶"}
+                      </button>
 
-                    <button
-                      className="
+                      <button
+                        className="
                     w-4 h-4
                     md:w-8 md:h-8
                     bg-transparent 
@@ -331,33 +330,38 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                     hover:bg-gray-100
                     transition
                   "
-                    >
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="30"
+                          height="30"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M5 5v14l12-7-12-7z" />
+                          <rect x="19" y="4" width="2" height="16" rx="1" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Heart Icon */}
+                    <button className="hidden items-center justify-center w-4 h-4 md:w-8 md:h-8 text-(--Muted-Text,#64748B) hover:text-red-500">
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
                         width="30"
                         height="30"
                         viewBox="0 0 24 24"
-                        fill="currentColor"
+                        fill="none"
                       >
-                        <path d="M5 5v14l12-7-12-7z" />
-                        <rect x="19" y="4" width="2" height="16" rx="1" />
+                        <path
+                          d="M12 20.25C12 20.25 4.5 15 4.5 9.75C4.5 6.85 6.85 4.5 9.75 4.5C11.18 4.5 12.51 5.11 13.5 6.1C14.49 5.11 15.82 4.5 17.25 4.5C20.15 4.5 22.5 6.85 22.5 9.75C22.5 15 15 20.25 15 20.25H12Z"
+                          stroke={COLORS.brandMutedText}
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </button>
                   </div>
-
-                  {/* Heart Icon */}
-                  <button className="hidden items-center justify-center w-4 h-4 md:w-8 md:h-8 text-(--Muted-Text,#64748B) hover:text-red-500">
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M12 20.25C12 20.25 4.5 15 4.5 9.75C4.5 6.85 6.85 4.5 9.75 4.5C11.18 4.5 12.51 5.11 13.5 6.1C14.49 5.11 15.82 4.5 17.25 4.5C20.15 4.5 22.5 6.85 22.5 9.75C22.5 15 15 20.25 15 20.25H12Z"
-                        stroke={COLORS.brandMutedText}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
                 </div>
                 {/*BTNS*/}
                 <div className="hidden">
@@ -371,9 +375,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                         alt=""
                         className="h-3 w-3 lg:h-6 lg:w-6"
                       />
-                      <span className="text-[12px] md:text-[16px]">
-                        
-                      </span>
+                      <span className="text-[12px] md:text-[16px]"></span>
                     </button>
 
                     {/* Comments */}
@@ -386,8 +388,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                         alt=""
                         className="h-3 w-3 lg:h-5 lg:w-5"
                       />
-                      <span className="text-[12px] md:text-[16px]">
-                      </span>
+                      <span className="text-[12px] md:text-[16px]"></span>
                     </button>
 
                     <div className="flex-1" />
@@ -427,8 +428,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   );
 };
 
-
-
 const MySavedPodcast = () => {
   const [podcasts, setPodcasts] = useState<SavedPodcast[]>([]);
   const [loading, setLoading] = useState(false);
@@ -462,7 +461,7 @@ const MySavedPodcast = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       console.log(res);
 
@@ -470,7 +469,9 @@ const MySavedPodcast = () => {
         const data = await res.json();
         console.log("saved articles", data);
         setPodcasts(data?.data || []);
-        const savedPodcastsIds = data?.data?.map((item: SavedPodcast) => item.sanityPodcastId);
+        const savedPodcastsIds = data?.data?.map(
+          (item: SavedPodcast) => item.sanityPodcastId,
+        );
         setPodcastId(savedPodcastsIds);
       }
     } catch (error: any) {
@@ -481,56 +482,86 @@ const MySavedPodcast = () => {
   };
 
   const fetchEpisodesFromSanity = async (episodeIds: string[]) => {
-  if (!episodeIds || episodeIds.length === 0) return [];
+    if (!episodeIds || episodeIds.length === 0) return [];
 
-  const data = await sanityClient.fetch(query, {
-    episodeIds,
-  });
+    const data = await sanityClient.fetch(query, {
+      episodeIds,
+    });
 
-  setEpisodes(data);
-};
+    setEpisodes(data);
+  };
 
-useEffect(() => {
-  if (podcastId) {
-    fetchEpisodesFromSanity(podcastId);
-  }
-}, [podcastId]);
+  useEffect(() => {
+    if (podcastId) {
+      fetchEpisodesFromSanity(podcastId);
+    }
+  }, [podcastId]);
 
-useEffect(() => {
+  useEffect(() => {
     console.log("Episodes:", episodes);
   }, [episodes]);
-
 
   useEffect(() => {
     fetchSavedPodcats();
   }, [token]);
   return (
-   <main className="min-h-screen bg-[#FAF9F8] relative">
-    <Navbar />
-     <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
-        <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
-          My Saved Podcasts
-        </h1>
-        <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
-          Here you can find your saved podcasts for easy access and listening.
-        </p>
-        {loading ? (
-          <div className="flex items-center justify-center h-screen text-2xl text-[#1E293B]">
-            Loading...
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2 ">
-            {/* Saved Articles */}
-            {episodes.map((episode: Episode) => (
-              <PlayerCard key={episode._id} episode={episode} />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-    <Footer />
-   </main>
+    <main className="min-h-screen bg-[#FAF9F8] relative">
+      <Navbar />
+      <section className="w-full bg-[#FAF9F8] pb-24 pt-10 md:pb-28 md:pt-16 min-h-screen">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 sm:px-6 lg:px-16">
+          <h1 className="font-sora text-[34px] leading-[44px] text-[#1E293B] md:text-[48px] md:leading-[60px] lg:text-[56px] lg:leading-[71px]">
+            My Saved Episodes
+          </h1>
+          <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#505050] md:text-[18px] md:leading-[28px]">
+            Here you can find your saved podcasts for easy access and listening.
+          </p>
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    {/* Avatar Skeleton */}
+                    <div className="w-16 h-16 bg-gray-200 rounded-full flex-shrink-0"></div>
+
+                    {/* Content Area */}
+                    <div className="flex-1">
+                      {/* Title */}
+                      <div className="h-6 bg-gray-200 rounded w-40 mb-2"></div>
+                      {/* Author */}
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar with Times */}
+                  <div className="mt-4 space-y-2">
+                    {/* Progress Bar */}
+                    <div className="relative">
+                      <div className="h-1 bg-gray-200 rounded-full w-full"></div>
+                      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-2.5 h-2.5 bg-gray-300 rounded-full"></div>
+                    </div>
+
+                    {/* Times and Play Button */}
+                    <div className="flex items-center justify-between">
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 ">
+              {/* Saved Articles */}
+              {episodes.map((episode: Episode) => (
+                <PlayerCard key={episode._id} episode={episode} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      <Footer />
+    </main>
   );
 };
 

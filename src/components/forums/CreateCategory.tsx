@@ -2,11 +2,11 @@
 
 import { getAuth } from "@/lib/getAuth";
 import { createCategory, updateCategory } from "@/Redux/slices/CategorySlice";
-import { AppDispatch } from "@/Redux/store";
+import { AppDispatch, RootState } from "@/Redux/store";
 import { Loader } from "lucide-react";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { set } from "sanity";
 import { form } from "sanity/structure";
 
@@ -21,24 +21,12 @@ const CreateCategory = () => {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
-  const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -47,20 +35,6 @@ const CreateCategory = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    const body = {
-      title: title,
-      route: route,
-      description: description,
-      color: color,
-      imageUrl: image ? await fileToBase64(image) : null,
-    };
-
-    let base64Image: string | null = null;
-
-  if (image) {
-    base64Image = await fileToBase64(image);
-  }
 
     try {
 
@@ -72,7 +46,7 @@ const CreateCategory = () => {
                   route: route,
                   color: color,
                   description: description,
-                  image: base64Image,
+                  image: image,
               })
             );
       toast.success("Category created successfully");

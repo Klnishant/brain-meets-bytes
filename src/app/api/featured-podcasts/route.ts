@@ -5,6 +5,7 @@ export const revalidate = 60; // ISR-style caching
 
 const query = `*[_type == "podcast"] | order(date desc)[0...6]{
   _id,
+  "slug": slug.current,
   title,
   author,
   date,

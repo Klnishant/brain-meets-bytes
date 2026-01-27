@@ -7,6 +7,8 @@ import { set } from "sanity";
 import { Edit, Images, Loader } from "lucide-react";
 import { getAuth } from "@/lib/getAuth";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { RootState } from "@/Redux/store";
 
 export type ChildFormRef = {
   submit: () => void;
@@ -43,6 +45,7 @@ type Thread = {
   content: string;
   CategoryId: Array<Number>;
   images: Array<string>;
+  videos: Array<string>;
   userId: Number;
   likesCount: number;
   commentsCount: number;
@@ -95,17 +98,12 @@ const EditThread: React.FC<EditThreadProps> = ({
   const [submiting,setSubmiting] = useState(false)
   const [error,setError] = useState<string | null>(null)
 
+   const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -169,24 +167,6 @@ const EditThread: React.FC<EditThreadProps> = ({
     setSelectedCategories(categories);
   };
 
-  const filesToBase64 = async (files: File[]): Promise<string[]> => {
-    const base64Images: string[] = [];
-
-    for (const file of files) {
-      const reader = new FileReader();
-
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("File reading failed"));
-        reader.readAsDataURL(file);
-      });
-
-      base64Images.push(base64);
-    }
-
-    return base64Images;
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -194,15 +174,17 @@ const EditThread: React.FC<EditThreadProps> = ({
     setSubmiting(true);
     setError(null)
 
-    const base64Images = await filesToBase64(images);
-
-    const data = {
-      title: title,
-      content: content,
-      userId: userId,
-      CategoryId: selectedCategories.map((category) => category.CategoryId),
-      images: base64Images,
-    };
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    formData.append("userId", userId?.toString() || "");
+    formData.append(
+      "CategoryId",
+      selectedCategories.map((category) => category.CategoryId).join(",")
+    );
+     images.forEach((image) => {
+  formData.append("images", image);
+});
 
     try {
       const res = await fetch(
@@ -211,9 +193,8 @@ const EditThread: React.FC<EditThreadProps> = ({
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: formData,
         }
       );
 

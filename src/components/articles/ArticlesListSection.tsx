@@ -4,10 +4,17 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
 
+type Author = {
+  name: string;
+  role: string;
+  bio: string;
+  imageUrl: string;
+};
+
 type Article = {
   _id: string;
   title?: string;
-  author?: string;
+  authors?: Author[];
   date?: string;
   imageUrl?: string;
   tags?: string[];
@@ -26,7 +33,7 @@ const formatDate = (iso: string) => {
 };
 
 const ArticleCard = ({ article }: { article: Article }) => {
-  const { title = "Untitled", author, date, imageUrl, tags = [], excerpt, slug } = article;
+  const { title = "Untitled", authors, date, imageUrl, tags = [], excerpt, slug } = article;
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-[#FAF9F8]">
@@ -47,9 +54,24 @@ const ArticleCard = ({ article }: { article: Article }) => {
       <div className="flex flex-1 flex-col gap-4 px-5 pb-5 pt-6">
         {/* Author + date */}
         <div className="flex items-center gap-4 text-xs text-[#505050]">
-          <span className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]">
-            {author || "Unknown"}
-          </span>
+          {
+            authors ? (
+              authors.map((author) => (
+              <span
+                key={author?.name}
+                className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]"
+              >
+                {author?.name || "Unknown"}
+              </span>
+            ))
+            ) : (
+              <span
+                className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]"
+              >
+                Unknown
+              </span>
+            )
+          }
           <span className="text-[11px] text-[#505050]">{formatDate(date || "")}</span>
         </div>
 
@@ -151,7 +173,7 @@ const ArticlesListSection = () => {
         const title = (article.title || "").toLowerCase();
         const excerpt = (article.excerpt || "").toLowerCase();
         const tagsText = Array.isArray(article.tags) ? article.tags.join(" ").toLowerCase() : "";
-        const author = (article.author || "").toLowerCase();
+        const author = Array.isArray(article?.authors) ? article?.authors.map((author) => author?.name).join(" ").toLowerCase() : "";
 
         return (
           title.includes(q) ||
@@ -348,9 +370,52 @@ const ArticlesListSection = () => {
         <div className="flex w-full flex-col items-center gap-12">
           <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {loading && !error && (
-              <p className="col-span-full text-center text-sm text-[#64748B]">
-                Loading articles...
-              </p>
+              <div className="col-span-full text-center text-sm text-[#64748B]">
+               <div className="grid grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                  {/* Image skeleton */}
+                  <div className="w-full h-48 bg-gray-200"></div>
+
+                  {/* Content section */}
+                  <div className="p-5">
+                    {/* Date skeleton */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+                      <div className="h-3 w-20 bg-gray-200 rounded"></div>
+                    </div>
+
+                    {/* Title skeleton */}
+                    <div className="space-y-2 mb-4">
+                      <div className="h-5 w-full bg-gray-200 rounded"></div>
+                      <div className="h-5 w-full bg-gray-200 rounded"></div>
+                      <div className="h-5 w-3/4 bg-gray-200 rounded"></div>
+                    </div>
+
+                    {/* Tags skeleton */}
+                    <div className="flex gap-2 mb-4">
+                      <div className="h-7 w-24 bg-gray-200 rounded-full"></div>
+                      <div className="h-7 w-16 bg-gray-200 rounded-full"></div>
+                      <div className="h-7 w-20 bg-gray-200 rounded-full"></div>
+                    </div>
+
+                    {/* Description skeleton */}
+                    <div className="space-y-2 mb-5">
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-full bg-gray-200 rounded"></div>
+                      <div className="h-3 w-5/6 bg-gray-200 rounded"></div>
+                    </div>
+
+                    {/* Read More button skeleton */}
+                    <div className="h-10 w-28 bg-gray-200 rounded-full"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+              </div>
             )}
 
             {!loading && error && (

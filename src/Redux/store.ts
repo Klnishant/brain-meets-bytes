@@ -5,6 +5,7 @@ import { articleCommentsReducer } from "./slices/ArticleCommentSlice";
 import { threadCommentsReducer } from "./slices/ThreadCommentSlice";
 import { categoriesReducer } from "./slices/CategorySlice";
 import { pollsReducer } from "./slices/PollSlice";
+import { authReducer } from "./slices/AuthSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     threadComments: threadCommentsReducer,
     categories: categoriesReducer,
     polls: pollsReducer,
+    auth: authReducer,
   },
 });
 

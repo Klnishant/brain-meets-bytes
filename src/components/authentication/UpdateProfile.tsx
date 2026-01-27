@@ -1,20 +1,38 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { X, Eye, EyeOff, Loader, CircleUserRound } from "lucide-react";
 import toast from "react-hot-toast";
 
-type SignupCardProps = {
-  onClose?: () => void;
-  handleSignIn?: () => void;
-  handleIsLoggedIn?: () => void;
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
 };
 
-const SignupCard: React.FC<SignupCardProps> = ({
+type UpdateProfileProps = {
+    name: string | null;
+    email: string | null;
+    ProfilePic: string | null;
+    onClose: () => void;
+    userId: number
+    handleUpdate: (data: User) => void
+};
+
+const UpdateProfile: React.FC<UpdateProfileProps> = ({
+  name,
+  email,
+  ProfilePic,
   onClose,
-  handleSignIn,
-  handleIsLoggedIn,
+  userId,
+  handleUpdate
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -23,11 +41,15 @@ const SignupCard: React.FC<SignupCardProps> = ({
   const [signupData, setSignupData] = useState({
     name: "",
     email: "",
-    password: "",
-    confirmPassword: "",
-    hasmembership: false,
   });
   const [image, setImage] = useState<File | null>(null);
+
+  useEffect(() => {
+    setSignupData({
+      name: name || "",
+      email: email || "",
+    });
+  },[name, email]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,9 +73,7 @@ const SignupCard: React.FC<SignupCardProps> = ({
 
   if (
     !signupData.name ||
-    !signupData.email ||
-    !signupData.password ||
-    !signupData.confirmPassword
+    !signupData.email
   ) {
     setError("Please fill in all the required fields.");
     setIsSubmitting(false);
@@ -61,53 +81,36 @@ const SignupCard: React.FC<SignupCardProps> = ({
   }
 
   try {
-    if (signupData.password !== signupData.confirmPassword) {
-      throw new Error("Password and confirm password do not match");
-    }
 
     const formData = new FormData();
     formData.append("name", signupData.name);
     formData.append("email", signupData.email);
-    formData.append("password", signupData.password);
-    formData.append(
-      "hasmembership",
-      String(signupData.hasmembership)
-    );
 
     if (image) {
       formData.append("ProfilePic", image);
     }
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}users`,
+      `${process.env.NEXT_PUBLIC_API_URL}users?userId=${userId}`,
       {
-        method: "POST",
+        method: "PUT",
         body: formData,
       }
     );
 
     if (!res.ok) {
-      throw new Error("Signup failed");
+      throw new Error("Failed to update account");
     }
 
-    await res.json();
+    const data = await res.json();
+    handleUpdate(data?.data);
+    onClose();
 
-    setSignupData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      hasmembership: false,
-    });
-    setImage(null);
-
-    toast.success("Account created successfully!");
-    handleSignIn?.();
-    handleIsLoggedIn?.();
+    toast.success("Account updated successfully!");
   } catch (error: any) {
     console.error(error);
     setError(error.message || "Something went wrong");
-    toast.error("Failed to create account");
+    toast.error("Failed to update account");
   } finally {
     setIsSubmitting(false);
   }
@@ -122,11 +125,8 @@ const SignupCard: React.FC<SignupCardProps> = ({
             {/* Header */}
             <div>
               <h2 className="text-[30px] font-bold text-[#1E293B]">
-                Create Your Account
+                Update Your Profile
               </h2>
-              <p className="mt-1 text-lg text-[#505050]">
-                Join the community exploring smarter brain health and longevity.
-              </p>
             </div>
 
             {/* Close Button */}
@@ -159,7 +159,15 @@ const SignupCard: React.FC<SignupCardProps> = ({
                     </div>
                   ):(
                     <div>
-                      <CircleUserRound size={100} />
+                      {
+                        ProfilePic ? (
+                          <img src={ProfilePic} alt=""
+                           className="w-30 h-30 object-cover rounded-full"
+                           />
+                        ):(
+                          <CircleUserRound className="w-30 h-30 object-cover rounded-full" />
+                        )
+                      }
                     </div>
                   )}
                 </div>
@@ -197,46 +205,6 @@ const SignupCard: React.FC<SignupCardProps> = ({
               className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
             />
 
-            {/* Password */}
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                name="password"
-                required={true}
-                value={signupData.password}
-                onChange={handleInputChange}
-                className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#505050]"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            {/* Confirm Password */}
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                name="confirmPassword"
-                required={true}
-                value={signupData.confirmPassword}
-                onChange={handleInputChange}
-                className="w-full rounded-full border border-[#E2E8F0] bg-[#FAF9F8] px-4 py-3 text-[#505050] text-sm outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#505050]"
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
             {/* Error Message */}
             {error && <p className="text-red-500">{error}</p>}
 
@@ -251,22 +219,14 @@ const SignupCard: React.FC<SignupCardProps> = ({
                   <Loader size={14} className="animate-spin" />
                 </div>
               ) : (
-                "SignUp"
+                "Update Profile"
               )}
             </button>
           </form>
-
-          {/* Footer */}
-          <p className="mt-4 text-center text-sm text-[#000000]">
-            Already have an account?{" "}
-            <span className="cursor-pointer text-[#D62828] font-medium">
-              <button onClick={handleSignIn}>Login</button>
-            </span>
-          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default SignupCard;
+export default UpdateProfile;

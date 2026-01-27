@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect, use } from "react";
 import CreateCategory from "./CreateCategory";
 import { set } from "sanity";
 import { getAuth } from "@/lib/getAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "@/Redux/store";
 
 type Category = {
   _id: string;
@@ -35,17 +37,12 @@ const SelectCategoryCard: React.FC<SelectCategoryCardProps> = ({
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
+  const auth = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,7 +65,7 @@ const SelectCategoryCard: React.FC<SelectCategoryCardProps> = ({
         console.log(res);
 
         if (!res.ok) {
-          throw new Error("Failed to load threads");
+          throw new Error("Failed to load categories");
         }
 
         const data = (await res.json())?.data as Category[];
@@ -76,7 +73,7 @@ const SelectCategoryCard: React.FC<SelectCategoryCardProps> = ({
         setCategories(Array.isArray(data) ? data : []);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message ?? "Failed to load threads");
+        setError(e?.message ?? "Failed to load categories");
       } finally {
         if (mounted) setLoading(false);
       }

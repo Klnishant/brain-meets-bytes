@@ -63,6 +63,18 @@ type Article = {
   }[];
 };
 
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
+};
+
 const articleQuery = `*[_type == "article" && slug.current == $slug][0]{
   _id,
   title,
@@ -229,18 +241,36 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
   const [isSaved, setIsSaved] = useState(false);
   const [nestedComments, setNestedComments] = useState<Comment[]>([]);
   const [isReplying, setIsReplying] = useState(false);
+  const [user,setUser] = useState<User | null>(null)
 
+  const auth = useSelector((state: RootState) => state.auth);
+  
+    useEffect(() => {
+      setToken(auth?.auth?.token);
+      setUserId(auth?.auth?.userId);
+    }, [auth]);
+  
   useEffect(() => {
-    const fetchAuth = async () => {
-      const auth = await getAuth();
-      if (auth) {
-        setToken(auth.token);
-        setUserId(auth.userId);
-      }
-      console.log("auth", auth);
-    };
-    fetchAuth();
-  }, []);
+      const user = async () => {
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await res.json();
+  
+        if (res.ok) {
+          setUser(data?.data);
+        }
+      };
+      user();
+    }, [token]);
   useEffect(() => {
     let mounted = true;
 
@@ -713,7 +743,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
             >
               <div className="h-[40px] w-[40px] md:h-[60px] md:w-[65px] overflow-hidden rounded-[78px] border-2 border-[#D62828]">
                 <img
-                  src="/forum-user-1.jpg"
+                  src={user?.ProfilePic}
                   alt="Current user"
                   className="h-full w-full object-cover"
                 />
