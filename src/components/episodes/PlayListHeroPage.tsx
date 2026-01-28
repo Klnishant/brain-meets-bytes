@@ -13,8 +13,6 @@ import {
   postComment,
   toggleCommentLike,
 } from "@/Redux/slices/PodcastCommentSlice";
-import { on } from "events";
-import { podcast } from "../../../sanity/schemaTypes/podcast";
 
 type Podcast = {
   _id: string;
@@ -118,6 +116,190 @@ type EpisodeActionState = {
 type Auth = {
   userId: number;
   token: string;
+};
+
+const PlayerCardSkeleton = () => {
+  return (
+    <div className="w-full mx-auto mt-8 bg-white rounded-3xl overflow-hidden shadow-xl animate-pulse">
+      {/* Desktop layout */}
+      <div className="hidden md:flex">
+        {/* Left side - Episode image */}
+        <div className="w-96 h-96 bg-gradient-to-br from-gray-200 to-gray-300 flex-shrink-0"></div>
+
+        {/* Right side - Episode details */}
+        <div className="flex-1 px-10 py-8 flex flex-col justify-between">
+          {/* Top section */}
+          <div>
+            {/* Category/Show name */}
+            <div className="h-3.5 w-36 bg-gray-300 rounded-md mb-5"></div>
+
+            {/* Episode title */}
+            <div className="space-y-3 mb-5">
+              <div className="h-8 w-full bg-gray-300 rounded-lg"></div>
+              <div className="h-8 w-11/12 bg-gray-300 rounded-lg"></div>
+            </div>
+
+            {/* Episode description */}
+            <div className="space-y-2.5 mb-8">
+              <div className="h-4 w-full bg-gray-200 rounded"></div>
+              <div className="h-4 w-full bg-gray-200 rounded"></div>
+              <div className="h-4 w-full bg-gray-200 rounded"></div>
+              <div className="h-4 w-4/5 bg-gray-200 rounded"></div>
+            </div>
+
+            {/* Additional metadata */}
+            <div className="flex items-center gap-4 mb-8">
+              <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+
+          {/* Bottom section - Player controls */}
+          <div>
+            {/* Progress bar */}
+            <div className="mb-5">
+              <div className="h-1.5 w-full bg-gray-300 rounded-full mb-3 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="h-3.5 w-14 bg-gray-200 rounded"></div>
+                <div className="h-3.5 w-14 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+
+            {/* Player controls */}
+            <div className="flex items-center justify-center gap-8 pt-2">
+              <div className="w-9 h-9 bg-gray-300 rounded-full"></div>
+              <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+              <div className="w-16 h-16 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full shadow-md"></div>
+              <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+              <div className="w-9 h-9 bg-gray-300 rounded-full"></div>
+            </div>
+
+            {/* Volume and additional controls */}
+            <div className="flex items-center justify-between mt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-gray-200 rounded"></div>
+                <div className="h-1.5 w-24 bg-gray-200 rounded-full"></div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-6 h-6 bg-gray-200 rounded"></div>
+                <div className="w-6 h-6 bg-gray-200 rounded"></div>
+                <div className="w-6 h-6 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile layout */}
+      <div className="md:hidden">
+        {/* Episode image */}
+        <div className="w-full aspect-square bg-gradient-to-br from-gray-200 to-gray-300 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+        </div>
+
+        {/* Episode details */}
+        <div className="p-5">
+          {/* Category/Show name */}
+          <div className="h-3 w-28 bg-gray-300 rounded mb-3"></div>
+
+          {/* Episode title */}
+          <div className="space-y-2.5 mb-4">
+            <div className="h-6 w-full bg-gray-300 rounded-lg"></div>
+            <div className="h-6 w-4/5 bg-gray-300 rounded-lg"></div>
+          </div>
+
+          {/* Episode description */}
+          <div className="space-y-2 mb-5">
+            <div className="h-3.5 w-full bg-gray-200 rounded"></div>
+            <div className="h-3.5 w-full bg-gray-200 rounded"></div>
+            <div className="h-3.5 w-3/4 bg-gray-200 rounded"></div>
+          </div>
+
+          {/* Metadata */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-3 w-20 bg-gray-200 rounded"></div>
+            <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+            <div className="h-3 w-16 bg-gray-200 rounded"></div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-6">
+            <div className="h-1 w-full bg-gray-300 rounded-full mb-2.5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"></div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="h-3 w-12 bg-gray-200 rounded"></div>
+              <div className="h-3 w-12 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+
+          {/* Player controls */}
+          <div className="flex items-center justify-center gap-6 mb-5">
+            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            <div className="w-9 h-9 bg-gray-300 rounded-full"></div>
+            <div className="w-14 h-14 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full shadow-lg"></div>
+            <div className="w-9 h-9 bg-gray-300 rounded-full"></div>
+            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+          </div>
+
+          {/* Bottom controls */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-gray-200 rounded"></div>
+              <div className="h-1 w-20 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="flex items-center gap-5">
+              <div className="w-5 h-5 bg-gray-200 rounded"></div>
+              <div className="w-5 h-5 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EpisodeCardSkeleton = () => {
+  return (
+    <div className="w-full rounded-2xl bg-white p-4 md:p-6 shadow-sm border animate-pulse">
+      {/* Top section */}
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div className="h-12 w-12 rounded-full bg-gray-200 shrink-0" />
+
+        {/* Title + subtitle */}
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-24 rounded bg-gray-200" />
+          <div className="h-4 w-3/4 rounded bg-gray-300" />
+          <div className="h-3 w-32 rounded bg-gray-200" />
+        </div>
+
+        {/* Play button */}
+        <div className="hidden sm:block">
+          <div className="h-10 w-24 rounded-full bg-gray-300" />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="my-4 h-px w-full bg-gray-200" />
+
+      {/* Bottom actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="h-8 w-16 rounded-full bg-gray-200" />
+        <div className="h-8 w-16 rounded-full bg-gray-200" />
+        <div className="h-8 w-20 rounded-full bg-gray-200" />
+        <div className="h-8 w-20 rounded-full bg-gray-200" />
+      </div>
+
+      {/* Mobile Play button */}
+      <div className="mt-4 sm:hidden">
+        <div className="h-10 w-full rounded-full bg-gray-300" />
+      </div>
+    </div>
+  );
 };
 
 const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
@@ -325,21 +507,20 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   };
 
-useEffect(() => {
-  const audio = audioRef.current;
-  if (!audio) return;
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  const onEnded = () => {
-    onNext(); // autoplay next episode
-  };
+    const onEnded = () => {
+      onNext(); // autoplay next episode
+    };
 
-  audio.addEventListener("ended", onEnded);
+    audio.addEventListener("ended", onEnded);
 
-  return () => {
-    audio.removeEventListener("ended", onEnded);
-  };
-}, [onNext]);
-
+    return () => {
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, [onNext]);
 
   const seek = (value: number) => {
     if (!audioRef.current) return;
@@ -357,11 +538,11 @@ useEffect(() => {
 "
         >
           <div className="flex md:flex-col gap-4 md:gap-6 items-center  h-full md:items-start">
-            <div className="w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[200px] lg:h-[250px] xl:w-[290px] xl:h-[319px] border-4 rounded-2xl">
+            <div className="w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[200px] lg:h-[250px] xl:w-[290px] xl:h-[319px] border-4 rounded-2xl shrink-0">
               <img
                 src={episode?.podcast?.authorImageUrl || "/ki.png"}
                 alt=""
-                className=" w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[200px] lg:h-[250px] xl:w-[308px] xl:h-[319px] rounded-3xl object-cover"
+                className=" w-[80px] h-[80px] md:w-[150px] md:h-[155px] lg:w-[200px] lg:h-[250px] xl:w-[308px] xl:h-[319px] rounded-2xl object-cover shrink-0"
               />
             </div>
             <div className=" flex flex-col gap-1 w-full justify-start">
@@ -954,6 +1135,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
 };
 const PlayListHeroPage = () => {
   const [loading, setLoading] = useState(false);
+  const [loadingPodcast, setLoadingPodcast] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [episode, setEpisode] = useState<Episode[]>([]);
@@ -967,17 +1149,16 @@ const PlayListHeroPage = () => {
     Record<string, EpisodeActionState>
   >({});
   const [currentIndex, setCurrentIndex] = useState(0);
-const [isShuffle, setIsShuffle] = useState(false);
-const [playOrder, setPlayOrder] = useState<number[]>([]);
-
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [playOrder, setPlayOrder] = useState<number[]>([]);
+  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
 
   const auth = useSelector((state: RootState) => state.auth);
-  
-    useEffect(() => {
-      setToken(auth?.auth?.token);
-      setUserId(auth?.auth?.userId);
-    }, [auth]);
-  
+
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   useEffect(() => {
     const user = async () => {
@@ -1005,17 +1186,21 @@ const [playOrder, setPlayOrder] = useState<number[]>([]);
   const slug = params.slug;
 
   useEffect(() => {
-  if (episode.length && playOrder.length === 0) {
-    setPlayOrder(episode.map((_, i) => i));
-  }
-}, [episode]); // safe
+    if (episode.length && playOrder.length === 0) {
+      setPlayOrder(episode.map((_, i) => i));
+    }
+  }, [episode]); // safe
 
+  let currentEpisodePlayer = useMemo(() => {
+    // if (!episode.length || !playOrder.length) return null;
+    return episode[playOrder[currentIndex]];
+  }, [episode, playOrder, currentIndex]);
 
-  let currentEpisode = useMemo(() => {
-  // if (!episode.length || !playOrder.length) return null;
-  return episode[playOrder[currentIndex]];
-}, [episode, playOrder, currentIndex]);
-
+  useEffect(() => {
+    if (currentEpisodePlayer) {
+      setCurrentEpisode(currentEpisodePlayer);
+    }
+  }, [currentEpisodePlayer]);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -1062,7 +1247,7 @@ const [playOrder, setPlayOrder] = useState<number[]>([]);
         if (mounted) setLoading(false);
       }
       try {
-        setLoading(true);
+        setLoadingPodcast(true);
         setError(null);
         const res = await fetch(`/api/episodes/${slug}`);
         if (!res.ok) {
@@ -1071,12 +1256,12 @@ const [playOrder, setPlayOrder] = useState<number[]>([]);
         const data = (await res.json()) as Episode[];
         if (!mounted) return;
         setEpisode(Array.isArray(data) ? data : []);
-        currentEpisode = episode[currentIndex] || null;
+        currentEpisodePlayer = episode[currentIndex] || null;
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message ?? "Failed to load podcasts");
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setLoadingPodcast(false);
       }
     };
 
@@ -1256,39 +1441,33 @@ const [playOrder, setPlayOrder] = useState<number[]>([]);
   }, [isReady]);
 
   const handleNext = () => {
-  setCurrentIndex((i) =>
-    i + 1 < playOrder.length ? i + 1 : 0
-  );
-};
+    setCurrentIndex((i) => (i + 1 < playOrder.length ? i + 1 : 0));
+  };
 
-const handlePrev = () => {
-  setCurrentIndex((i) =>
-    i - 1 >= 0 ? i - 1 : playOrder.length - 1
-  );
-};
-
+  const handlePrev = () => {
+    setCurrentIndex((i) => (i - 1 >= 0 ? i - 1 : playOrder.length - 1));
+  };
 
   const shuffleArray = (arr: number[]) => {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-};
-
-const handleShuffle = () => {
-  setIsShuffle((prev) => {
-    if (!prev) {
-      setPlayOrder((order) => shuffleArray(order));
-    } else {
-      setPlayOrder(episode.map((_, i) => i));
-      setCurrentIndex(0);
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    return !prev;
-  });
-};
+    return copy;
+  };
 
+  const handleShuffle = () => {
+    setIsShuffle((prev) => {
+      if (!prev) {
+        setPlayOrder((order) => shuffleArray(order));
+      } else {
+        setPlayOrder(episode.map((_, i) => i));
+        setCurrentIndex(0);
+      }
+      return !prev;
+    });
+  };
 
   return (
     <div className="w-full  bg-[#FAF9F8] px-8 xl:px-16">
@@ -1313,7 +1492,9 @@ const handleShuffle = () => {
         {/* Current Page Title */}
         <span className="flex items-center gap-2">
           <span className="font-medium cursor-pointer md:text-[20px] max-w-[700px] overflow-hidden">
-            {episode[0]?.podcast?.title || "Podcast Title"}
+            {episode[0]?.podcast?.title || (
+              <div className="h-8 w-full bg-gray-300 rounded-lg"></div>
+            )}
           </span>
           <h1 className="md:text-xl">›</h1>
         </span>
@@ -1325,11 +1506,11 @@ const handleShuffle = () => {
       </div>
 
       {/* player card */}
-      {currentEpisode && (
+      {(currentEpisode && (
         <PlayerCard
           user={user}
           episode={currentEpisode}
-          index={playOrder[currentIndex] + 1}
+          index={episode.findIndex(ep => ep._id === currentEpisode?._id)+1}
           isLike={getEpisodeAction(currentEpisode?._id)?.isLiked}
           likeCount={getEpisodeAction(currentEpisode?._id)?.likesCount}
           isSaved={getEpisodeAction(currentEpisode?._id)?.isSaved}
@@ -1346,7 +1527,7 @@ const handleShuffle = () => {
           onPrev={handlePrev}
           onShuffle={handleShuffle}
         />
-      )}
+      )) || <PlayerCardSkeleton />}
 
       {/* Episodes */}
       {!loading && !error && (
@@ -1376,10 +1557,18 @@ const handleShuffle = () => {
               onCommentLike={(commentId, isLiked) =>
                 handleCommentLike(ep?._id, commentId, isLiked)
               }
-              onSelect={() => setEpisodeNumber(index + 1)}
+              onSelect={() => {
+                setCurrentEpisode(episode[index])
+              }}
             />
-          ))}
-          {episode.length === 0 && (
+          )) || (
+            <div>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <EpisodeCardSkeleton key={index} />
+              ))}
+            </div>
+          )}
+          {episode.length === 0 && !loading && (
             <p className="col-span-full text-center text-sm text-[#64748B]">
               No Episodes Are Available.
             </p>
@@ -1415,12 +1604,52 @@ const handleShuffle = () => {
                 </div>
               )}
 
-              {!loading && !error && (
+              {podcasts && (
                 <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {podcasts.map((podcast) => (
                     <PodcastCard key={podcast._id} podcast={podcast} />
-                  ))}
-                  {podcasts.length === 0 && (
+                  )) || (
+                    <div>
+                      {
+                        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse max-w-xl"
+                            >
+                              {/* Image Skeleton */}
+                              <div className="w-full h-64 bg-gray-200"></div>
+
+                              {/* Content Section */}
+                              <div className="p-5 space-y-4">
+                                {/* Author and Date */}
+                                <div className="flex items-center gap-3">
+                                  <div className="h-4 bg-gray-200 rounded w-24"></div>
+                                  <div className="h-4 bg-gray-200 rounded w-28"></div>
+                                </div>
+
+                                {/* Title Skeleton */}
+                                <div className="space-y-2">
+                                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                                  <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                                </div>
+
+                                {/* Tag Skeleton */}
+                                <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
+
+                                {/* Listen Button and Episodes */}
+                                <div className="flex items-center justify-between pt-2">
+                                  <div className="h-11 w-32 bg-gray-200 rounded-full"></div>
+                                  <div className="h-5 bg-gray-200 rounded w-24"></div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      }
+                    </div>
+                  )}
+                  {podcasts.length === 0 && !loadingPodcast && (
                     <p className="col-span-full text-center text-sm text-[#64748B]">
                       No podcasts match your search.
                     </p>

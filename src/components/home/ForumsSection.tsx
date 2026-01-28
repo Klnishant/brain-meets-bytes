@@ -1,6 +1,7 @@
 'use client';
 
 import { COLORS } from "@/lib/constants";
+import { intervalToDuration } from "date-fns";
 import { useEffect, useState } from "react";
 
 type ForumContent = {
@@ -38,22 +39,42 @@ type ForumCardProps = {
 
 const FALL_BACK_CONTENT: ForumContent = {
   _id: "",
-  heading: "",
-  description: "",
+  heading: "Join the Brain Meets Bytes Community",
+  description: "Connect with listeners, researchers, and practitioners who care about brain health and longevity. Ask questions, share ideas, and continue the conversations that start in each episode.",
   Card: {
-    title: "",
-    description: "",
-    user: "",
-    role: "",
-    tags: [],
+    title: "Key takeaways from ‘The Future of Cognitive Enhancement’",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum egestas eleifend. Nulla est tortor, iaculis eu iaculis ut, congue at sapien. Mauris gravida congue vulputate. Suspendisse vitae magna at sem vehicula porttitor. Suspendisse eget pretium elit, ut dapibus massa. Sed vulputate dolor mattis, pretium lorem quis, ullamcorper justo.",
+    user: "Sara Jones",
+    role: "Member",
+    tags: ["Episode Discussion"],
     date: "",
-    repliesCount: 0,
-    reactionCount: 0,
-    profileImageUrl: "",
+    repliesCount: 18,
+    reactionCount: 6,
+    profileImageUrl: "./forum-usser.jpg",
   },
 };
 
 const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
+  const duration = intervalToDuration({
+      start: new Date(Card?.date),
+      end: new Date(),
+    });
+  
+    let time = "just now";
+  
+    if (duration?.years) {
+      time = `${duration.years} years ago`;
+    } else if (duration?.months) {
+      time = `${duration.months} months ago`;
+    } else if (duration?.weeks) {
+      time = `${duration.weeks} weeks ago`;
+    } else if (duration?.days) {
+      time = `${duration.days} days ago`;
+    } else if (duration?.hours) {
+      time = `${duration.hours} hours ago`;
+    } else if (duration?.minutes) {
+      time = `${duration.minutes} minutes ago`;
+    }
   return (
     <div
       className={`rounded-2xl border border-[#E2E8F0] bg-white shadow-md px-6 md:px-8 py-6 md:py-8 flex flex-col gap-6 ${
@@ -77,7 +98,7 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
                   {Card?.user}
                 </span>
                 <span className="inline-block w-px h-4 bg-[#64748B] rounded-full" />
-                <span className="font-inter text-sm font-light text-[#64748B]">3 days ago</span>
+                <span className="font-inter text-sm font-light text-[#64748B]">{time}</span>
               </div>
               <span className="font-inter text-xs font-semibold text-[#505050]">{Card?.role}</span>
             </div>
@@ -186,11 +207,15 @@ const ForumsSection = () => {
                   <span key={index} className={`${index  === 5 ? "text-[#D62828]" : ""}`}>
                     {word}{" "}
                   </span>
+                )) ?? FALL_BACK_CONTENT.heading.split(" ")?.map((word, index) => (
+                  <span key={index} className={`${index  === 5 ? "text-[#D62828]" : ""}`}>
+                    {word}{" "}
+                  </span>
                 ))
               }
             </h2>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              {content?.description}
+              {content?.description ?? FALL_BACK_CONTENT.description}
             </p>
           </div>
 

@@ -26,6 +26,18 @@ type PodcastHeroContent = {
   podcastCount: number;
 };
 
+const FALL_BACK_CONTENT: PodcastHeroContent = {
+  heading: "Explore Breakthroughs in Brain Health & Longevity",
+  description: "Explore conversations with leading experts advancing brain health, neuroscience, and human longevity. Listen, learn, and discover the ideas shaping the future of how we think, age, and thrive.",
+  slug: "",
+  newReleasePodcastTitle: "The New Light Frontier: How Photonic Computing Could Transform Brain Health and the Future of Care",
+  author: "Ki Siadatan",
+  imageUrl: "./podcast-demo.png",
+  date: "2025-12-25 21:53",
+  tags: ["NueroScience", "Longevity", "Psycology"],
+  podcastCount: 200,
+}
+
 const formatDate = (iso?: string) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -92,14 +104,13 @@ const PodcastsHeroSection = () => {
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:mb-16">
           <div className=" w-full max-w-[1259px] max-h-[213px]">
             <h2 className="font-sora z-1 text-[32px] md:text-4xl xl:text-[56px] font-bold text-center md:text-start text-[#1E293B]">
-              {content?.heading.split(" ").map((word,i) => (<span key={i} className={i === 1 ? "text-[#D62828]" : ""}>{word} </span>)) ||
-                "Where Brain Science Meets a Healthier Future for Everyone"}
+              {content?.heading.split(" ").map((word,i) => (<span key={i} className={i === 1 ? "text-[#D62828]" : ""}>{word} </span>)) ??
+                FALL_BACK_CONTENT.heading.split(" ").map((word,i) => (<span key={i} className={i === 1 ? "text-[#D62828]" : ""}>{word} </span>))}
             </h2>
           </div>
           <div className="h-[213px] flex flex-col gap-8 ">
             <p className="font-inter md:w-[600px] z-1 text-[12px] md:text-base xl:text-[18px] leading-relaxed text-center md:text-start text-[#505050] max-w-[951px] font-400">
-              {content?.description ||
-                "Brain Meets Bytes explores breakthroughs in neuroscience, healthy aging, and human longevity—translating emerging science into insights that help us all live longer, healthier, and sharper lives."}
+              {content?.description ?? FALL_BACK_CONTENT.description}
             </p>
             <button
               className="inline-flex items-center w-full z-10 md:w-[295px] h-[50px] justify-center gap-3 rounded-full px-10 py-3 text-sm md:text-base font-normal text-white"
@@ -113,7 +124,7 @@ const PodcastsHeroSection = () => {
                   className="h-4 w-4 object-contain"
                 />
 
-                <span>Discover all {String(content?.podcastCount) || "200"}+</span>
+                <span>Discover all {String(content?.podcastCount) ?? String(FALL_BACK_CONTENT?.podcastCount)}+</span>
 
                 {/* Right dropdown arrow icon */}
                 <img
@@ -130,7 +141,7 @@ const PodcastsHeroSection = () => {
           {/* Background image */}
           <div className="absolute inset-0 w-full h-[470px]">
             <img
-              src={content?.imageUrl || "/podcast-hero-image.png"}
+              src={content?.imageUrl ?? FALL_BACK_CONTENT.imageUrl}
               alt={"Podcast Hero"}
               className="h-full w-full rounded-2xl"
             />
@@ -148,7 +159,7 @@ const PodcastsHeroSection = () => {
               </div>
               <div className="inline-flex items-center gap-2 rounded-full bg-[#E2E8F0] px-3 py-1">
                 <span className="font-inter text-[10px] md:text-[14px] text-[#1E293B]">
-                  {content?.author || "Unknown"}
+                  {content?.author ?? FALL_BACK_CONTENT.author}
                 </span>
               </div>
             </div>
@@ -156,7 +167,7 @@ const PodcastsHeroSection = () => {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-center w-full mb-2">
                   <span className="font-inter text-[10px] md:text-[14px] text-[#FAF9F8]">
-                    {content?.date ? formatDate(content.date) : "Nov 14, 2025"}
+                    {content?.date ? formatDate(content.date) : formatDate(FALL_BACK_CONTENT.date)}
                   </span>
                 </div>
                 {/* Meta chips row 2: tags */}
@@ -169,13 +180,27 @@ const PodcastsHeroSection = () => {
                       >
                         {tag}
                       </span>
-                    ))}
+                    )) ?? (
+                      <div>
+                        {
+                          FALL_BACK_CONTENT.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center rounded-full border border-[#FAF9F8] px-3 py-1 font-inter text-[10px] md:text-[14px] text-[#FAF9F8]"
+                            >
+                              {tag}
+                            </span>
+                          ))
+                        }
+                      </div>
+                    )
+                    }
                   </div>
                 )}
                 {/* Title */}
                 <div className="flex flex-col gap-4">
                   <h2 className="font-sora text-[20px] md:text-[28px] md:text-[32px] lg:text-[36px] font-semibold leading-[1.25] text-[#FAF9F8] text-center">
-                    {content?.newReleasePodcastTitle || "Healthier Future"}
+                    {content?.newReleasePodcastTitle ?? FALL_BACK_CONTENT.newReleasePodcastTitle}
                   </h2>
                 </div>
               </div>

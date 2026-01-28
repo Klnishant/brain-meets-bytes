@@ -1,6 +1,7 @@
 'use client';
 
 import { COLORS } from "@/lib/constants";
+import { intervalToDuration } from "date-fns";
 import { ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -40,23 +41,43 @@ type ForumCardProps = {
 
 const FALL_BACK_CONTENT: ForumContent = {
   _id: "",
-  heading: "",
-  descriptionTag: "",
-  description: "",
+  heading: "Join the Conversation",
+  descriptionTag: "Breakthroughs don't happen alone.",
+  description: "Join a community of curious minds, health innovators, and lifelong learners who are passionate about advancing smarter brain health and longevity. Share ideas, ask questions, and grow together as we shape the future of human health.",
   Card: {
-    title: "",
-    description: "",
-    user: "",
-    role: "",
-    tags: [],
+    title: "Key takeaways from“The Future of Cognitive Enhancement”",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum egestas eleifend. Nulla est tortor, iaculis eu iaculis ut, congue at sapien. Mauris gravida congue vulputate. Suspendisse vitae magna at sem vehicula porttitor.",
+    user: "Sara Jones",
+    role: "Member",
+    tags: ["Episode Discussion"],
     date: "",
-    repliesCount: 0,
-    reactionCount: 0,
-    profileImageUrl: "",
+    repliesCount: 18,
+    reactionCount: 245,
+    profileImageUrl: "./forum-usser.jpg",
   },
 }
 
 const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
+  const duration = intervalToDuration({
+        start: new Date(Card?.date),
+        end: new Date(),
+      });
+    
+      let time = "just now";
+    
+      if (duration?.years) {
+        time = `${duration.years} years ago`;
+      } else if (duration?.months) {
+        time = `${duration.months} months ago`;
+      } else if (duration?.weeks) {
+        time = `${duration.weeks} weeks ago`;
+      } else if (duration?.days) {
+        time = `${duration.days} days ago`;
+      } else if (duration?.hours) {
+        time = `${duration.hours} hours ago`;
+      } else if (duration?.minutes) {
+        time = `${duration.minutes} minutes ago`;
+      }
   return (
     <div
       className={`rounded-2xl border border-[#E2E8F0] bg-white shadow-md px-4 md:px-8 py-4 md:py-8 flex flex-col gap-3 md:gap-6 ${
@@ -69,7 +90,7 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 md:w-12 md:h-12 rounded-full border-2 border-[#F77F00] overflow-hidden">
               <img
-                src={`${Card?.profileImageUrl}`}
+                src={`${Card?.profileImageUrl || FALL_BACK_CONTENT.Card.profileImageUrl}`}
                 alt="Sara Jones avatar"
                 className="w-full h-full object-cover"
               />
@@ -77,21 +98,21 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
                 <span className="font-inter text-base font-normal text-[#1E293B]">
-                 {Card?.user}
+                 {Card?.user || FALL_BACK_CONTENT.Card.user}
                 </span>
                 <span className="hidden md:inline-block w-px h-4 bg-[#64748B] rounded-full" />
-                <span className="hidden md:block font-inter text-sm font-light text-[#64748B]">3 days ago</span>
+                <span className="hidden md:block font-inter text-sm font-light text-[#64748B]">{time}</span>
               </div>
-              <span className="font-inter text-xs font-semibold text-[#505050]">{Card?.role}</span>
+              <span className="font-inter text-xs font-semibold text-[#505050]">{Card?.role || FALL_BACK_CONTENT.Card.role}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             <span className="inline-flex items-center justify-center px-2.5 md:px-3 py-1 rounded-full bg-[#64748B] text-[10px] md:text-[11px] text-white font-inter">
-              {Card?.tags?.join(", ")}
+              {Card?.tags?.join(", ") || FALL_BACK_CONTENT.Card.tags.join(", ")}
             </span>
             <span className="inline-flex items-center justify-center px-2.5 md:px-3 py-1 rounded-full border border-[#64748B] text-[10px] md:text-[11px] text-[#64748B] font-inter">
-              {Card?.repliesCount} replies
+              {Card?.repliesCount || FALL_BACK_CONTENT.Card.repliesCount} replies
             </span>
           </div>
         </div>
@@ -109,11 +130,15 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
               <span key={index} className={`${index >= 2 ? "italic" : ""}`}>
                 {word}{" "}
               </span>
+            )) ?? FALL_BACK_CONTENT.Card.title.split(" ").map((word, index) => (
+              <span key={index} className={`${index >= 2 ? "italic" : ""}`}>
+                {word}{" "}
+              </span>
             ))
           }
         </h3>
         <p className="font-inter text-xs md:text-base text-[#333333] md:leading-7 line-clamp-7">
-          {Card?.description}
+          {Card?.description || FALL_BACK_CONTENT.Card.description}
         </p>
       </div>
 
@@ -124,7 +149,7 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
             <ThumbsUp
               className="w-2.5 h-2.5 text-[#64748B] md:w-3.5 md:h-3.5 object-contain"
             />
-            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">{Card?.reactionCount}</span>
+            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">{Card?.reactionCount || FALL_BACK_CONTENT.Card.reactionCount}</span>
           </button>
 
           <button className="inline-flex items-center gap-2 px-3 md:px-4 py-1 md:py-2 rounded-full border border-[#64748B] bg-white">
@@ -133,7 +158,7 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
               alt="Comments"
               className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 object-contain"
             />
-            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">{Card?.repliesCount}</span>
+            <span className="font-inter text-[10px] md:text-sm text-[#64748B]">{Card?.repliesCount || FALL_BACK_CONTENT.Card.repliesCount}</span>
           </button>
         </div>
 
@@ -175,14 +200,18 @@ const AboutJoinCommunitySection = () => {
                   <span key={index} className={`${index  === 1 ? "text-[#D62828]" : ""}`}>
                     {word}{" "}
                   </span>
+                )) ?? FALL_BACK_CONTENT.heading.split(" ").map((word, index) => (
+                  <span key={index} className={`${index  === 1 ? "text-[#D62828]" : ""}`}>
+                    {word}{" "}
+                  </span>
                 ))
               }
             </h2>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              {content?.descriptionTag}
+              {content?.descriptionTag || FALL_BACK_CONTENT.descriptionTag}
             </p>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              {content?.description}
+              {content?.description || FALL_BACK_CONTENT.description}
             </p>
           </div>
 

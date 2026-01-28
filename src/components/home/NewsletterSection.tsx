@@ -1,6 +1,41 @@
+'use client';
+
 import { COLORS } from "@/lib/constants";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 const NewsletterSection = () => {
+  const [email, setEmail] = useState({
+    email: "",
+  });
+  
+      const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const { name, value } = e.target;
+        setEmail((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+      const handleSubsription = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        try {
+          const res = await fetch('/api/subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(email),
+          });
+          if (res.ok) {
+            setEmail({ email: "" });
+            toast.success('Subscribed successfully!');
+          }
+        } catch (error: any) {
+          console.log(error?.message,"Subscription failed");
+          toast.error("Subscription failed");
+        }
+      }
   return (
     <section className="w-full py-16 md:py-20 lg:py-24">
       <div className="mx-auto px-4 sm:px-6 lg:px-16">
@@ -26,10 +61,17 @@ const NewsletterSection = () => {
             </div>
 
             {/* Email input + send button */}
-            <form className="flex w-full max-w-xl items-center gap-4 rounded-full bg-[#E2E8F0] px-4 md:px-6 py-2 md:py-3">
+            <form
+            method="post"
+               noValidate
+               onSubmit={handleSubsription}
+             className="flex w-full max-w-xl items-center gap-4 rounded-full bg-[#E2E8F0] px-4 md:px-6 py-2 md:py-3">
               <input
                 type="email"
                 placeholder="Enter your Email address"
+                name="email"
+                value={email.email}
+                onChange={handleInputChange}
                 className="flex-1 bg-transparent outline-none border-none font-sora text-sm md:text-base text-[#64748B] placeholder:text-[#64748B]"
               />
               <button
