@@ -63,7 +63,6 @@ type Thread = {
   likes: Array<Like>;
 };
 
-
 type EditThreadProps = {
   threadId: Number;
   threadImages: string[];
@@ -77,7 +76,7 @@ type EditThreadProps = {
 
 const EditThread: React.FC<EditThreadProps> = ({
   threadId,
- threadImages,
+  threadImages,
   threadTitle,
   threadContent,
   threadCategories,
@@ -94,61 +93,23 @@ const EditThread: React.FC<EditThreadProps> = ({
   const [imageUrls, setImageUrls] = useState<string[]>(threadImages);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  const [loading,setLoading] = useState(false)
-  const [submiting,setSubmiting] = useState(false)
-  const [error,setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [submiting, setSubmiting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-   const auth = useSelector((state: RootState) => state.auth);
+  const auth = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     setToken(auth?.auth?.token);
     setUserId(auth?.auth?.userId);
   }, [auth]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const urlsToFiles = async (
-    urls: string[],
-    options?: {
-      namePrefix?: string;
-      mimeType?: string;
-    }
-  ): Promise<File[]> => {
-    return Promise.all(
-      urls?.map(async (url, index) => {
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch ${url}`);
-        }
-
-        const blob = await res.blob();
-
-        return new File(
-          [blob],
-          `${options?.namePrefix || "file"}-${index}.${blob.type.split("/")[1]}`,
-          {
-            type: options?.mimeType || blob.type,
-          }
-        );
-      })
-    );
+  const handleClick = () => {
+    fileInputRef.current?.click();
   };
 
-  useEffect(() => {
-    const convert = async () => {
-      try {
-        const converted = await urlsToFiles(imageUrls, {
-          namePrefix: "edit-image",
-        });
-        setImages(converted);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    convert();
-    console.log(threadCategories);
-  }, [threadImages]);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
@@ -172,7 +133,7 @@ const EditThread: React.FC<EditThreadProps> = ({
     setLoading(true);
     isCreateThread(true);
     setSubmiting(true);
-    setError(null)
+    setError(null);
 
     const formData = new FormData();
     formData.append("title", title);
@@ -180,11 +141,11 @@ const EditThread: React.FC<EditThreadProps> = ({
     formData.append("userId", userId?.toString() || "");
     formData.append(
       "CategoryId",
-      selectedCategories.map((category) => category.CategoryId).join(",")
+      selectedCategories.map((category) => category.CategoryId).join(","),
     );
-     images.forEach((image) => {
-  formData.append("images", image);
-});
+    images.forEach((image) => {
+      formData.append("images", image);
+    });
 
     try {
       const res = await fetch(
@@ -195,7 +156,7 @@ const EditThread: React.FC<EditThreadProps> = ({
             Authorization: `Bearer ${token}`,
           },
           body: formData,
-        }
+        },
       );
 
       if (!res.ok) {
@@ -209,14 +170,14 @@ const EditThread: React.FC<EditThreadProps> = ({
       setContent("");
       setSelectedCategories([]);
       setLoading(false);
-        isOpen();
-        isCreateThread(false);
-        onSuccess && onSuccess(Resdata?.data);
+      isOpen();
+      isCreateThread(false);
+      onSuccess && onSuccess(Resdata?.data);
     } catch (error: any) {
       setError(error?.message);
       console.log(error?.message, "Failed to update Thread");
       toast.error("Failed to update Thread");
-    } finally{
+    } finally {
       isCreateThread(false);
       setLoading(false);
       setSubmiting(false);
@@ -225,8 +186,9 @@ const EditThread: React.FC<EditThreadProps> = ({
 
   return (
     <div
-    aria-disabled={loading}
-     className="rounded-2xl border bg-white p-5 shadow-sm">
+      aria-disabled={loading}
+      className="rounded-2xl border bg-white p-5 shadow-sm"
+    >
       <h3 className="mb-4 text-lg font-semibold text-slate-900">Edit Thread</h3>
       <form
         method="post"
@@ -260,38 +222,28 @@ const EditThread: React.FC<EditThreadProps> = ({
         />
 
         {/* Image Upload */}
-        <div className="mb-4 mt-2 flex items-center gap-4">
-          <label
-            htmlFor="image-upload"
-            className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
+        <div className="flex items-center gap-4 mt-2">
+          <button
+            type="button"
+            onClick={handleClick}
+            className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2 hover:bg-gray-50"
           >
-            <div className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2">
-              <span className=" items-center justify-center ">
-                <img
-                  src="/image.png"
-                  alt="Images"
-                  className="h-4 w-4 object-contain"
-                />
-              </span>
-              <span className="font-sora text-[14px] text-[#023047]">
-                Images
-              </span>
-            </div>
-            <input
-              id="image-upload"
-              name="image-upload"
-              ref={inputRef}
-              type="file"
-              multiple
-              hidden
-              accept="image/*"
-              onChange={handleImageChange}
+            <img
+              src="/image.png"
+              alt="Images"
+              className="h-4 w-4 object-contain"
             />
-          </label>
+            <span className="font-sora text-[14px] text-[#023047]">Images</span>
+          </button>
 
-          <span className="text-xs text-[#64748B]">
-            {images.length} selected
-          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
         </div>
 
         {/* Image Preview */}
@@ -316,13 +268,13 @@ const EditThread: React.FC<EditThreadProps> = ({
           ))}
         </div>
 
-          {/* Error */}
-          {error && (
-            <div className="mt-4 rounded-md bg-red-50 p-4">
-              <h3 className="text-sm font-semibold text-red-900">Error</h3>
-              <div className="mt-2 text-sm text-red-700">{error}</div>
-            </div>
-          )}
+        {/* Error */}
+        {error && (
+          <div className="mt-4 rounded-md bg-red-50 p-4">
+            <h3 className="text-sm font-semibold text-red-900">Error</h3>
+            <div className="mt-2 text-sm text-red-700">{error}</div>
+          </div>
+        )}
         {/* Publish */}
         <div className="flex justify-end">
           <button
@@ -330,7 +282,11 @@ const EditThread: React.FC<EditThreadProps> = ({
             disabled={submiting}
             className="rounded-full bg-[#023047] px-6 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
-            {!submiting ? "Edit" : (<Loader size={14} className="animate-spin" />)}
+            {!submiting ? (
+              "Edit"
+            ) : (
+              <Loader size={14} className="animate-spin" />
+            )}
           </button>
         </div>
       </form>

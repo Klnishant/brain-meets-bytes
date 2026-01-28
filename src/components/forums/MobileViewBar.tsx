@@ -450,10 +450,10 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
         </button>
       </div>
       <div
-        className={`flex items-center justify-between h-[48px] w-[361px] gap-3 bg-[#023047] px-1.5 py-2 rounded-full ${className ?? ""}`}
+        className={`flex items-center justify-between h-[48px] w-[231px] gap-3 bg-[#023047] px-1.5 py-2 rounded-full ${className ?? ""}`}
       >
         {/* Icon Buttons */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center justify-between w-full">
           <button
             onClick={() => {
               setIsSearchOpen(!isSearchOpen);
@@ -465,11 +465,11 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
             <Search size={"16px"} />
           </button>
 
-          <button className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center">
+          <button className="h-9 w-9 bg-[#D62828] rounded-full hidden justify-center items-center">
             <Bell size={"16px"} />
           </button>
 
-          <button className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center">
+          <button className="h-9 w-9 bg-[#D62828] rounded-full hidden justify-center items-center">
             <MessageCircle size={"16px"} />
           </button>
 
@@ -483,8 +483,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           >
             <Plus size={"16px"} />
           </button>
-        </div>
-        {/* Menu Button */}
+          {/* Menu Button */}
         <button
           onClick={() => {
             setIsMenuOpen(!isMenuOpen);
@@ -496,6 +495,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           <Menu size={"18px"} />
           Menu
         </button>
+        </div>
       </div>
     </div>
   );

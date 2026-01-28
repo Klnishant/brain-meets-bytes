@@ -97,6 +97,30 @@ type ForumHeroContent = {
   date: string;
 };
 
+const FALL_BACK_CONTENT: ForumHeroContent = {
+  heading: "Brain Meets Bytes Community",
+  description: "Breakthroughs don&apos;t happen alone. Connect with fellow listeners, researchers, and health enthusiasts exploring smarter brain health and longevity together.",
+  authors: [
+    {
+      name: "Jerry#203",
+      content: "Lorem ipsum dolor sit amet, sectetur adipiscing elit.",
+      imageUrl: "./forum-hero-1.png",
+    },
+    {
+      name: "Sam#003",
+      content: "Lorem ipsum dolor sit amet, sectetur adipiscing elit.",
+      imageUrl: "./forum-hero-2.png",
+    },
+    {
+      name: "John#001",
+      content: "Lorem ipsum dolor sit amet, sectetur adipiscing elit.",
+      imageUrl: "./forum-hero-3.jpg",
+    },
+  ],
+  imageUrl: "./forum-bg.jpg",
+  date: "",
+}
+
 const ForumsHeroSection = () => {
   const [content, setContent] = useState<ForumHeroContent | null>(null);
   const [contentLength, setContentLength] = useState<number>(0);
@@ -133,7 +157,7 @@ const ForumsHeroSection = () => {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 h-[640px] w-full -translate-x-1/2 opacity-25">
           <img
-            src={content?.imageUrl ?? "./forums-hero.png"}
+            src={content?.imageUrl ?? FALL_BACK_CONTENT.imageUrl}
             alt="Forums hero background"
             className="h-full w-full object-cover"
           />
@@ -158,16 +182,19 @@ const ForumsHeroSection = () => {
                 </div>
               ) : (
                 <div>
-                  Brain Meets Bytes{" "}
-                  <span style={{ color: COLORS.brandRed }}>Community</span>
+                  {FALL_BACK_CONTENT.heading?.split(" ").map((word, index) => (
+                    <span
+                      key={index}
+                      className={index + 1 == 4 ? "text-[#D62828]" : ""}
+                    >
+                      {word}{" "}
+                    </span>
+                  ))}
                 </div>
               )}
             </h1>
             <p className="max-w-[875px] font-inter text-[16px] leading-[26px] text-[#E2E8F0] md:text-[18px] md:leading-[28px]">
-              {content?.description ||
-                `Breakthroughs don&apos;t happen alone. Connect with fellow
-              listeners, researchers, and health enthusiasts exploring smarter
-              brain health and longevity together.`}
+              {content?.description ?? FALL_BACK_CONTENT.description}
             </p>
           </div>
 
@@ -184,7 +211,7 @@ const ForumsHeroSection = () => {
         {/* Right: hero cards row */}
         <div className="mt-8 flex w-full max-w-[824px] flex-row gap-6 overflow-x-auto pb-4 lg:mt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           {/* Card 1 */}
-          {content?.authors &&
+          {
             content?.authors?.map((author, index) => (
               <div
                 key={index}
@@ -207,7 +234,30 @@ const ForumsHeroSection = () => {
                   </p>
                 </div>
               </div>
-            ))}
+            )) ?? FALL_BACK_CONTENT.authors?.map((author, index) => (
+              <div
+                key={index}
+                className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow"
+              >
+                <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
+                  <img
+                    src={`${author.imageUrl}`}
+                    alt="Forum hero"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
+                <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+                  <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
+                    {author?.content}
+                  </p>
+                  <p className="font-inter text-[14px] font-light leading-[24px] text-white">
+                    By {author?.name}
+                  </p>
+                </div>
+              </div>
+            ))
+             } 
 
           {/* Card 2 */}
 
@@ -830,8 +880,8 @@ const ForumsMainSection = () => {
           </div>
 
           {/* Right: sidebars placeholder column */}
-          <div className="mt-6 flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
-            <div className="flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
+          <div className="hidden mt-6 lg:flex w-full max-w-[517px] flex-col gap-6 lg:mt-0">
+            <div className="hidden lg:flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Top Categories
               </h3>
@@ -844,7 +894,7 @@ const ForumsMainSection = () => {
               </div>
             </div>
 
-            <div className="flex h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
+            <div className="hidden lg:flex h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Recommended Topics
               </h3>
@@ -859,6 +909,7 @@ const ForumsMainSection = () => {
                     {visibleTopics &&
                       visibleTopics.map((topic) => (
                         <Link
+                          key={topic._id}
                           href={topic.route}
                           className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
                         >
@@ -888,7 +939,7 @@ const ForumsMainSection = () => {
               </div>
             </div> */}
 
-            <div className="flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
+            <div className="hidden lg:flex h-[299px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 relative">
               <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
                 Latest Poll
               </h3>

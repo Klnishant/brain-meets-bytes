@@ -50,7 +50,7 @@ const FALL_BACK_CONTENT: ForumContent = {
     date: "",
     repliesCount: 18,
     reactionCount: 6,
-    profileImageUrl: "./forum-usser.jpg",
+    profileImageUrl: "forum-user-1.jpg",
   },
 };
 

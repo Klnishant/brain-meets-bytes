@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { COLORS } from "@/lib/constants";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { use, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { getAuth } from "@/lib/getAuth";
 import PodcastCommentsCard from "../commentsCard/PodcastCommentsCard";
@@ -1246,6 +1246,18 @@ const PlayListHeroPage = () => {
       } finally {
         if (mounted) setLoading(false);
       }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
       try {
         setLoadingPodcast(true);
         setError(null);
@@ -1264,7 +1276,6 @@ const PlayListHeroPage = () => {
         if (mounted) setLoadingPodcast(false);
       }
     };
-
     void load();
 
     return () => {
@@ -1510,7 +1521,7 @@ const PlayListHeroPage = () => {
         <PlayerCard
           user={user}
           episode={currentEpisode}
-          index={episode.findIndex(ep => ep._id === currentEpisode?._id)+1}
+          index={episode.findIndex((ep) => ep._id === currentEpisode?._id) + 1}
           isLike={getEpisodeAction(currentEpisode?._id)?.isLiked}
           likeCount={getEpisodeAction(currentEpisode?._id)?.likesCount}
           isSaved={getEpisodeAction(currentEpisode?._id)?.isSaved}
@@ -1530,6 +1541,23 @@ const PlayListHeroPage = () => {
       )) || <PlayerCardSkeleton />}
 
       {/* Episodes */}
+      <div>
+        {
+          loading && (
+            <div className="flex flex-col gap-4">
+              <div
+            className="font-sora h-11 p-4 md:py-16 font-semibold text-[20px] md:text-[36px] leading-[100%] tracking-[0%] 
+"
+          >
+            <h1 className="text-[#1E293B]">All Episodes</h1>
+          </div>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <EpisodeCardSkeleton key={index} />
+              ))}
+            </div>
+          )
+        }
+      </div>
       {!loading && !error && (
         <div className="flex flex-col gap-4">
           <div
@@ -1558,16 +1586,10 @@ const PlayListHeroPage = () => {
                 handleCommentLike(ep?._id, commentId, isLiked)
               }
               onSelect={() => {
-                setCurrentEpisode(episode[index])
+                setCurrentEpisode(episode[index]);
               }}
             />
-          )) || (
-            <div>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <EpisodeCardSkeleton key={index} />
-              ))}
-            </div>
-          )}
+          ))}
           {episode.length === 0 && !loading && (
             <p className="col-span-full text-center text-sm text-[#64748B]">
               No Episodes Are Available.
@@ -1593,10 +1615,46 @@ const PlayListHeroPage = () => {
             </div>
 
             <div className="w-full">
-              {loading && (
-                <p className="text-center text-sm text-[#64748B]">
-                  Loading featured podcasts...
-                </p>
+              {loadingPodcast && (
+                <div>
+                  {
+                    <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse max-w-xl"
+                        >
+                          {/* Image Skeleton */}
+                          <div className="w-full h-64 bg-gray-200"></div>
+
+                          {/* Content Section */}
+                          <div className="p-5 space-y-4">
+                            {/* Author and Date */}
+                            <div className="flex items-center gap-3">
+                              <div className="h-4 bg-gray-200 rounded w-24"></div>
+                              <div className="h-4 bg-gray-200 rounded w-28"></div>
+                            </div>
+
+                            {/* Title Skeleton */}
+                            <div className="space-y-2">
+                              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+
+                            {/* Tag Skeleton */}
+                            <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
+
+                            {/* Listen Button and Episodes */}
+                            <div className="flex items-center justify-between pt-2">
+                              <div className="h-11 w-32 bg-gray-200 rounded-full"></div>
+                              <div className="h-5 bg-gray-200 rounded w-24"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  }
+                </div>
               )}
               {error && !loading && (
                 <div>
@@ -1608,47 +1666,7 @@ const PlayListHeroPage = () => {
                 <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {podcasts.map((podcast) => (
                     <PodcastCard key={podcast._id} podcast={podcast} />
-                  )) || (
-                    <div>
-                      {
-                        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                          {Array.from({ length: 6 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse max-w-xl"
-                            >
-                              {/* Image Skeleton */}
-                              <div className="w-full h-64 bg-gray-200"></div>
-
-                              {/* Content Section */}
-                              <div className="p-5 space-y-4">
-                                {/* Author and Date */}
-                                <div className="flex items-center gap-3">
-                                  <div className="h-4 bg-gray-200 rounded w-24"></div>
-                                  <div className="h-4 bg-gray-200 rounded w-28"></div>
-                                </div>
-
-                                {/* Title Skeleton */}
-                                <div className="space-y-2">
-                                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                                  <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-                                </div>
-
-                                {/* Tag Skeleton */}
-                                <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
-
-                                {/* Listen Button and Episodes */}
-                                <div className="flex items-center justify-between pt-2">
-                                  <div className="h-11 w-32 bg-gray-200 rounded-full"></div>
-                                  <div className="h-5 bg-gray-200 rounded w-24"></div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      }
-                    </div>
-                  )}
+                  ))}
                   {podcasts.length === 0 && !loadingPodcast && (
                     <p className="col-span-full text-center text-sm text-[#64748B]">
                       No podcasts match your search.

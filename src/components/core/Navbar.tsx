@@ -192,6 +192,10 @@ const Navbar = () => {
 
   const dispatch = useDispatch<AppDispatch>();
 
+  useEffect(() => {
+    dispatch(fetchAuth());
+  },[]);
+
   const auth = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {

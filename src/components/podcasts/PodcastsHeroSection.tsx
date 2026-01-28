@@ -124,7 +124,7 @@ const PodcastsHeroSection = () => {
                   className="h-4 w-4 object-contain"
                 />
 
-                <span>Discover all {String(content?.podcastCount) ?? String(FALL_BACK_CONTENT?.podcastCount)}+</span>
+                <span>Discover all {String(content?.podcastCount ?? FALL_BACK_CONTENT?.podcastCount)}+</span>
 
                 {/* Right dropdown arrow icon */}
                 <img
