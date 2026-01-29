@@ -591,7 +591,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
 
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 {authors &&
-                  authors.map((author, index) => (
+                  authors?.map((author, index) => (
                     <div
                       key={index}
                       className="inline-flex items-center gap-3 rounded-full bg-[#E2E8F0] px-4 py-2"
@@ -611,9 +611,9 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
                 </span>
               </div>
 
-              {tags.length > 0 && (
+              {tags?.length > 0 && (
                 <div className="flex flex-wrap items-center gap-3">
-                  {tags.map((tag) => (
+                  {tags?.map((tag) => (
                     <span
                       key={tag}
                       className="inline-flex items-center rounded-full border border-[#64748B] px-4 py-2 font-inter text-[14px] text-[#64748B]"
@@ -648,7 +648,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
 
             {/* Author card */}
             {authors &&
-              authors.map((author, index) => (
+              authors?.map((author, index) => (
                 <div
                   key={index}
                   className="flex flex-col gap-6 rounded-[32px] bg-[#E2E8F0] p-6 md:flex-row md:items-center md:p-8"

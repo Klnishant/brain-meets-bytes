@@ -56,7 +56,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
         <div className="flex items-center gap-4 text-xs text-[#505050]">
           {
             authors ? (
-              authors.map((author) => (
+              authors?.map((author) => (
               <span
                 key={author?.name}
                 className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]"
@@ -81,9 +81,9 @@ const ArticleCard = ({ article }: { article: Article }) => {
         </h3>
 
         {/* Tags */}
-        {tags.length > 0 && (
+        {tags?.length > 0 && (
           <div className="flex flex-wrap gap-2 text-[11px]">
-            {tags.map((tag) => (
+            {tags?.map((tag) => (
               <span
                 key={tag}
                 className="inline-flex items-center rounded-full border border-[#64748B] px-3 py-1 text-[#64748B]"
