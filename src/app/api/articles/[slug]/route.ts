@@ -52,7 +52,12 @@ const articleQuery = `*[_type == "article" && slug.current == $slug][0]{
 const relatedQuery = `*[_type == "article" && slug.current != $slug] | order(date desc)[0...3]{
   _id,
   title,
-  author,
+ authors[]{
+    name,
+    role,
+    bio,
+    "imageUrl": image.asset->url
+  },
   date,
   "imageUrl": image.asset->url,
   tags,

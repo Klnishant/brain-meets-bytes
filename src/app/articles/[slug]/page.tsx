@@ -75,34 +75,6 @@ type User = {
   ProfilePic: string;
 };
 
-const articleQuery = `*[_type == "article" && slug.current == $slug][0]{
-  _id,
-  title,
-  author,
-  date,
-  "imageUrl": image.asset->url,
-  tags,
-  excerpt,
-  authorDetails {
-    name,
-    role,
-    bio,
-    "imageUrl": image.asset->url
-  },
-  content
-}`;
-
-const relatedQuery = `*[_type == "article" && slug.current != $slug] | order(date desc)[0...3]{
-  _id,
-  title,
-  author,
-  date,
-  "imageUrl": image.asset->url,
-  tags,
-  excerpt,
-  "slug": slug.current
-}`;
-
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -160,7 +132,7 @@ const renderBlocks = (blocks: Article["content"]) => {
 };
 
 const RelatedArticleCard = ({ article }: { article: any }) => {
-  const { title, author, date, imageUrl, tags = [], excerpt, slug } = article;
+  const { title, authors, date, imageUrl, tags = [], excerpt, slug } = article;
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-[#FAF9F8]">
@@ -178,15 +150,24 @@ const RelatedArticleCard = ({ article }: { article: any }) => {
 
       <div className="flex flex-1 flex-col gap-4 px-5 pb-5 pt-6">
         <div className="flex items-center gap-4 text-xs text-[#505050]">
-          <span className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]">
-            {author || "Unknown"}
-          </span>
+          {
+            authors && (
+              authors?.map((author: Author) => (
+                <span
+                  key={author?.name}
+                  className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]"
+                >
+                  {author?.name || "Unknown"}
+                </span>
+              ))
+            )
+          }
           <span className="text-[11px] text-[#505050]">{formatDate(date)}</span>
         </div>
 
-        {tags.length > 0 && (
+        {tags?.length > 0 && (
           <div className="flex flex-wrap gap-2 text-[11px]">
-            {tags.map((tag: string) => (
+            {tags?.map((tag: string) => (
               <span
                 key={tag}
                 className="inline-flex items-center rounded-full border border-[#64748B] px-3 py-1 text-[#64748B]"
@@ -290,6 +271,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
         console.log(data);
         setArticle(data?.article || null);
         setRelated(Array.isArray(data?.related) ? data?.related : []);
+        
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message ?? "Failed to load articles");

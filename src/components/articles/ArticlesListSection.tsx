@@ -148,6 +148,7 @@ const ArticlesListSection = () => {
         const data = (await res.json()) as Article[];
         if (!mounted) return;
         setArticles(Array.isArray(data) ? data : []);
+        
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message ?? "Failed to load articles");

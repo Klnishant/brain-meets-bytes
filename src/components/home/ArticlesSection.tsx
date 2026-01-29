@@ -4,15 +4,28 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
 
+type Author = {
+  name: string;
+  role: string;
+  bio: string;
+  imageUrl: string;
+};
+
 type Article = {
   _id: string;
-  title?: string;
-  author?: string;
+  title: string;
   date?: string;
   imageUrl?: string;
   tags?: string[];
   excerpt?: string;
   slug?: string;
+  authors?: Author[];
+  content?: {
+    _key: string;
+    _type: string;
+    children?: { _key: string; text?: string }[];
+    style?: string;
+  }[];
 };
 
 const formatDate = (iso: string) => {
@@ -26,7 +39,7 @@ const formatDate = (iso: string) => {
 };
 
 const ArticleCard = ({ article }: { article: Article }) => {
-  const { title = "Untitled", author, date, imageUrl, tags = [], excerpt, slug } = article;
+  const { title = "Untitled", authors, date, imageUrl, tags = [], excerpt, slug } = article;
 
   return (
     <article className="flex flex-col border border-[#E2E8F0] rounded-2xl bg-[#FAF9F8] overflow-hidden h-full">
@@ -44,9 +57,18 @@ const ArticleCard = ({ article }: { article: Article }) => {
 
       <div className="flex flex-col gap-4 p-3 flex-1">
         <div className="flex items-center gap-3 text-xs text-[#505050]">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#E2E8F0] text-[11px] text-[#64748B]">
-            {author || "Unknown"}
-          </span>
+          {
+            authors && (
+              authors?.map((author) => (
+                <span
+                  key={author?.name}
+                  className="inline-flex items-center rounded-full bg-[#E2E8F0] px-3 py-1 text-[11px] text-[#64748B]"
+                >
+                  {author?.name || "Unknown"}
+                </span>
+              ))
+            )
+          }
           <span className="text-[11px]">{formatDate(date || "")}</span>
         </div>
 
@@ -138,12 +160,18 @@ const ArticlesSection = () => {
       const tagsText = Array.isArray(article.tags)
         ? article.tags.join(" ").toLowerCase()
         : "";
-      const author = (article.author || "").toLowerCase();
+      const authorsText = Array.isArray(article.authors)
+      ? article.authors
+          .map((a) => a?.name)
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+      : "";
 
       const inTitle = title.includes(q);
       const inExcerpt = excerpt.includes(q);
       const inTags = tagsText.includes(q);
-      const inAuthor = author.includes(q);
+      const inAuthor = authorsText.includes(q)
       return inTitle || inExcerpt || inTags || inAuthor;
     });
   }, [articles, search]);
