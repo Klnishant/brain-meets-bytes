@@ -2,6 +2,7 @@
 
 import { COLORS } from "@/lib/constants";
 import { intervalToDuration } from "date-fns";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type ForumContent = {
@@ -219,12 +220,14 @@ const ForumsSection = () => {
             </p>
           </div>
 
-          <button
+          <Link href="/about">
+              <button
             className="inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandNavy }}
           >
             Learn More
           </button>
+          </Link>
         </div>
       </div>
     </section>

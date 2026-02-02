@@ -63,9 +63,8 @@ const CategoryCard = () => {
  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-      if (!token) return;
-    dispatch(fetchCategories({ token }));
-  }, [dispatch, token]);
+    dispatch(fetchCategories());
+  }, []);
 
   const categories = useSelector(
   (state: RootState) => state.categories.list
@@ -117,7 +116,6 @@ const error = useSelector(
   return (
     <div className="flex flex-col justify-between h-full gap-2">
       <div
-        key={currentCategory?._id}
         className={` text-[#505050] ${isEditOpen && currentEditCategory === currentCategory?.CategoryId ? "block" : "hidden"} z-10 absolute top-0 left-0`}
       >
         <div className="w-full flex justify-end">

@@ -1,6 +1,20 @@
+'use client';
+
 import { NAV_LINKS } from "@/lib/constants";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
+const linkToHref = (label: string) => {
+  if (label === "Home") return "/";
+  if (label === "About Us") return "/about";
+  const slug = label.toLowerCase().replace(/\s+/g, "-");
+  return `/${slug}`;
+};
 
 const Footer = () => {
+  const [isOpen, setIsOpen] = useState(false);
+    const pathname = usePathname();
   return (
     <footer className="w-full bg-white shadow-md">
       <div className=" mx-auto px-4 sm:px-6 lg:px-16 py-12 md:py-16 flex flex-col gap-10 md:gap-14">
@@ -28,18 +42,27 @@ const Footer = () => {
               Menu
             </h3>
             <nav className="flex flex-col gap-4 font-inter text-sm md:text-base">
-              {NAV_LINKS.map((item) => (
-                <button
-                  key={item}
-                  className={`text-left ${
-                    item === "Home"
-                      ? "font-semibold text-[#D62828]"
-                      : "font-normal text-[#1E293B] opacity-50 hover:opacity-80"
+              {NAV_LINKS.map((link) => {
+              const href = linkToHref(link);
+              const isActive =
+                (href === "/" && pathname === "/") ||
+                (href !== "/" && pathname.startsWith(href));
+
+              return (
+                <Link
+                  key={link}
+                  href={href}
+                  onClick={() => setIsOpen(false)}
+                  className={`transition-colors font-inter text-sm md:text-base text-[#505050] ${
+                    isActive
+                      ? "text-[#D62828] font-semibold"
+                        : ""
                   }`}
                 >
-                  {item}
-                </button>
-              ))}
+                  {link}
+                </Link>
+              );
+            })}
             </nav>
           </div>
 

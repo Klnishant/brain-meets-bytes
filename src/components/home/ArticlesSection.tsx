@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
+import { set } from "sanity";
 
 type Author = {
   name: string;
@@ -119,6 +120,7 @@ const ArticlesSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -176,6 +178,11 @@ const ArticlesSection = () => {
     });
   }, [articles, search]);
 
+   const visibleArticles = useMemo(() => {
+  if (showAll) return filtered;
+  return filtered.slice(0, 6);
+}, [filtered, showAll]);
+
   return (
     <section className="w-full py-16 md:py-20 lg:py-24">
       <div className="mx-auto px-4 sm:px-6 lg:px-16 flex flex-col items-center gap-16">
@@ -226,7 +233,7 @@ const ArticlesSection = () => {
             )}
 
             {!loading && !error &&
-              filtered.map((article) => (
+              visibleArticles.map((article) => (
                 <ArticleCard key={article._id} article={article} />
               ))}
 
@@ -238,10 +245,12 @@ const ArticlesSection = () => {
           </div>
 
           <button
+            type="button"
+            onClick={() => setShowAll(true)}
             className="w-full md:w-auto inline-flex items-center justify-center px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandNavy }}
           >
-            Discover all 200+
+            Discover all
           </button>
         </div>
       </div>

@@ -154,10 +154,12 @@ const hasLiked = normalizedLikes.some(
   (like) => like?.userId === Number(userId)
 );
 
-setImageLength(thread?.images?.length);
-
 setHasLiked(hasLiked);
   }, [userId]);
+
+useEffect(() => {
+  setImageLength(thread?.images?.length);
+},[thread])
 
   const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();

@@ -8,7 +8,9 @@ const ArticlesPage = () => {
     <main className="min-h-screen bg-[#FAF9F8]">
       <Navbar />
       <ArticlesHeroSection />
-      <ArticlesListSection />
+      <div id="articles-list">
+        <ArticlesListSection />
+      </div>
       <Footer />
     </main>
   );

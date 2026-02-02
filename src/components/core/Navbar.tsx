@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/Redux/store";
 import { clearAuth, fetchAuth } from "@/Redux/slices/AuthSlice";
 import UpdateProfile from "../authentication/UpdateProfile";
+import { closeMembership, openMembership, toggleMembership } from "@/Redux/slices/MemberShipSlice";
 
 type User = {
   _id: string;
@@ -179,7 +180,6 @@ const Navbar = () => {
   const isForumsPage = pathname === "/forums";
   const [openLogIn, setOpenLogIn] = useState(false);
   const [openSignUp, setOpenSignUp] = useState(false);
-  const [openMembership, setOpenMembership] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [users, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -224,6 +224,10 @@ const Navbar = () => {
     };
     user();
   }, [token]);
+
+  const openMemberships = useSelector(
+    (state: RootState) => state.membership.openMembership,
+  );
 
   const handleLogout = async () => {
     const res = await fetch("/api/auth/logout", {
@@ -327,7 +331,7 @@ const Navbar = () => {
             <button
               className={`${users ? "hidden" : ""} flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5`}
               style={{ backgroundColor: COLORS.brandRed }}
-              onClick={() => setOpenMembership(true)}
+              onClick={() => dispatch(openMembership())}
             >
               Become a member
             </button>
@@ -356,7 +360,7 @@ const Navbar = () => {
                 <ProfileDropdown
                   user={users}
                   onLogout={handleLogout}
-                  onMembership={(open: boolean) => setOpenMembership(open)}
+                  onMembership={(open: boolean) => dispatch(openMembership())}
                   handleUpdate={handleOpenUpdate}
                 />
               </div>
@@ -457,7 +461,7 @@ const Navbar = () => {
                 <button
                   className={`${users ? "hidden" : ""} flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 rounded-full text-xs md:text-sm lg:text-base text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md hover:-translate-y-0.5`}
                   style={{ backgroundColor: COLORS.brandRed }}
-                  onClick={() => setOpenMembership(true)}
+                  onClick={() => dispatch(openMembership())}
                 >
                   Become a member
                 </button>
@@ -479,7 +483,7 @@ const Navbar = () => {
                     <ProfileDropdown
                       user={users}
                       onLogout={handleLogout}
-                      onMembership={(open: boolean) => setOpenMembership(open)}
+                      onMembership={(open: boolean) => dispatch(toggleMembership())}
                       handleUpdate={handleOpenUpdate}
                     />
                   </div>
@@ -521,8 +525,14 @@ const Navbar = () => {
       )}
 
       {/* Membership Modal */}
-      {openMembership && (
-        <MembershipCard onClose={() => setOpenMembership(false)} />
+      {openMemberships && (
+        <MembershipCard 
+        onClose={() => dispatch(closeMembership())}
+        handleSignIn={() => {
+            dispatch(closeMembership());
+            setOpenLogIn(true);
+          }}
+         />
       )}
 
       {/* Reset Password Modal */}

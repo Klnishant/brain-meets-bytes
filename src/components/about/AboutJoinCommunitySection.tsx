@@ -3,6 +3,7 @@
 import { COLORS } from "@/lib/constants";
 import { intervalToDuration } from "date-fns";
 import { ThumbsUp } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type ForumContent = {
@@ -215,12 +216,14 @@ const AboutJoinCommunitySection = () => {
             </p>
           </div>
 
-          <button
+          <Link href={"/forums"}>
+              <button
             className="w-full md:w-autoinline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandRed }}
           >
             Join Now!
           </button>
+          </Link>
         </div>
 
         {/* Right: stacked forum cards (horizontal fan) */}

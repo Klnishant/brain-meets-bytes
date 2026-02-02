@@ -70,8 +70,7 @@ const PollCard = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   useEffect(() => {
-    if (!token) return;
-    dispatch(fetchPolls({ token }));
+    dispatch(fetchPolls());
   }, [token, userId]);
 
   const polls = useSelector((state: RootState) => state.polls.polls);

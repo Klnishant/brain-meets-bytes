@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type AboutHeroContent = {
@@ -78,12 +79,14 @@ const AboutHeroSection = () => {
         </div>
 
         <div className="w-full md:w-autoflex justify-center">
-          <button className="w-full md:w-auto inline-flex items-center justify-between  md:gap-4 px-6 md:px-10 py-2 md:py-4 rounded-full bg-[#D62828] text-white font-sora text-[12px] md:text-lg shadow-md hover:bg-[#b81f1f] transition-colors">
+          <Link href={"/podcasts"}>
+            <button className="w-full md:w-auto inline-flex items-center justify-between  md:gap-4 px-6 md:px-10 py-2 md:py-4 rounded-full bg-[#D62828] text-white font-sora text-[12px] md:text-lg shadow-md hover:bg-[#b81f1f] transition-colors">
             <span>{primaryCtaLabel}</span>
             <span className="inline-flex items-center justify-center w-6 h-6 md:w-11 md:h-11 rounded-full bg-white">
               <span className="inline-block w-0 h-0 border-y-[6px] border-y-transparent border-l-8 border-l-[#D62828] ml-[2px]" />
             </span>
           </button>
+          </Link>
         </div>
       </div>
     </section>

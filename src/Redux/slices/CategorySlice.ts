@@ -26,15 +26,10 @@ const initialState: CategoriesState = {
 
 export const fetchCategories = createAsyncThunk(
   "categories/fetch",
-  async ({ token }: { token: string }, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+      
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}category`)
 
       if (!res.ok) throw new Error("Failed to fetch categories");
 

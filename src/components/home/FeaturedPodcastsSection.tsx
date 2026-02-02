@@ -105,6 +105,7 @@ const FeaturedPodcastsSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -149,6 +150,12 @@ const FeaturedPodcastsSection = () => {
       return title.includes(q) || author.includes(q) || tagsText.includes(q);
     });
   }, [podcasts, search]);
+  
+  const visiblePodcasts = useMemo(() => {
+  if (showAll) return filtered;
+  return filtered.slice(0, 6);
+}, [filtered, showAll]);
+
 
   return (
     <section className="w-full py-16 md:py-20 lg:py-24">
@@ -194,7 +201,7 @@ const FeaturedPodcastsSection = () => {
 
           {!loading && !error && (
             <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((podcast) => (
+              {visiblePodcasts.map((podcast) => (
                 <PodcastCard key={podcast._id} podcast={podcast} />
               ))}
               {filtered.length === 0 && (
@@ -207,10 +214,12 @@ const FeaturedPodcastsSection = () => {
         </div>
 
         <button
+          type="button"
+          onClick={() => setShowAll(true)}
           className="w-full md:w-auto inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
           style={{ backgroundColor: COLORS.brandNavy }}
         >
-          Discover all 200+
+          Discover all
         </button>
       </div>
     </section>

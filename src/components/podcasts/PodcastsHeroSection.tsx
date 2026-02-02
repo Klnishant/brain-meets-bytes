@@ -113,6 +113,11 @@ const PodcastsHeroSection = () => {
               {content?.description ?? FALL_BACK_CONTENT.description}
             </p>
             <button
+            onClick={() => {
+              document
+                .getElementById("podcasts-list")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
               className="inline-flex items-center w-full z-10 md:w-[295px] h-[50px] justify-center gap-3 rounded-full px-10 py-3 text-sm md:text-base font-normal text-white"
               style={{ backgroundColor: COLORS.brandRed }}
             >

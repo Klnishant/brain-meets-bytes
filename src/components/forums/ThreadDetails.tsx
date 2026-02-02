@@ -123,7 +123,6 @@ const ThreadDetails = () => {
     let mounted = true;
 
     const load = async () => {
-      if (!token) return;
       try {
         setLoading(true);
         setError(null);
@@ -398,7 +397,8 @@ const ThreadDetails = () => {
                   </div>
                   <div className="flex flex-col gap-4">
                     {Array.from({ length: 5 }).map((_, index) => (
-                      <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
+                      <div key={index}>
+                        <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
                         {/* User Info Section */}
                         <div className="flex items-start gap-3 mb-4">
                           {/* Avatar Skeleton */}
@@ -425,6 +425,7 @@ const ThreadDetails = () => {
                           {/* Reply Button Skeleton */}
                           <div className="h-9 w-16 bg-gray-200 rounded-full"></div>
                         </div>
+                      </div>
                       </div>
                     ))}
                   </div>
@@ -529,6 +530,7 @@ const ThreadDetails = () => {
                     {visibleTopics &&
                       visibleTopics.map((topic) => (
                         <Link
+                          key={topic._id}
                           href={topic.route}
                           className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
                         >

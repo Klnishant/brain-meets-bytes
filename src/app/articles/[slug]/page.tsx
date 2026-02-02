@@ -223,6 +223,7 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
   const [nestedComments, setNestedComments] = useState<Comment[]>([]);
   const [isReplying, setIsReplying] = useState(false);
   const [user,setUser] = useState<User | null>(null)
+  const [visibleRelated, setVisibleRelated] = useState<Article[]>([]);
 
   const auth = useSelector((state: RootState) => state.auth);
   
@@ -286,6 +287,15 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const visible = related.slice(0, 3);
+    setVisibleRelated(visible);
+  },[article]);
+
+  const handleAll = () => {
+    setVisibleRelated(related);
+  }
 
   const dispatch = useDispatch<AppDispatch>();
   
@@ -785,13 +795,15 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
                 </div>
 
                 <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  {related.map((a) => (
+                  {visibleRelated.map((a) => (
                     <RelatedArticleCard key={a._id} article={a} />
                   ))}
                 </div>
 
-                <button className="inline-flex items-center justify-center gap-3 rounded-[36px] bg-[#023047] px-10 py-3 text-[16px] text-white">
-                  Discover all 200+
+                <button 
+                onClick={handleAll}
+                className="inline-flex items-center justify-center gap-3 rounded-[36px] bg-[#023047] px-10 py-3 text-[16px] text-white">
+                  Discover all
                 </button>
               </div>
             )}

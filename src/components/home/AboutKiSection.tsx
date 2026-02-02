@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { COLORS } from "@/lib/constants";
+import Link from "next/link";
 
 type AboutKiContent = {
   badgeLabel?: string;
@@ -129,12 +130,14 @@ const AboutKiSection = () => {
           </div>
 
           {/* CTA */}
-          <button
+          <Link href="/about">
+              <button
             className="w-full md:w-auto mt-2 inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandNavy }}
           >
             {ctaLabel}
           </button>
+          </Link>
         </div>
       </div>
     </section>

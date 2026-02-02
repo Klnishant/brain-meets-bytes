@@ -90,6 +90,11 @@ const ArticlesHeroSection = () => {
           </div>
 
           <button
+            onClick={() => {
+              document
+                .getElementById("articles-list")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
             className="w-full md:w-auto inline-flex items-center justify-center gap-3 rounded-full px-10 py-3 text-sm md:text-base font-normal text-white z-1"
             style={{ backgroundColor: COLORS.brandNavy }}
           >
@@ -101,7 +106,7 @@ const ArticlesHeroSection = () => {
                 className="h-4 w-4 object-contain"
               />
 
-              <span>Discover all 200+</span>
+              <span>Discover all</span>
 
               {/* Right dropdown arrow icon */}
               <img
@@ -147,42 +152,42 @@ const ArticlesHeroSection = () => {
             </div>
             <div className="flex flex-col gap-4 md:gap-2">
               {/* Meta chips row 2: tags */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap items-center gap-3">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center rounded-full border border-[#FAF9F8] px-2.5 md:px-3 py-1 font-inter text-[10px] md:text-[12px] text-[#FAF9F8]"
-                  >
-                    {tag}
-                  </span>
-                ))}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center rounded-full border border-[#FAF9F8] px-2.5 md:px-3 py-1 font-inter text-[10px] md:text-[12px] text-[#FAF9F8]"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Title + excerpt */}
+              <div className="flex flex-col gap-4">
+                <h2 className="font-sora text-[20px] md:text-[32px] lg:text-[36px] font-semibold leading-[1.25] text-[#FAF9F8]">
+                  {title}
+                </h2>
+                <p className="font-inter text-[12px] md:text-[16px] md:leading-[24px] text-[#E2E8F0] max-w-[792px] line-clamp-4 md:line-clamp-none">
+                  {excerpt}
+                </p>
               </div>
-            )}
 
-            {/* Title + excerpt */}
-            <div className="flex flex-col gap-4">
-              <h2 className="font-sora text-[20px] md:text-[32px] lg:text-[36px] font-semibold leading-[1.25] text-[#FAF9F8]">
-                {title}
-              </h2>
-              <p className="font-inter text-[12px] md:text-[16px] md:leading-[24px] text-[#E2E8F0] max-w-[792px] line-clamp-4 md:line-clamp-none">
-                {excerpt}
-              </p>
-            </div>
-
-            {/* Read more button */}
-            {featured?.slug ? (
-              <Link
-                href={`/articles/${featured.slug}`}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-xs md:text-[16px] font-normal text-[#D62828] md:text-[#023047] md:w-fit"
-              >
-                Read More
-              </Link>
-            ) : (
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-6 py-5 md:px-8 md:py-3 text-[16px] font-normal text-[#023047] md:w-fit">
-                Read More
-              </button>
-            )}
+              {/* Read more button */}
+              {featured?.slug ? (
+                <Link
+                  href={`/articles/${featured.slug}`}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-xs md:text-[16px] font-normal text-[#D62828] md:text-[#023047] md:w-fit"
+                >
+                  Read More
+                </Link>
+              ) : (
+                <button className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-6 py-5 md:px-8 md:py-3 text-[16px] font-normal text-[#023047] md:w-fit">
+                  Read More
+                </button>
+              )}
             </div>
           </div>
         </div>

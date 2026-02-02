@@ -68,13 +68,13 @@ const AudioCard = () => {
 
   useEffect(() => {
     if (!audioRef?.current) return;
-    audioRef.current?.load();
+    audioRef?.current?.load();
     audioRef.current.currentTime = 0;
     setCurrentTime(0);
   }, [episode]);
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
+    if (!audioRef?.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -86,19 +86,19 @@ const AudioCard = () => {
   };
 
   const onTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+    if (audioRef?.current) {
+      setCurrentTime(audioRef?.current?.currentTime);
     }
   };
 
   const onLoadedMetadata = () => {
-    if (audioRef.current) {
+    if (audioRef?.current) {
       setDuration(audioRef?.current?.duration || 0);
     }
   };
 
   const seek = (value: number) => {
-    if (!audioRef.current) return;
+    if (!audioRef?.current) return;
     audioRef.current.currentTime = value;
     setCurrentTime(value);
   };

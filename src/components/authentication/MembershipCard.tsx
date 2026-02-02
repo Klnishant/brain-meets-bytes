@@ -40,8 +40,10 @@ const FeatureCard =({
 
 const MembershipCard = ({
   onClose,
+  handleSignIn,
 }: {
   onClose?: () => void;
+  handleSignIn?: () => void;
 }) => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -91,7 +93,9 @@ const MembershipCard = ({
               !user && (
                 <p className="mt-4 font-inter font-weight-[400] text-[18px] text-[#505050]">
               Already a member?{" "}
-              <span className="cursor-pointer text-[#D62828]">
+              <span
+                onClick={handleSignIn}
+               className="cursor-pointer text-[#D62828]">
                 Sign in
               </span>
             </p>

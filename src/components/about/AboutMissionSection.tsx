@@ -66,9 +66,9 @@ const AboutMissionSection = () => {
             </div>
           </div>
 
-          <button className="w-full md:w-auto mt-2 inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full bg-[#023047] text-sm md:text-base text-[#FAF9F8]">
+          {/* <button className="w-full md:w-auto mt-2 inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full bg-[#023047] text-sm md:text-base text-[#FAF9F8]">
             {ctaLabel}
-          </button>
+          </button> */}
         </div>
 
         {/* Right: layered mission image block */}

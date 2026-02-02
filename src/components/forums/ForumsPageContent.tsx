@@ -319,15 +319,13 @@ const ForumsMainSection = () => {
   }, [token]);
 
   const fetchThreads = async () => {
-    if (!token) return;
-
     try {
       setLoading(true);
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?page=${page}&limit=10`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          //headers: { Authorization: `Bearer ${token}` },
         },
       );
 
@@ -335,6 +333,8 @@ const ForumsMainSection = () => {
 
       const Res = await res.json();
       const data = Res?.data ?? [];
+
+      console.log("Threads",data);
 
       setThreads((prev) => [...prev, ...data]);
       setHasNext(page < Res?.meta?.totalPages);
@@ -360,18 +360,11 @@ const ForumsMainSection = () => {
   });
 
   const fetchTopics = async () => {
-    if (!token) return;
     try {
       setIsLoadingTopics(true);
       setError(null);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`);
       if (!res.ok) {
         throw new Error("Failed to load topics");
       }

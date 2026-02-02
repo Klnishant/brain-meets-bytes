@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import AudioCard from "./AudioCard";
 import { COLORS } from "@/lib/constants";
+import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/Redux/store";
+import { openMembership } from "@/Redux/slices/MemberShipSlice";
 
 type homeHero = {
   _id: string;
@@ -50,6 +54,8 @@ const Hero = () => {
         mounted = false;
       };
     }, []);
+
+    const dispatch = useDispatch<AppDispatch>();
   return (
     <section
       className="py-20  bg-[url('/hero-bg-wave.png')]
@@ -98,7 +104,8 @@ const Hero = () => {
           {/* CTA BUTTONS */}
           <div className="flex  sm:flex-row items-start gap-3 md:gap-5">
             {/* PRIMARY CTA BUTTON */}
-            <button
+            <Link href="/podcasts">
+              <button
               className="inline-flex items-center justify-between gap-3 text-white rounded-full pl-4 md:pl-6 pr-1.5 md:pr-2 py-2 shadow-sm hover:shadow-md transition-shadow"
               style={{ backgroundColor: COLORS.brandRed }}
             >
@@ -115,8 +122,10 @@ const Hero = () => {
               </span>
             </button>
 
+            </Link>
             {/* SECONDARY BUTTON */}
             <button
+              onClick={() => dispatch(openMembership())}
               className="relative inline-flex items-center justify-center px-2 md:px-6 py-4 md:py-3.5 rounded-full border-2 text-sm md:text-base font-medium overflow-hidden transition duration-200 ease-out hover:text-white hover:-translate-y-0.5"
               style={{
                 borderColor: COLORS.brandNavy,

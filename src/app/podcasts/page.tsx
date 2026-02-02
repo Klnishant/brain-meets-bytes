@@ -9,7 +9,9 @@ const PodcastsPage = () => {
             <Navbar />
 
             <PodcastsHeroSection />
-            <PodcastsMainSection />
+            <div id="podcasts-list">
+                <PodcastsMainSection />
+            </div>
             <Footer />
 
         </main>

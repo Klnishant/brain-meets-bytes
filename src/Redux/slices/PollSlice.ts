@@ -31,15 +31,9 @@ const initialState = {
 
 export const fetchPolls = createAsyncThunk(
   "polls/fetch",
-  async ({ token }: { token: string }, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}polls`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}polls`);
 
       if (!res.ok) throw new Error("Failed to fetch polls");
 

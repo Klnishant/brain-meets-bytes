@@ -13,6 +13,7 @@ import {
   postComment,
   toggleCommentLike,
 } from "@/Redux/slices/PodcastCommentSlice";
+import { set } from "sanity";
 
 type Podcast = {
   _id: string;
@@ -1138,6 +1139,7 @@ const PlayListHeroPage = () => {
   const [loadingPodcast, setLoadingPodcast] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [visiblePodcasts, setVisiblePodcasts] = useState<Podcast[]>([]);
   const [episode, setEpisode] = useState<Episode[]>([]);
   const [episodeNumber, setEpisodeNumber] = useState<number>(1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -1480,6 +1482,15 @@ const PlayListHeroPage = () => {
     });
   };
 
+  useEffect(() => {
+    const visible = podcasts.slice(0, 3);
+    setVisiblePodcasts(visible);
+  }, [podcasts]);
+
+  const handleAll = () => {
+    setVisiblePodcasts(podcasts);
+  }
+
   return (
     <div className="w-full  bg-[#FAF9F8] px-8 xl:px-16">
       {/* Breadcrumb */}
@@ -1664,7 +1675,7 @@ const PlayListHeroPage = () => {
 
               {podcasts && (
                 <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {podcasts.map((podcast) => (
+                  {visiblePodcasts.map((podcast) => (
                     <PodcastCard key={podcast._id} podcast={podcast} />
                   ))}
                   {podcasts.length === 0 && !loadingPodcast && (
@@ -1678,6 +1689,7 @@ const PlayListHeroPage = () => {
 
             <div>
               <button
+                onClick={handleAll}
                 className="inline-flex items-center justify-center px-8 md:px-10 py-3 rounded-full text-sm md:text-base text-white"
                 style={{ backgroundColor: COLORS.brandNavy }}
               >
