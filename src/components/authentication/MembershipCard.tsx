@@ -2,6 +2,7 @@
 
 import { getUser } from "@/lib/getUser";
 import { X, Mic, FileText, MessageCircle, Star } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 /* Feature Card Component */
@@ -85,9 +86,11 @@ const MembershipCard = ({
               Cancel anytime · No spam · Evidence-based content only
             </p>
 
-            <button className="mt-8 rounded-full bg-[#D62828] px-8 py-3 text-[#FAF9F8] font-semibold hover:bg-red-700 transition">
+            <Link href={'/checkout'}>
+              <button className="mt-8 rounded-full bg-[#D62828] px-8 py-3 text-[#FAF9F8] font-semibold hover:bg-red-700 transition">
               Join Membership
             </button>
+            </Link>
 
             {
               !user && (

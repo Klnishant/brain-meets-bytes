@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
 import { set } from "sanity";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type Author = {
   name: string;
@@ -41,6 +44,16 @@ const formatDate = (iso: string) => {
 
 const ArticleCard = ({ article }: { article: Article }) => {
   const { title = "Untitled", authors, date, imageUrl, tags = [], excerpt, slug } = article;
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  
+  const dispatch = useDispatch<AppDispatch>();
+  const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   return (
     <article className="flex flex-col border border-[#E2E8F0] rounded-2xl bg-[#FAF9F8] overflow-hidden h-full">
@@ -95,7 +108,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
         </p>
 
         <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
-          {slug ? (
+          {slug && token ? (
             <Link
               href={`/articles/${slug}`}
               className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
@@ -104,6 +117,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
             </Link>
           ) : (
             <button
+              onClick={() => dispatch(openLogIn())}
               className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
             >
               Read More
@@ -193,10 +207,10 @@ const ArticlesSection = () => {
               <span>Most recent </span>
               <span style={{ color: COLORS.brandRed }}>Articles &amp; Interviews</span>
             </h2>
-            <p className="font-inter text-[12px] md:text-base text-[#505050] text-center md:text-start">
+            {/* <p className="font-inter text-[12px] md:text-base text-[#505050] text-center md:text-start">
               Quick, digestible breakdowns of the most important research and trends in brain
               health and longevity.
-            </p>
+            </p> */}
           </div>
 
           {/* Search bar */}

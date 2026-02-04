@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { COLORS } from "@/lib/constants";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
+import { openMembership } from "@/Redux/slices/MemberShipSlice";
+import { getUser } from "@/lib/getUser";
 
 type Article = {
   _id: string;
@@ -13,6 +18,18 @@ type Article = {
   tags?: string[];
   excerpt?: string;
   slug?: string;
+};
+
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
 };
 
 const formatDate = (iso?: string) => {
@@ -28,6 +45,39 @@ const formatDate = (iso?: string) => {
 
 const ArticlesHeroSection = () => {
   const [featured, setFeatured] = useState<Article | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
+
+  useEffect(() => {
+      const user = async () => {
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await res.json();
+  
+        if (res.ok) {
+          setUser(data?.data);
+        }
+      };
+      user();
+    }, [token]);
 
   useEffect(() => {
     let mounted = true;
@@ -176,7 +226,7 @@ const ArticlesHeroSection = () => {
               </div>
 
               {/* Read more button */}
-              {featured?.slug ? (
+              {featured?.slug && token ? (
                 <Link
                   href={`/articles/${featured.slug}`}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-8 py-3 text-xs md:text-[16px] font-normal text-[#D62828] md:text-[#023047] md:w-fit"
@@ -184,12 +234,37 @@ const ArticlesHeroSection = () => {
                   Read More
                 </Link>
               ) : (
-                <button className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-6 py-5 md:px-8 md:py-3 text-[16px] font-normal text-[#023047] md:w-fit">
+                <button
+                  onClick={() => {
+                    dispatch(openLogIn());
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-[36px] bg-[#FAF9F8] px-6 py-5 md:px-8 md:py-3 text-[16px] font-normal text-[#023047] md:w-fit"
+                >
                   Read More
                 </button>
               )}
             </div>
           </div>
+          {/*Membership Button*/}
+          {!user?.hasmembership && (
+            <div className="absolute inset-0 h-[450px]  md:h-[1067px] w-full  md:-translate-y-[207px] z-20 flex items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
+              <button
+                onClick={() => {
+                  dispatch(openMembership());
+                }}
+                className="group relative bg-[#D62828] text-[#F9FAFB] font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3"
+              >
+                {/* Lock Icon */}
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                  <img src="./lock.png" alt="" />
+                </div>
+
+                <span className="text-base pr-2">
+                  Become a member to unlock
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>

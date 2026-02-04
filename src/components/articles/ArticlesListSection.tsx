@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type Author = {
   name: string;
@@ -34,6 +37,17 @@ const formatDate = (iso: string) => {
 
 const ArticleCard = ({ article }: { article: Article }) => {
   const { title = "Untitled", authors, date, imageUrl, tags = [], excerpt, slug } = article;
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  
+  const dispatch = useDispatch<AppDispatch>();
+  const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
+  
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-[#FAF9F8]">
@@ -104,7 +118,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
 
         {/* Footer CTA (Read more) */}
         <div className="w-fullmt-2 flex items-center justify-between">
-          {slug ? (
+          {slug && token ? (
             <Link
               href={`/articles/${slug}`}
               className="w-full md:w-auto justify-center inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] md:px-6 py-2 text-[14px] font-normal text-[#D62828]"
@@ -112,7 +126,9 @@ const ArticleCard = ({ article }: { article: Article }) => {
               Read More
             </Link>
           ) : (
-            <button className=" w-full md:w-auto inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] px-6 py-2 text-[14px] font-normal text-[#D62828]">
+            <button 
+            onClick={() => dispatch(openLogIn())}
+            className=" w-full md:w-auto inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] px-6 py-2 text-[14px] font-normal text-[#D62828]">
               Read More
             </button>
           )}

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 import { NAV_LINKS } from "@/lib/constants";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const linkToHref = (label: string) => {
   if (label === "Home") return "/";
@@ -12,9 +12,58 @@ const linkToHref = (label: string) => {
   return `/${slug}`;
 };
 
+type FooterContent = {
+  description: string;
+  phone: string;
+  email: string;
+  address: string;
+  instalink: string;
+  facebooklink: string;
+  xlink: string;
+  linkedinlink: string;
+};
+
+const FALL_BACK_CONTENT: FooterContent = {
+  description:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vitae hendrerit lectus. Praesent vitae consequat mi. Maecenas auctor sed sapien ut bibendum. Nam in viverra justo.",
+  phone: "(123) 456-7890",
+  email: "O0Bt9@example.com",
+  address: "123 Main Street, Anytown, USA",
+  instalink: "",
+  facebooklink: "",
+  xlink: "",
+  linkedinlink: "",
+};
+
 const Footer = () => {
+  const [content, setContent] = useState<FooterContent | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-    const pathname = usePathname();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const res = await fetch("/api/footer");
+        if (!res.ok) {
+          throw new Error("Failed to load articles");
+        }
+
+        const data = (await res.json()) as FooterContent | null;
+        if (!mounted) return;
+        setContent(data);
+      } catch (e: any) {
+        if (!mounted) return;
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
   return (
     <footer className="w-full bg-white shadow-md">
       <div className=" mx-auto px-4 sm:px-6 lg:px-16 py-12 md:py-16 flex flex-col gap-10 md:gap-14">
@@ -29,9 +78,7 @@ const Footer = () => {
                 className="w-44 h-auto object-contain"
               />
               <p className="font-inter text-sm md:text-base leading-7 text-[#505050] max-w-md">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vitae
-                hendrerit lectus. Praesent vitae consequat mi. Maecenas auctor sed
-                sapien ut bibendum. Nam in viverra justo.
+                {content?.description ?? FALL_BACK_CONTENT.description}
               </p>
             </div>
           </div>
@@ -43,26 +90,24 @@ const Footer = () => {
             </h3>
             <nav className="flex flex-col gap-4 font-inter text-sm md:text-base">
               {NAV_LINKS.map((link) => {
-              const href = linkToHref(link);
-              const isActive =
-                (href === "/" && pathname === "/") ||
-                (href !== "/" && pathname.startsWith(href));
+                const href = linkToHref(link);
+                const isActive =
+                  (href === "/" && pathname === "/") ||
+                  (href !== "/" && pathname.startsWith(href));
 
-              return (
-                <Link
-                  key={link}
-                  href={href}
-                  onClick={() => setIsOpen(false)}
-                  className={`transition-colors font-inter text-sm md:text-base text-[#505050] ${
-                    isActive
-                      ? "text-[#D62828] font-semibold"
-                        : ""
-                  }`}
-                >
-                  {link}
-                </Link>
-              );
-            })}
+                return (
+                  <Link
+                    key={link}
+                    href={href}
+                    onClick={() => setIsOpen(false)}
+                    className={`transition-colors font-inter text-sm md:text-base text-[#505050] ${
+                      isActive ? "text-[#D62828] font-semibold" : ""
+                    }`}
+                  >
+                    {link}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -93,7 +138,7 @@ const Footer = () => {
                     className="w-3.5 h-3.5 object-contain"
                   />
                 </div>
-                <span>(123) 456 – 7890</span>
+                <span>{content?.phone ?? FALL_BACK_CONTENT.phone}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center">
@@ -103,7 +148,7 @@ const Footer = () => {
                     className="w-3.5 h-3.5 object-contain"
                   />
                 </div>
-                <span>Example@email.com</span>
+                <span>{content?.email ?? FALL_BACK_CONTENT.email}</span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center mt-1">
@@ -113,9 +158,7 @@ const Footer = () => {
                     className="w-3.5 h-3.5 object-contain"
                   />
                 </div>
-                <span>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                </span>
+                <span>{content?.address ?? FALL_BACK_CONTENT.address}</span>
               </div>
             </div>
           </div>
@@ -131,19 +174,42 @@ const Footer = () => {
           </h3>
 
           <div className="flex items-center gap-3 md:gap-6">
-            {["instagram", "facebook", "x", "linkedin"].map((name) => (
-              <button
-                key={name}
-                aria-label={name}
-                className="relative w-12 h-12 rounded-full bg-[#F5F5F5] shadow-inner flex items-center justify-center"
-              >
-                <img
-                  src={`/${name}.png`}
-                  alt={name}
-                  className="w-6 h-6 object-contain"
-                />
-              </button>
-            ))}
+            {[
+              { name: "instagram", url: content?.instalink },
+              { name: "facebook", url: content?.facebooklink },
+              { name: "x", url: content?.xlink },
+              { name: "linkedin", url: content?.linkedinlink },
+            ].map(({ name, url }) => {
+              const isDisabled = !url;
+
+              const IconButton = (
+                <button
+                  aria-label={name}
+                  disabled={isDisabled}
+                  className={`relative w-12 h-12 rounded-full flex items-center justify-center bg-[#F5F5F5] shadow-inner hover:scale-105 transition
+        `}
+                >
+                  <img
+                    src={`/${name}.png`}
+                    alt={name}
+                    className="w-6 h-6 object-contain"
+                  />
+                </button>
+              );
+
+              return isDisabled ? (
+                <div key={name}>{IconButton}</div>
+              ) : (
+                <Link
+                  key={name}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {IconButton}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

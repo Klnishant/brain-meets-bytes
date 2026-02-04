@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { COLORS } from "@/lib/constants";
 import Pagination from "./Pagination";
 import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type Podcast = {
   _id: string;
@@ -18,6 +21,16 @@ type Podcast = {
 
 const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
   const { title, author, date, imageUrl, tags = [], podcastCount, slug } = podcast;
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  
+  const dispatch = useDispatch<AppDispatch>();
+  const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    setToken(auth?.auth?.token);
+    setUserId(auth?.auth?.userId);
+  }, [auth]);
 
   const formattedDate = useMemo(() => {
     if (!date) return "";
@@ -87,7 +100,9 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
           {/* When multiple episodes, keep compact button and show episode count label */}
           {podcastCount && podcastCount > 1 && (
             <>
-              <Link href={`/podcasts/${slug}`}>
+              {
+                slug && token ? (
+                  <Link href={`/podcasts/${slug}`}>
                 <button className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
                   <span>Listen</span>
                   <span className="inline-flex items-center justify-center w-4 h-4">
@@ -95,6 +110,17 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
                   </span>
                 </button>
               </Link>
+                ) : (
+                  <button
+                    onClick={() => dispatch(openLogIn())}
+                   className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
+                    <span>Listen</span>
+                    <span className="inline-flex items-center justify-center w-4 h-4">
+                      <span className="inline-block w-0 h-0 border-y-[6px] border-y-transparent border-l-10 border-l-[#D62828]" />
+                    </span>
+                  </button>
+                )
+              }
 
               <span className="text-[14px] text-[#D62828] ml-auto whitespace-nowrap">
                 {podcastCount} Episodes

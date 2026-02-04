@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchPolls } from "@/Redux/slices/PollSlice";
 import { current } from "@reduxjs/toolkit";
 import { set } from "sanity";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type Option = {
   votedUserIds: number[];
@@ -128,6 +129,10 @@ useEffect(() => {
 
   const handleVote = async (OptionId: number, PollId: number) => {
     if (pollVoteStatus[Number(PollId)]?.hasVoted) {
+    }
+    if (!token) {
+      dispatch(openLogIn());
+      return;
     }
     try {
       const data = {

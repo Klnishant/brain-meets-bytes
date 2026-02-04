@@ -20,6 +20,7 @@ import { AppDispatch, RootState } from "@/Redux/store";
 import { clearAuth, fetchAuth } from "@/Redux/slices/AuthSlice";
 import UpdateProfile from "../authentication/UpdateProfile";
 import { closeMembership, openMembership, toggleMembership } from "@/Redux/slices/MemberShipSlice";
+import { closeLogIn, openLogIn } from "@/Redux/slices/LogInSlice";
 
 type User = {
   _id: string;
@@ -178,7 +179,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const isForumsPage = pathname === "/forums";
-  const [openLogIn, setOpenLogIn] = useState(false);
   const [openSignUp, setOpenSignUp] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [users, setUser] = useState<User | null>(null);
@@ -227,6 +227,10 @@ const Navbar = () => {
 
   const openMemberships = useSelector(
     (state: RootState) => state.membership.openMembership,
+  );
+
+  const openLogin = useSelector(
+    (state: RootState) => state.login.openLogIn,
   );
 
   const handleLogout = async () => {
@@ -340,7 +344,7 @@ const Navbar = () => {
             {!users ? (
               <button
                 className="hidden md:flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
-                onClick={() => setOpenLogIn(true)}
+                onClick={() => dispatch(openLogIn())}
                 style={
                   isForumsPage
                     ? {
@@ -470,7 +474,7 @@ const Navbar = () => {
                 {!users ? (
                   <button
                     className="flex justify-center items-center px-4 lg:px-6 py-2 lg:py-3 border rounded-full text-xs md:text-sm lg:text-base whitespace-nowrap"
-                    onClick={() => setOpenLogIn(true)}
+                    onClick={() => dispatch(openLogIn())}
                     style={{
                       borderColor: COLORS.brandNavy,
                       color: COLORS.brandNavy,
@@ -495,11 +499,11 @@ const Navbar = () => {
       </div>
 
       {/* SignIn Modal */}
-      {openLogIn && (
+      {openLogin && (
         <SignInCard
-          onClose={() => setOpenLogIn(false)}
+          onClose={() => dispatch(closeLogIn())}
           handleSignup={() => {
-            setOpenLogIn(false);
+            dispatch(closeLogIn());
             setOpenSignUp(true);
           }}
           handleIsLoggedIn={() => {
@@ -507,7 +511,7 @@ const Navbar = () => {
             router.refresh();
           }}
           handleForgetPassword={() => {
-            setOpenLogIn(false);
+            dispatch(closeLogIn());
             setOpenForgotPassword(true);
           }}
         />
@@ -519,7 +523,7 @@ const Navbar = () => {
           onClose={() => setOpenSignUp(false)}
           handleSignIn={() => {
             setOpenSignUp(false);
-            setOpenLogIn(true);
+            dispatch(openLogIn());
           }}
         />
       )}
@@ -530,7 +534,7 @@ const Navbar = () => {
         onClose={() => dispatch(closeMembership())}
         handleSignIn={() => {
             dispatch(closeMembership());
-            setOpenLogIn(true);
+            dispatch(openLogIn());
           }}
          />
       )}
@@ -541,7 +545,7 @@ const Navbar = () => {
           onClose={() => setOpenResetPassword(false)}
           handleSignIn={() => {
             setOpenResetPassword(false);
-            setOpenLogIn(true);
+            dispatch(openLogIn());
           }}
         />
       )}

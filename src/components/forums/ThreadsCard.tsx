@@ -11,8 +11,9 @@ import EditThread from "./EditThreads";
 import { getAuth } from "@/lib/getAuth";
 import toast from "react-hot-toast";
 import { on } from "events";
-import { useSelector } from "react-redux";
-import { RootState } from "@/Redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type Category = {
   _id: string;
@@ -115,6 +116,7 @@ const ThreadsCard: React.FC<ThreadsCardProps> = ({ thread, onSuccess, onEdit }) 
   const isMySavedThreadPage = pathname === "/forums/MySavedThreads";
   const isGetReportsPage = pathname === "/forums/Thread/GetReports";
 
+  const dispatch = useDispatch<AppDispatch>();
    const auth = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -167,6 +169,10 @@ useEffect(() => {
       userId: userId,
     };
     let Res;
+    if (!token) {
+          dispatch(openLogIn());
+          return;
+        }
     try {
       setIsLiking(true);
       const res = await fetch(
@@ -220,6 +226,10 @@ useEffect(() => {
   };
 
   const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
+    if (!token) {
+          dispatch(openLogIn());
+          return;
+        }
     e.preventDefault();
     setIsReplying(true);
     const data = {
@@ -296,6 +306,10 @@ useEffect(() => {
   };
 
   const handleShare = async () => {
+    if (!token) {
+          dispatch(openLogIn());
+          return;
+        }
     const shareData = {
       title: thread?.title,
       url: window.location.href,
@@ -343,6 +357,10 @@ useEffect(() => {
     fetchSaved();
   }, [token]);
   const handleSave = async () => {
+    if (!token) {
+          dispatch(openLogIn());
+          return;
+        }
     setIsSaving(true);
     try {
       const body = {
@@ -376,6 +394,10 @@ useEffect(() => {
   };
 
   const handleReporting = async (e: React.FormEvent<HTMLFormElement>) => {
+    if (!token) {
+          dispatch(openLogIn());
+          return;
+        }
     e.preventDefault();
     setIsReporting(true);
     try {
@@ -531,7 +553,13 @@ useEffect(() => {
             <div className={`flex gap-1 items-center ${ isMySavedThreadPage || isGetReportsPage ? "hidden" : "block"}`}>
               <button
               disabled={isReporting}
-              onClick={()=>setIsReportOpen(!isReportOpen)} 
+              onClick={()=>{
+                if (!token){
+                  dispatch(openLogIn());
+                  return;
+                }
+                setIsReportOpen(!isReportOpen)
+              }} 
               className="flex items-center justify-center h-8 w-8 md:h-auto md:w-auto  md:px-4 gap-2.5 rounded-full border border-[#D62828] bg-[#D62828] md:bg-white py-2">
                 <img
                   src="/red-flag.png"
@@ -634,7 +662,13 @@ useEffect(() => {
 
                   {/* Comments */}
                   <button
-                    onClick={() => setIsCommentOpen(!isCommentOpen)}
+                    onClick={() => {
+                      if(!token){
+                        dispatch(openLogIn());
+                        return;
+                      }
+                      setIsCommentOpen(!isCommentOpen)
+                    }}
                     className="flex items-center gap-2 px-4 py-2 border border-[#2A4157] rounded-full text-[#64748B] hover:bg-[#1A2A38] transition"
                   >
                     <img
