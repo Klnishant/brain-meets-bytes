@@ -107,7 +107,7 @@ const ForumCard = ({ faded, className, Card }: ForumCardProps) => {
 
           <div className="flex items-center gap-3 flex-wrap">
             <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#64748B] text-[11px] text-white font-inter">
-              {Card?.tags.join(", ")}
+              {Card?.tags?.join(", ")}
             </span>
             <span className="inline-flex items-center justify-center px-3 py-1 rounded-full border border-[#64748B] text-[11px] text-[#64748B] font-inter">
              {Card?.repliesCount} replies
@@ -190,13 +190,13 @@ const ForumsSection = () => {
         {/* Left: stacked forum cards */}
         <div className="relative w-full max-w-2xl h-[360px] md:h-[420px]">
           {/* Back top card */}
-          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 -top-22 md:-top-20 scale-95" Card={content?.Card || FALL_BACK_CONTENT.Card} />
+          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 -top-22 md:-top-20 scale-95" Card={content?.Card || FALL_BACK_CONTENT?.Card} />
 
           {/* Back bottom card */}
-          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 top-20 md:top-16 scale-95" Card={content?.Card || FALL_BACK_CONTENT.Card} />
+          <ForumCard faded className="absolute w-full md:w-auto md:left-4 md:right-4 top-20 md:top-16 scale-95" Card={content?.Card || FALL_BACK_CONTENT?.Card} />
 
           {/* Front main card */}
-          <ForumCard className="relative z-10" Card={content?.Card || FALL_BACK_CONTENT.Card} />
+          <ForumCard className="relative z-10" Card={content?.Card || FALL_BACK_CONTENT?.Card} />
         </div>
 
         {/* Right: text + CTA */}
@@ -208,7 +208,7 @@ const ForumsSection = () => {
                   <span key={index} className={`${index  === 5 ? "text-[#D62828]" : ""}`}>
                     {word}{" "}
                   </span>
-                )) ?? FALL_BACK_CONTENT.heading.split(" ")?.map((word, index) => (
+                )) ?? FALL_BACK_CONTENT?.heading.split(" ")?.map((word, index) => (
                   <span key={index} className={`${index  === 5 ? "text-[#D62828]" : ""}`}>
                     {word}{" "}
                   </span>
@@ -216,7 +216,7 @@ const ForumsSection = () => {
               }
             </h2>
             <p className="font-inter text-sm md:text-base text-[#505050] leading-7">
-              {content?.description ?? FALL_BACK_CONTENT.description}
+              {content?.description ?? FALL_BACK_CONTENT?.description}
             </p>
           </div>
 

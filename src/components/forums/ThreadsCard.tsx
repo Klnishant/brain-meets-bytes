@@ -596,11 +596,11 @@ useEffect(() => {
           <div className="w-fit flex gap-3 text-[#64748B] items-center justify-center">
             {thread?.categories &&
               thread?.categories.map((category) => (
-                <>
+                <div key={category.CategoryId}>
                   <div className="rounded-full border text-[10px] md:text-base gap-2.5 px-2.5 py-1 md:py-2 opacity-100">
                     {category.title}
                   </div>
-                </>
+                </div>
               ))}
           </div>
           <Link href={`/forums/${thread?.ThreadId}`}>

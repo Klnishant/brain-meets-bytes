@@ -66,9 +66,9 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
           {title}
         </h3>
 
-        {Array.isArray(tags) && tags.length > 0 && (
+        {Array.isArray(tags) && tags?.length > 0 && (
           <div className="flex flex-wrap gap-2 text-[11px]">
-            {tags.map((tag) => (
+            {tags?.map((tag) => (
               <span
                 key={tag}
                 className="inline-flex items-center px-3 py-1 rounded-full border border-[#64748B] text-[#64748B]"

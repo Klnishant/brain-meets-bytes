@@ -76,18 +76,18 @@ const Hero = () => {
             className="inline-flex items-center justify-center px-7 py-2.5 rounded-full text-sm md:text-base font-light"
             style={{ backgroundColor: COLORS.badgeBg, color: COLORS.brandMutedText }}
           >
-            {content?.tag ?? FALL_BACK_CONTENT.tag}
+            {content?.tag ?? FALL_BACK_CONTENT?.tag}
           </button>
 
           {/* HEADING */}
           <div className="flex-col gap-3">
             <h1 className="font-sora font-bold  text-[32px] md:text-2xl lg:text-5xl leading-snug md:leading-[3.2rem] lg:leading-tight text-[#1E293B]">
               {
-                content?.heading.split(" ")?.map((word, index) => (
+                content?.heading?.split(" ")?.map((word, index) => (
                   <span key={index} className={`${index  === 4 || index === 5 ? "text-[#D62828]" : ""}`}>
                     {word}{" "}
                   </span>
-                )) ?? FALL_BACK_CONTENT.heading.split(" ")?.map((word, index) => (
+                )) ?? FALL_BACK_CONTENT?.heading?.split(" ")?.map((word, index) => (
                   <span key={index} className={`${index  === 4 || index === 5 ? "text-[#D62828]" : ""}`}>
                     {word}{" "}
                   </span>
@@ -97,7 +97,7 @@ const Hero = () => {
 
             {/* PARAGRAPH */}
             <p className="font-inter max-w-2xl text-xs md:text-sm lg:text-base leading-7 text-[#505050]">
-              {content?.description ?? FALL_BACK_CONTENT.description}
+              {content?.description ?? FALL_BACK_CONTENT?.description}
             </p>
           </div>
 

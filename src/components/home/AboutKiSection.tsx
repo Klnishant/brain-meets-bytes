@@ -75,9 +75,9 @@ const AboutKiSection = () => {
 
     return (
       <>
-        {heading.slice(0, idx)}
+        {heading?.slice(0, idx)}
         <span style={{ color: COLORS.brandRed }}>{target}</span>
-        {heading.slice(idx + target.length)}
+        {heading?.slice(idx + target?.length)}
       </>
     );
   };
@@ -123,7 +123,7 @@ const AboutKiSection = () => {
 
             {/* Body copy */}
             <div className="font-inter text-[15px] md:text-[16px] leading-[26px] md:leading-[28px] text-[#505050] space-y-4">
-              {bodyParagraphs.map((para, idx) => (
+              {bodyParagraphs?.map((para, idx) => (
                 <p key={idx}>{para}</p>
               ))}
             </div>
