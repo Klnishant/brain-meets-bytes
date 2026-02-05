@@ -247,11 +247,11 @@ const ArticlesSection = () => {
             )}
 
             {!loading && !error &&
-              visibleArticles.map((article) => (
+              visibleArticles?.map((article) => (
                 <ArticleCard key={article._id} article={article} />
               ))}
 
-            {!loading && !error && filtered.length === 0 && (
+            {!loading && !error && filtered?.length === 0 && (
               <p className="col-span-full text-center text-sm text-[#64748B]">
                 No articles match your search.
               </p>

@@ -1,7 +1,9 @@
 "use client";
 import { COLORS } from "@/lib/constants";
-import { ArrowRight } from "lucide-react";
-import React, { useState } from "react";
+import { ArrowRight, Loader } from "lucide-react";
+import React, { useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
+import toast from "react-hot-toast";
 
 function Contact() {
   const [contactData, setContactData] = useState({
@@ -10,6 +12,40 @@ function Contact() {
     email: "",
     message: "",
   });
+  const formRef = useRef<HTMLFormElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const sendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      await emailjs.sendForm(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+        formRef.current!,
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+      );
+
+      setSuccess(true);
+      setContactData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        message: "",
+      });
+      toast.success('Message sent successfully!');
+      formRef.current?.reset();
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+      toast.error('Failed to send message. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -32,15 +68,9 @@ function Contact() {
       body: JSON.stringify(contactData),
     });
     if(res.ok) {
-      setContactData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        message: "",
-      });
-      alert('Message sent successfully!');
+      
     } else {
-      alert('Failed to send message. Please try again later.');
+      toast.error('Failed to send message. Please try again later.');
     }
   }
   return (
@@ -101,9 +131,8 @@ function Contact() {
         <div className="w-full lg:w-fit">
           <form
             className=" rounded-3xl bg-[#FAF9F8] p-4 md:p-8 shadow-lg border border-[#E2E8F0] text-[#1E293B] placeholder:text-[#0505050]"
-            method="post"
-            noValidate
-            onSubmit={handleSubmit}
+            ref={formRef}
+      onSubmit={sendEmail}
           >
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -195,8 +224,18 @@ function Contact() {
                 type="submit"
                 className="flex items-center justify-between w-full xl:w-[136px] md:-h-[44px] text-[18px] gap-2 rounded-full bg-[#D62828] px-8 py-3 text-sm font-semibold text-white"
               >
-                Send
+                {
+                  loading ? (
+                    <span className="w-full opacity-100 rotate-0 flex items-center justify-center">
+                      <Loader className="text-[#023047] animate-spin" />
+                    </span>
+                  ) : (
+                    <div className="flex gap-2 items-center justify-between w-full">
+                      Send
                 <img src="/send.png" alt="" />
+                    </div>
+                  )
+                }
               </button>
             </div>
           </form>

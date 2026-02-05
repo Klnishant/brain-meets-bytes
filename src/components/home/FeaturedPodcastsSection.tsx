@@ -224,10 +224,10 @@ const FeaturedPodcastsSection = () => {
 
           {!loading && !error && (
             <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {visiblePodcasts.map((podcast) => (
+              {visiblePodcasts?.map((podcast) => (
                 <PodcastCard key={podcast._id} podcast={podcast} />
               ))}
-              {filtered.length === 0 && (
+              {filtered?.length === 0 && (
                 <p className="col-span-full text-center text-sm text-[#64748B]">
                   No podcasts match your search.
                 </p>

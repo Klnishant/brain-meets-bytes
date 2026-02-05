@@ -1,9 +1,12 @@
 "use client";
 
 import { getUser } from "@/lib/getUser";
+import { closeMembership } from "@/Redux/slices/MemberShipSlice";
+import { AppDispatch } from "@/Redux/store";
 import { X, Mic, FileText, MessageCircle, Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 
 /* Feature Card Component */
 const FeatureCard =({
@@ -56,6 +59,14 @@ const MembershipCard = ({
       };
       fetchUser();
     }, []);
+
+    const dispatch = useDispatch<AppDispatch>();
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if(!user) return handleSignIn?.();
+      window.location.href = "/plans";
+      dispatch(closeMembership());
+    }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="relative w-full max-w-5xl rounded-[48px] bg-white p-10 shadow-xl overflow-hidden">
@@ -86,11 +97,11 @@ const MembershipCard = ({
               Cancel anytime · No spam · Evidence-based content only
             </p>
 
-            <Link href={'/checkout'}>
-              <button className="mt-8 rounded-full bg-[#D62828] px-8 py-3 text-[#FAF9F8] font-semibold hover:bg-red-700 transition">
+            <button
+              onClick={handleClick}
+               className="mt-8 rounded-full bg-[#D62828] px-8 py-3 text-[#FAF9F8] font-semibold hover:bg-red-700 transition">
               Join Membership
             </button>
-            </Link>
 
             {
               !user && (

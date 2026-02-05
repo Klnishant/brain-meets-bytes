@@ -151,21 +151,21 @@ const AudioCard = () => {
         {/* PROFILE + TEXT */}
         <div className="flex items-center gap-4 mt-2">
           <img
-            src={episode?.imageUrl ?? FALL_BACK_CONTENT.imageUrl}
+            src={episode?.imageUrl ?? FALL_BACK_CONTENT?.imageUrl}
             alt="Speaker"
             className="w-[70px] h-[70px] md:w-[110px] md:h-[110px] rounded-full object-cover border border-[#E2E8F0]"
           />
 
           <div className="flex flex-col justify-center items-start gap-2 w-[260px]">
             <h3 className="font-sora text-[16px] md:text-[18px] font-semibold leading-[24px] text-gray-900">
-              {episode?.title ?? FALL_BACK_CONTENT.title}
+              {episode?.title ?? FALL_BACK_CONTENT?.title}
             </h3>
 
             <p
               className="font-inter text-xs md:text-sm"
               style={{ color: COLORS.brandMutedText }}
             >
-              {episode?.podcast?.author ?? FALL_BACK_CONTENT.author}
+              {episode?.podcast?.author ?? FALL_BACK_CONTENT?.author}
             </p>
           </div>
         </div>
@@ -212,7 +212,7 @@ const AudioCard = () => {
                 {Math.floor((duration % 3600) / 60)} :{" "}
                 {Math.floor(duration % 60)}
               </span>
-            )) ?? <span>{FALL_BACK_CONTENT.duration}</span>}
+            )) ?? <span>{FALL_BACK_CONTENT?.duration}</span>}
           </div>
         </div>
 
