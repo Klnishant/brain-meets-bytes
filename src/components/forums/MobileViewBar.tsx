@@ -8,6 +8,7 @@ import CategoryCard from "./CategoryCard";
 import PollCard from "./PollCard";
 import UsersCard from "./UsersCard";
 import { set } from "sanity";
+import { usePathname } from "next/navigation";
 
 type User = {
   _id: string;
@@ -95,6 +96,9 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
   const [isCreatingPoll, setIsCreatingPoll] = useState(false);
   const [isCreatePollOpen, setIsCreatePollOpen] = useState(false);
   const [isCreateThread, setIsCreateThread] = useState(false);
+
+  const pathname = usePathname();
+    const isForumsPage = pathname === "/forums";
 
   const handleSearchInputChange = (searchText?: string) => {
     handleSearch(searchText!);
@@ -453,14 +457,14 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
         className={`flex items-center justify-between h-[48px] w-[231px] gap-3 bg-[#023047] px-1.5 py-2 rounded-full ${className ?? ""}`}
       >
         {/* Icon Buttons */}
-        <div className="flex items-center justify-between w-full">
+        <div className={`flex items-center justify-between w-full`}>
           <button
             onClick={() => {
               setIsSearchOpen(!isSearchOpen);
               setIsComposerOpen(false);
               setIsMenuOpen(false);
             }}
-            className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center"
+            className={`h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center ${isForumsPage ? "block" : "hidden"}`}
           >
             <Search size={"16px"} />
           </button>
@@ -479,7 +483,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
               setIsSearchOpen(false);
               setIsMenuOpen(false);
             }}
-            className="h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center"
+            className={`h-9 w-9 bg-[#D62828] rounded-full flex justify-center items-center ${isForumsPage ? "block" : "hidden"}`}
           >
             <Plus size={"16px"} />
           </button>
@@ -490,7 +494,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
             setIsSearchOpen(false);
             setIsComposerOpen(false);
           }}
-          className="flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm"
+          className={`flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm ${isForumsPage ? "" : "w-full justify-center"}`}
         >
           <Menu size={"18px"} />
           Menu

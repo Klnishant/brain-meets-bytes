@@ -7,6 +7,8 @@ import { set } from "sanity";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/Redux/store";
 import { openLogIn } from "@/Redux/slices/LogInSlice";
+import { useRouter } from "next/navigation";
+import { route } from "sanity/router";
 
 type Author = {
   name: string;
@@ -32,6 +34,18 @@ type Article = {
   }[];
 };
 
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
+};
+
 const formatDate = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -46,17 +60,53 @@ const ArticleCard = ({ article }: { article: Article }) => {
   const { title = "Untitled", authors, date, imageUrl, tags = [], excerpt, slug } = article;
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector((state: RootState) => state.auth);
+  const router = useRouter();
 
   useEffect(() => {
     setToken(auth?.auth?.token);
     setUserId(auth?.auth?.userId);
   }, [auth]);
 
+  useEffect(() => {
+      const user = async () => {
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await res.json();
+  
+        if (res.ok) {
+          setUser(data?.data);
+        }
+      };
+      user();
+    }, [token]);
+
+  const isOlderThan7Days = (date: string) => {
+  const givenDate = new Date(date);
+  const now = new Date();
+
+  const diffInMs = now.getTime() - givenDate.getTime();
+  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+  return diffInDays >= 7;
+};
+
   return (
-    <article className="flex flex-col border border-[#E2E8F0] rounded-2xl bg-[#FAF9F8] overflow-hidden h-full">
+    <article className={`flex flex-col border border-[#E2E8F0] rounded-2xl bg-[#FAF9F8] overflow-hidden h-full ${!isOlderThan7Days(date || "") && !user?.hasmembership ? "opacity-50" : ""}`}
+    aria-disabled={!isOlderThan7Days(date || "") && !user?.hasmembership}
+    >
       <div className="pt-3 pr-3 pl-3">
         <div className="relative w-full pt-[56%] bg-[#CDCDCD] overflow-hidden rounded-lg">
           {imageUrl && (
@@ -109,15 +159,19 @@ const ArticleCard = ({ article }: { article: Article }) => {
 
         <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
           {slug && token ? (
-            <Link
-              href={`/articles/${slug}`}
-              className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
+            <button
+              onClick={()=> {
+                if (!isOlderThan7Days(date || "") && !user?.hasmembership) return;
+                router.push(`/articles/${slug}`);
+              }}
+              className={`w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828] ${!isOlderThan7Days(date || "") && !user?.hasmembership ? "hidden" : ""}`}
             >
               Read More
-            </Link>
+            </button>
           ) : (
             <button
               onClick={() => dispatch(openLogIn())}
+              disabled={(!isOlderThan7Days(date || "") && !user?.hasmembership) ? true : false}
               className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
             >
               Read More
@@ -135,6 +189,8 @@ const ArticlesSection = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -260,7 +316,7 @@ const ArticlesSection = () => {
 
           <button
             type="button"
-            onClick={() => setShowAll(true)}
+            onClick={() => router.push("/articles")}
             className="w-full md:w-auto inline-flex items-center justify-center px-10 py-3 rounded-full text-sm md:text-base text-white"
             style={{ backgroundColor: COLORS.brandNavy }}
           >

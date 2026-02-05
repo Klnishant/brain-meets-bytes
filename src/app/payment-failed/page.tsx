@@ -4,20 +4,20 @@ import Footer from '@/components/core/Footer';
 import Navbar from '@/components/core/Navbar';
 import { useRouter } from 'next/navigation';
 
-export default function PaymentSuccess() {
+export default function PaymentFailed() {
   const router = useRouter();
 
   return (
     <main className='min-h-screen bg-[#FAF9F8]'>
-      <Navbar />
-      <div className="flex min-h-screen items-center justify-center">
+        <Navbar />
+        <div className="flex min-h-screen items-center justify-center">
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
           {/* Icon */}
           <div className="mb-6">
-            <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center animate-bounce">
+            <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
               <svg 
-                className="w-10 h-10 text-green-500" 
+                className="w-10 h-10 text-red-500" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -26,7 +26,7 @@ export default function PaymentSuccess() {
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
                   strokeWidth={2} 
-                  d="M5 13l4 4L19 7" 
+                  d="M6 18L18 6M6 6l12 12" 
                 />
               </svg>
             </div>
@@ -34,26 +34,23 @@ export default function PaymentSuccess() {
 
           {/* Content */}
           <h1 className="text-3xl font-bold text-gray-800 mb-3">
-            Payment Successful!
+            Payment Failed
           </h1>
-          <p className="text-gray-600 mb-2">
-            Thank you for your purchase!
-          </p>
-          <p className="text-sm text-gray-500 mb-8">
-            A confirmation email has been sent to your inbox.
+          <p className="text-gray-600 mb-8">
+            We couldn't process your payment. Please check your payment details and try again.
           </p>
 
           {/* Buttons */}
           <div className="space-y-3">
             <button
               onClick={() => router.back()}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition duration-200 ease-in-out"
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 shadow-md"
             >
-              Go Back
+              Try Again
             </button>
             <button
               onClick={() => router.push('/')}
-              className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition duration-200"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition duration-200 ease-in-out"
             >
               Return to Home
             </button>

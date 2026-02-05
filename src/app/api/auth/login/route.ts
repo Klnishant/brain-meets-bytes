@@ -52,8 +52,8 @@ export async function POST(req: Request) {
     : undefined,
        })
        return response
-   } catch (err) {
+   } catch (err: any) {
     console.error("Error logging in:", err);
-    return NextResponse.json({ message: "Failed to log in" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to log in", error: err?.message }, { status: 500 });
    }
 }

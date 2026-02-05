@@ -73,8 +73,7 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
       {/* Button */}
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-3 rounded-full bg-gradient-to-r from-[#D62828] to-[#701515]
- px-4 py-2 text-white shadow-md hover:bg-[#9E0F22] transition"
+        className={`flex items-center gap-3 rounded-full bg-gradient-to-r from-[#D62828] to-[#701515] px-4 py-2 text-white shadow-md transition`}
       >
         <div className="relative h-[34px] w-[34px] border-[2px] bg-[#FAF9F8]  overflow-hidden rounded-full">
           <img src={user?.ProfilePic} className="h-full w-full object-cover" />
@@ -154,7 +153,7 @@ const ProfileDropdown: React.FC<profileDropdownProp> = ({
 
             {/* Membership */}
             <button
-              className="w-fit flex justify-center items-center px-2 py-2  rounded-full text-xs md:text-sm  text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md"
+              className={`w-fit flex justify-center items-center px-2 py-2  rounded-full text-xs md:text-sm  text-[#F9FAFB] whitespace-nowrap transition duration-200 ease-out hover:bg-[#b81f1f] hover:shadow-md ${user?.hasmembership ? "hidden": "block"}`}
               style={{ backgroundColor: COLORS.brandRed }}
               onClick={() => onMembership(true)}
             >
@@ -302,9 +301,9 @@ const Navbar = () => {
           </nav>
 
           {/* RIGHT SIDE — Search + Membership + Login (desktop) */}
-          <div className="flex items-center gap-3 lg:gap-6 shrink-0">
+          <div className="flex items-center gap-3 lg:gap-6 shrink-0 z-10">
             {/* Search with hover expand animation */}
-            <button
+            {/* <button
               className="group flex items-center gap-2 rounded-full text-xs md:text-sm lg:text-base overflow-hidden transition-all duration-300 ease-out w-12 px-3.5 py-3 hover:w-40"
               style={{
                 backgroundColor: COLORS.badgeBg,
@@ -329,7 +328,7 @@ const Navbar = () => {
               <span className="whitespace-nowrap opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-left">
                 Search
               </span>
-            </button>
+            </button> */}
 
             {/* Membership */}
             <button
@@ -376,7 +375,7 @@ const Navbar = () => {
         <div className="fixed top-2 left-0 right-0 z-50 flex lg:hidden items-start justify-end pointer-events-auto">
           <div className="w-full flex justify-end mr-1">
             {/* Search with hover expand animation */}
-            <button
+            {/* <button
               className="group flex items-center px-2.5 gap-2 rounded-full text-xs md:text-sm lg:text-base overflow-hidden transition-all duration-300 ease-out w-9 h-9 lg:h-auto lg:w-12 hover:w-40"
               style={{
                 backgroundColor: COLORS.badgeBg,
@@ -401,7 +400,7 @@ const Navbar = () => {
               <span className="whitespace-nowrap opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-left">
                 Search
               </span>
-            </button>
+            </button> */}
           </div>
           <div
             className={`${isOpen ? "bg-[#FAF9F8] border border-[#E2E8F0]  rounded-xl" : "bg-none"}  px-4 py-2`}

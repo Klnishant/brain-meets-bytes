@@ -571,6 +571,14 @@ const ThreadDetails = () => {
             </div>
           </div>
         </div>
+         <div className="lg:hidden fixed bottom-0 left-0 z-20 w-full flex justify-center bg-white shadow-md"
+ >
+        <MobileViewBar
+          user={users[0]}
+          onSuccess={()=>{}}
+          handleSearch={()=>{}}
+         />
+      </div>
       </section>
     </>
   );

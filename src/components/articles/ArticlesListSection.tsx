@@ -6,6 +6,7 @@ import { COLORS } from "@/lib/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/Redux/store";
 import { openLogIn } from "@/Redux/slices/LogInSlice";
+import { useRouter } from "next/navigation";
 
 type Author = {
   name: string;
@@ -25,6 +26,18 @@ type Article = {
   slug?: string;
 };
 
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  RoleId: number;
+  Rolename: string;
+  hasmembership: boolean;
+  userId: number;
+  ProfilePic: string;
+};
+
 const formatDate = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -39,18 +52,54 @@ const ArticleCard = ({ article }: { article: Article }) => {
   const { title = "Untitled", authors, date, imageUrl, tags = [], excerpt, slug } = article;
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector((state: RootState) => state.auth);
+  const router = useRouter();
 
   useEffect(() => {
     setToken(auth?.auth?.token);
     setUserId(auth?.auth?.userId);
   }, [auth]);
+
+  useEffect(() => {
+      const user = async () => {
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/one?userId=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await res.json();
+  
+        if (res.ok) {
+          setUser(data?.data);
+        }
+      };
+      user();
+    }, [token]);
+
+  const isOlderThan7Days = (date: string) => {
+  const givenDate = new Date(date);
+  const now = new Date();
+
+  const diffInMs = now.getTime() - givenDate.getTime();
+  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+  return diffInDays >= 7;
+};
   
 
   return (
-    <article className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-[#FAF9F8]">
+    <article className={`relative flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-[#FAF9F8] ${!isOlderThan7Days(date || "") && !user?.hasmembership ? "opacity-50" : ""}`}
+      aria-disabled={!isOlderThan7Days(date!) && !user?.hasmembership}
+    >
       {/* Image */}
       <div className="px-5 pt-5">
         <div className="relative w-full overflow-hidden rounded-lg bg-[#CDCDCD] pt-[54%]">
@@ -119,12 +168,15 @@ const ArticleCard = ({ article }: { article: Article }) => {
         {/* Footer CTA (Read more) */}
         <div className="w-fullmt-2 flex items-center justify-between">
           {slug && token ? (
-            <Link
-              href={`/articles/${slug}`}
+            <button
+              onClick={()=> {
+                if (!isOlderThan7Days(date || "") && !user?.hasmembership) return;
+                router.push(`/articles/${slug}`);
+              }}
               className="w-full md:w-auto justify-center inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] md:px-6 py-2 text-[14px] font-normal text-[#D62828]"
             >
               Read More
-            </Link>
+            </button>
           ) : (
             <button 
             onClick={() => dispatch(openLogIn())}

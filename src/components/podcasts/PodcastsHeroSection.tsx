@@ -150,7 +150,7 @@ const PodcastsHeroSection = () => {
   const newLocal = "flex items-center gap-3";
   return (
     <section className=" w-full  bg-[#FAF9F8] pb-20 md:pb-24 lg:pb-28 pt-20 md:pt-44 lg:pt-48">
-      <div className="relative mx-auto  max-w-[1920px]  px-4 sm:px-6 lg:px-16">
+      <div className="relative mx-auto  max-w-[1920px] flex flex-col gap-24  px-4 sm:px-6 lg:px-16">
         <div className="w-full sm:w-[1070px] xl:w-[1857px] h-[392px] xl:h-[1016px] absolute -top-[118px] left-[-90px] lg:-top-[30%] lg:left-[-426px] opacity-[30%] rotate-90 lg:rotate-0 overflow-hidden">
           <img
             src="/article-bg.png"
@@ -158,7 +158,7 @@ const PodcastsHeroSection = () => {
             className=" h-full w-full object-cover"
           />
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:mb-16">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-20 md:gap-8 md:mb-16">
           <div className=" w-full max-w-[1259px] max-h-[213px]">
             <h2 className="font-sora z-1 text-[32px] md:text-4xl xl:text-[56px] font-bold text-center md:text-start text-[#1E293B]">
               {content?.heading.split(" ").map((word, i) => (
@@ -173,8 +173,8 @@ const PodcastsHeroSection = () => {
                 ))}
             </h2>
           </div>
-          <div className="h-[213px] flex flex-col gap-8 ">
-            <p className="font-inter md:w-[600px] z-1 text-[12px] md:text-base xl:text-[18px] leading-relaxed text-center md:text-start text-[#505050] max-w-[951px] font-400">
+          <div className="h-full md:h-[213px] flex flex-col gap-8">
+            <p className="font-inter md:w-[600px] z-1 text-[12px] md:text-base xl:text-[18px] leading-relaxed  text-center md:text-start text-[#505050] max-w-[951px] font-400">
               {content?.description ?? FALL_BACK_CONTENT.description}
             </p>
             <button

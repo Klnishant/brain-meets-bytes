@@ -50,7 +50,6 @@ const SignInCard: React.FC<SignInCardProps> =({onClose,handleSignup,handleIsLogg
         "password": signInData.password,
         "remeberMe": signInData.remeberMe
       }
-      console.log(body);
       
       const res = await fetch('/api/auth/login', {
         method: "POST",

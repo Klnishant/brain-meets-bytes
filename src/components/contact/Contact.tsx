@@ -118,14 +118,14 @@ function Contact() {
               </div>
             </div>
           </div>
-          <div>
+          {/* <div>
             <button className="flex items-center justify-between w-full lg:w-1/2 xl:w-[185px] h-[50px] pl-8 pr-2 bg-[#023047] font-sora font-bold text-[18px] leading-[24px] tracking-normal text-[#F2F2F2] rounded-[50px]">
               Live Chat{" "}
               <span className="w-[34px] h-[34px] rounded-[52px] opacity-100 rotate-0 bg-[#FAF9F8] flex items-center justify-center">
                 <ArrowRight className="text-[#023047]" />
               </span>
             </button>
-          </div>
+          </div> */}
         </div>
         {/* Form */}
         <div className="w-full lg:w-fit">
