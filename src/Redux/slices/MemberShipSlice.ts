@@ -1,18 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-/* ================= TYPES ================= */
-
 type MembershipState = {
   openMembership: boolean;
 };
 
-/* ================= INITIAL STATE ================= */
-
 const initialState: MembershipState = {
   openMembership: false,
 };
-
-/* ================= SLICE ================= */
 
 const membershipSlice = createSlice({
   name: "membership",
@@ -32,8 +26,6 @@ const membershipSlice = createSlice({
     },
   },
 });
-
-/* ================= EXPORTS ================= */
 
 export default membershipSlice.reducer;
 export const {

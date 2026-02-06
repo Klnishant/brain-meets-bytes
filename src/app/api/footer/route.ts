@@ -11,7 +11,7 @@ const query = `*[_type == "footer"][0]{
   address,
   instalink,
   facebooklink,
-  xlink,
+  youtubelink,
   linkedinlink
 }`;
 

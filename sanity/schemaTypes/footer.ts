@@ -32,8 +32,8 @@ export const footer = defineType({
             type: "string",
         }),
         defineField({
-            name: "xlink",
-            title: "X Link",
+            name: "youtubelink",
+            title: "YouTube Link",
             type: "string",
         }),
         defineField({

@@ -294,10 +294,10 @@ const PodcastsMainSection = () => {
               <span className="text-[#1E293B]">All</span>{" "}
               <span style={{ color: COLORS.brandRed }}>Podcasts</span>
             </h2>
-            <p className="font-inter text-[12px] md:text-base text-[#505050]">
+            {/* <p className="font-inter text-[12px] md:text-base text-[#505050]">
               Nam vulputate faucibus urna non mollis. Vivamus a vulputate
               turpis. Aenean efficitur aliquam dui a elementum.
-            </p>
+            </p> */}
           </div>
 
           <div className="flex items-center gap-1 justify-between w-full  md:px-5 py-2 md:py-3">

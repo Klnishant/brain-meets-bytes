@@ -297,9 +297,9 @@ const ArticlesListSection = () => {
             <h2 className="font-sora text-3xl md:text-[36px] font-bold leading-[45px] text-[#1E293B]">
               All <span style={{ color: COLORS.brandRed }}>Articles</span>
             </h2>
-            <p className="max-w-[937px] font-inter text-[16px] md:text-[18px] leading-[22px] text-[#505050]">
+            {/* <p className="max-w-[937px] font-inter text-[16px] md:text-[18px] leading-[22px] text-[#505050]">
               Nam vulputate faucibus urna non mollis. Vivamus a vulputate turpis. Aenean efficitur aliquam dui a elementum.
-            </p>
+            </p> */}
           </div>
 
           {/* Search + filter row */}

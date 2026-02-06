@@ -254,10 +254,10 @@ const FeaturedPodcastsSection = () => {
               <span style={{ color: COLORS.brandRed }}>Featured</span>{" "}
               <span className="text-[#1E293B]">Podcasts</span>
             </h2>
-            <p className="font-inter text-[12px] md:text-base text-[#505050]">
+            {/* <p className="font-inter text-[12px] md:text-base text-[#505050]">
               Dive into handpicked podcasts that explore the most exciting breakthroughs in brain
               health and longevity.
-            </p>
+            </p> */}
           </div>
 
           <div className="w-full max-w-xl flex items-center gap-3 rounded-full bg-[#E2E8F0] px-5 py-3">

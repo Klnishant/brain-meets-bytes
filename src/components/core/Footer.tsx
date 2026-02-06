@@ -19,7 +19,7 @@ type FooterContent = {
   address: string;
   instalink: string;
   facebooklink: string;
-  xlink: string;
+  youtubelink: string;
   linkedinlink: string;
 };
 
@@ -31,7 +31,7 @@ const FALL_BACK_CONTENT: FooterContent = {
   address: "123 Main Street, Anytown, USA",
   instalink: "",
   facebooklink: "",
-  xlink: "",
+  youtubelink: "",
   linkedinlink: "",
 };
 
@@ -150,7 +150,7 @@ const Footer = () => {
                 </div>
                 <span>{content?.email ?? FALL_BACK_CONTENT.email}</span>
               </div>
-              <div className="flex items-start gap-3">
+              {/* <div className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center mt-1">
                   <img
                     src="/location.png"
@@ -159,7 +159,7 @@ const Footer = () => {
                   />
                 </div>
                 <span>{content?.address ?? FALL_BACK_CONTENT.address}</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ const Footer = () => {
             {[
               { name: "instagram", url: content?.instalink },
               { name: "facebook", url: content?.facebooklink },
-              { name: "x", url: content?.xlink },
+              { name: "youtube", url: content?.youtubelink },
               { name: "linkedin", url: content?.linkedinlink },
             ].map(({ name, url }) => {
               const isDisabled = !url;

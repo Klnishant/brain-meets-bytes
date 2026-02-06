@@ -1,18 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-/* ================= TYPES ================= */
 
 type LogInState = {
   openLogIn: boolean;
 };
 
-/* ================= INITIAL STATE ================= */
-
 const initialState: LogInState = {
   openLogIn: false,
 };
-
-/* ================= SLICE ================= */
 
 const loginSlice = createSlice({
   name: "login",
@@ -32,8 +27,6 @@ const loginSlice = createSlice({
     },
   },
 });
-
-/* ================= EXPORTS ================= */
 
 export default loginSlice.reducer;
 export const {
