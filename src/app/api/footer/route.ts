@@ -6,6 +6,10 @@ export const revalidate = 300;
 const query = `*[_type == "footer"][0]{
   _id,
   description,
+  refundPolicy,
+  privacyPolicy,
+  tremsAndConditions,
+  forumTerms,
   phone,
   email,
   address,

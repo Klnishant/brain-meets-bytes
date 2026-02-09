@@ -12,6 +12,30 @@ export const footer = defineType({
             rows: 3,
         }),
         defineField({
+            name: "refundPolicy",
+            title: "Refund Policy",
+            type: "text",
+            rows: 5,
+        }),
+        defineField({
+            name: "privacyPolicy",
+            title: "Privacy Policy",
+            type: "text",
+            rows: 5,
+        }),
+        defineField({
+            name: "tremsAndConditions",
+            title: "Terms and Conditions",
+            type: "text",
+            rows: 5,
+        }),
+        defineField({
+            name: "forumTerms",
+            title: "Forum Terms",
+            type: "text",
+            rows: 5,
+        }),
+        defineField({
             name: "phone",
             title: "Phone",
             type: "string",

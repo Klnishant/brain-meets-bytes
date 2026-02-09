@@ -23,22 +23,22 @@ const FALLBACK_APPROACH: ApproachContent = {
       title: "Conversations with top global experts",
       description:
         "Neuroscientists, longevity pioneers, physicians, researchers & technologists.",
-      iconUrl: "/about-approach-mic.png",
+      iconUrl: "./broadcast-mic.png",
     },
     {
       title: "Accessible to everyone",
       description: "Clear, engaging content you can actually apply.",
-      iconUrl: "/about-approach-accessible.png",
+      iconUrl: "./about-approach-accessible.png",
     },
     {
       title: "Evidence-based exploration",
       description: "We verify facts — no hype, no misinformation.",
-      iconUrl: "/about-approach-evidence.png",
+      iconUrl: "./about-approach-evidence.png",
     },
     {
       title: "Curated insights from every episode",
       description: "Key takeaways, resources, and actionable learnings.",
-      iconUrl: "/about-approach-insights.png",
+      iconUrl: "./about-approach-insights.png",
     },
   ],
 };
@@ -74,7 +74,7 @@ const AboutApproachSection = () => {
   const points =
     Array.isArray(content?.points) && content.points.length > 0
       ? content.points
-      : FALLBACK_APPROACH.points!;
+      : FALLBACK_APPROACH?.points!;
 
   return (
     <section className="w-full bg-[#FAF9F8] py-16 md:py-20 lg:py-24">
@@ -86,10 +86,10 @@ const AboutApproachSection = () => {
               key={idx}
               className="group flex items-center gap-6 bg-white border border-[#E2E8F0] rounded-2xl px-4 py-4 md:px-6 md:py-5 transition-shadow duration-200 hover:shadow-md"
             >
-              {point.iconUrl && (
+              {point?.iconUrl && (
                 <img
-                  src={point.iconUrl}
-                  alt={point.title || "Icon"}
+                  src={point?.iconUrl}
+                  alt={point?.title || "Icon"}
                   className="w-16 h-16 md:w-20 md:h-20 object-contain"
                 />
               )}

@@ -117,10 +117,10 @@ const Footer = () => {
               Important
             </h3>
             <div className="flex flex-col gap-3 font-inter text-sm md:text-base text-[#505050]">
-              <span>Refund Policy</span>
-              <span>Privacy Policy</span>
-              <span>Terms &amp; Conditions</span>
-              <span>Forum terms</span>
+              <Link href={'/RefundPolicy'}><span>Refund Policy</span></Link>
+              <Link href={'/PrivacyPolicy'}><span>Privacy Policy</span></Link>
+              <Link href={'/terms-conditions'}> <span>Terms &amp; Conditions</span> </Link>
+              <Link href={'/forum-terms'}><span>Forum terms</span></Link>
             </div>
           </div>
 

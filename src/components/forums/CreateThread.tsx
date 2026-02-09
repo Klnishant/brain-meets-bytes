@@ -13,8 +13,9 @@ import { form } from "sanity/structure";
 import { set } from "sanity";
 import { getAuth } from "@/lib/getAuth";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
-import { RootState } from "@/Redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { fetchAuth } from "@/Redux/slices/AuthSlice";
 
 export type CreatThreadFormRef = {
   submit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -88,12 +89,21 @@ const CreateThread = React.forwardRef<CreatThreadFormRef, CreateThreadProps>(
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-     const auth = useSelector((state: RootState) => state.auth);
+    const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(fetchAuth());
+  },[]);
+
+    const auth = useSelector((state: RootState) => state?.auth);
 
   useEffect(() => {
     setToken(auth?.auth?.token);
     setUserId(auth?.auth?.userId);
   }, [auth]);
+
+  console.log("Create Thread token:",token);
+  
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleCategoryChange = useCallback((categories: Category[]) => {
@@ -122,6 +132,11 @@ videos.forEach((video) => {
   formData.append("videos", video);
 });
       try {
+        if (!token) {
+          console.log("token not found");
+          
+          throw new Error("Token not found");
+        }
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}threads`, {
           method: "POST",
           headers: {

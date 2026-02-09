@@ -321,18 +321,17 @@ const ForumsMainSection = () => {
   const fetchThreads = async () => {
     try {
       setLoading(true);
-
+      setError(null);
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?page=${page}&limit=10`,
-        {
-          //headers: { Authorization: `Bearer ${token}` },
-        },
+        `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?page=${page}&limit=10`
       );
 
       if (!res.ok) throw new Error("Failed to load threads");
 
       const Res = await res.json();
       const data = Res?.data ?? [];
+      console.log("threads res:",Res);
+      
 
       console.log("Threads",data);
 
@@ -347,7 +346,7 @@ const ForumsMainSection = () => {
 
   useEffect(() => {
     fetchThreads();
-  }, [token, page]);
+  }, [page]);
 
   const [infiniteRef, { rootRef }] = useInfiniteScroll({
     loading,

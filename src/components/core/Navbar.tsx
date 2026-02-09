@@ -21,6 +21,7 @@ import { clearAuth, fetchAuth } from "@/Redux/slices/AuthSlice";
 import UpdateProfile from "../authentication/UpdateProfile";
 import { closeMembership, openMembership, toggleMembership } from "@/Redux/slices/MemberShipSlice";
 import { closeLogIn, openLogIn } from "@/Redux/slices/LogInSlice";
+import VerifyEmail from "../authentication/VerifyEmail";
 
 type User = {
   _id: string;
@@ -186,6 +187,7 @@ const Navbar = () => {
   const [openResetPassword, setOpenResetPassword] = useState(false);
   const [openForgotPassword, setOpenForgotPassword] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
+  const [openVerification, setOpenVerification] = useState(false);
 
   const router = useRouter();
 
@@ -222,7 +224,7 @@ const Navbar = () => {
       }
     };
     user();
-  }, [token]);
+  }, [auth, token, userId]);
 
   const openMemberships = useSelector(
     (state: RootState) => state.membership.openMembership,
@@ -522,7 +524,7 @@ const Navbar = () => {
           onClose={() => setOpenSignUp(false)}
           handleSignIn={() => {
             setOpenSignUp(false);
-            dispatch(openLogIn());
+            setOpenVerification(true);
           }}
         />
       )}
@@ -569,6 +571,16 @@ const Navbar = () => {
           onClose={handleOpenUpdate}
           userId={Number(users?.userId)}
           handleUpdate={handleUpdate}
+        />
+      )}
+      {/* Verification Modal */}
+      {openVerification && (
+        <VerifyEmail
+          onClose={() => setOpenVerification(false)}
+          handleSignIn={() => {
+            setOpenVerification(false);
+            dispatch(openLogIn());
+          }}
         />
       )}
     </header>
