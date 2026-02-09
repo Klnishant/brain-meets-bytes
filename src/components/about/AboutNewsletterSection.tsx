@@ -20,6 +20,9 @@ const [email, setEmail] = useState({
     const handleSubsription = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       try {
+        if (!email.email) {
+          throw new Error("Please fill the email.");
+        }
         const res = await fetch('/api/subscription', {
           method: 'POST',
           headers: {
@@ -75,6 +78,7 @@ const [email, setEmail] = useState({
                     type="email"
                     name="email"
                     value={email.email}
+                    required
                     onChange={handleInputChange}
                     placeholder="Enter your Email address"
                     className="w-full border-none bg-transparent font-sora text-base text-[#64748B] placeholder:text-[#64748B] outline-none"

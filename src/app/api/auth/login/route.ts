@@ -14,6 +14,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    console.log(process.env.NEXT_PUBLIC_API_URL);
+    
      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}login`, {
         method: "POST",
         credentials: "include",

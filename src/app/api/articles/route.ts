@@ -23,8 +23,8 @@ export async function GET() {
   try {
     const data = await sanityClient.fetch(query);
     return NextResponse.json(data ?? []);
-  } catch (err) {
-    console.error("Error fetching articles from Sanity", err);
+  } catch (err: any) {
+    console.error("Error fetching articles from Sanity", err?.message);
     return NextResponse.json(
       { message: "Failed to load articles" },
       { status: 500 }
