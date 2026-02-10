@@ -1,9 +1,23 @@
 "use client";
 import { COLORS } from "@/lib/constants";
 import { ArrowRight, Loader } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
 import toast from "react-hot-toast";
+
+type ContactContent = {
+  heading: string;
+  body: string;
+  phone: string;
+  email: string;
+};
+
+const FALLBACK_CONTACT_DATA: ContactContent = {
+  heading: "Get in Touch",
+  body: "We’d love to hear from you, whether you’re a listener with a question, a researcher with an idea, or a partner exploring collaboration opportunities in brain health and longevity.",
+  phone: "+1 (123) 456-7890",
+  email: "O0Bt9@example.com",
+};
 
 function Contact() {
   const [contactData, setContactData] = useState({
@@ -16,6 +30,33 @@ function Contact() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [content, setContent] = useState<ContactContent | null>(null);
+
+   useEffect(() => {
+      let mounted = true;
+  
+      const load = async () => {
+        try {
+          const res = await fetch("/api/contact");
+          if (!res.ok) {
+            throw new Error("Failed to load contact");
+          }
+  
+          const data = (await res.json()) as ContactContent | null;
+          if (!mounted) return;
+          setContent(data);
+          
+        } catch (e: any) {
+          if (!mounted) return;
+        }
+      };
+  
+      void load();
+  
+      return () => {
+        mounted = false;
+      };
+    }, []);
 
   const sendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,12 +127,18 @@ function Contact() {
         <div className="flex flex-col gap-[66px] z-10">
           <div className="flex flex-col gap-9">
             <h1 className="text-[#1E293B] font-sora font-bold text-[32px] md:text-[56px] leading-[1] tracking-normal ">
-              Get In <span style={{ color: COLORS.brandRed }}>Touch</span>
+              {
+                content?.heading?.split(" ")?.map((word, index) => (
+                  <span key={index} className={`${index==2 ? "text-[#D62828]" : ""}`}>{word} </span>
+                )) ?? FALLBACK_CONTACT_DATA?.heading?.split(" ")?.map((word, index) => (
+                  <span key={index} className={`${index==2 ? "text-[#D62828]" : ""}`}>{word} </span>
+                ))
+              }
             </h1>
             <p className="font-inter font-normal text-[12px] md:text-[18px] text-[#505050] xl:max-w-[653px] leading-[28px] tracking-normal">
-              We’d love to hear from you, whether you’re a listener with a
-              question, a researcher with an idea, or a partner exploring
-              collaboration opportunities in brain health and longevity.
+              {
+                content?.body ?? FALLBACK_CONTACT_DATA?.body
+              }
             </p>
           </div>
           <div className="flex md:flex-col gap-6">
@@ -102,7 +149,7 @@ function Contact() {
               <div className="flex items-center justify-center gap-3">
                 <img src="/phone.png" alt="" />
                 <p className="font-inter font-bold text-[12px] md:text-[18px] text-[#505050] leading-[1] tracking-normal">
-                  +1-323-453-5817
+                  {content?.phone ?? FALLBACK_CONTACT_DATA?.phone}
                 </p>
               </div>
             </div>
@@ -113,7 +160,7 @@ function Contact() {
               <div className="flex items-center justify-center gap-3">
                 <img src="/email.png" alt="" />
                 <p className="font-inter font-bold text-[12px] md:text-[18px] text-[#505050] leading-[1] tracking-normal">
-                  info@brainmeetsbytes
+                  {content?.email ?? FALLBACK_CONTACT_DATA?.email}
                 </p>
               </div>
             </div>

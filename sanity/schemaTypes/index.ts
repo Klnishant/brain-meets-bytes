@@ -15,6 +15,7 @@ import { homeHero } from "./homeHero";
 import { homeForum } from "./homeForum";
 import { aboutForum } from "./aboutForum";
 import { footer } from "./footer";
+import { contact } from "./contact";
 
 export const schemaTypes = [
   podcast,
@@ -32,4 +33,5 @@ export const schemaTypes = [
   homeForum,
   aboutForum,
   footer,
+  contact,
 ];
