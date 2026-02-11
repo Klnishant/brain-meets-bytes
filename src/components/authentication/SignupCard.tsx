@@ -14,7 +14,7 @@ type SignupCardProps = {
 };
 
 type FooterContent = {
-  tremsAndConditions: TypedObject[];
+  forumTerms: TypedObject[];
 };
 
 const components: Partial<PortableTextReactComponents> = {
@@ -67,9 +67,9 @@ const TermsAndConditions = () => {
     <section className="h-20 bg-[#FAF9F8] overflow-y-scroll scrollbar-hide">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-8">
               <div className="text-[#505050] prose mx-auto ">
-                {(content?.tremsAndConditions && (
+                {(content?.forumTerms && (
                   <PortableText
-                    value={content?.tremsAndConditions}
+                    value={content?.forumTerms}
                     components={components}
                   />
                 )) ?? (
