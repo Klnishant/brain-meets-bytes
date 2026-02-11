@@ -1,14 +1,84 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { X, Eye, EyeOff, Loader, CircleUserRound } from "lucide-react";
 import toast from "react-hot-toast";
+import { PortableText, PortableTextReactComponents } from "next-sanity";
+import { TypedObject } from "sanity";
 
 type SignupCardProps = {
   onClose?: () => void;
   handleSignIn?: () => void;
   handleIsLoggedIn?: () => void;
+};
+
+type FooterContent = {
+  tremsAndConditions: TypedObject[];
+};
+
+const components: Partial<PortableTextReactComponents> = {
+  block: {
+    h2: ({ children }) => (
+      <h2 className="mt-4 mb-1 text-lg font-semibold">{children}</h2>
+    ),
+    normal: ({ children }) => (
+      <p className="mb-1 leading-relaxed ">{children}</p>
+    ),
+  },
+  list: {
+    bullet: ({ children }) => (
+      <ul className="list-disc ml-5 space-y-1">{children}</ul>
+    ),
+  },
+  marks: {
+    strong: ({ children }) => <strong>{children}</strong>,
+  },
+};
+
+const TermsAndConditions = () => {
+  const [content, setContent] = useState<FooterContent | null>(null);
+  
+    useEffect(() => {
+      let mounted = true;
+  
+      const load = async () => {
+        try {
+          const res = await fetch("/api/footer");
+          if (!res.ok) {
+            throw new Error("Failed to load articles");
+          }
+  
+          const data = (await res.json()) as FooterContent | null;
+          if (!mounted) return;
+          setContent(data);
+        } catch (e: any) {
+          if (!mounted) return;
+        }
+      };
+  
+      void load();
+  
+      return () => {
+        mounted = false;
+      };
+    }, []);
+  return (
+    <section className="h-20 bg-[#FAF9F8] overflow-y-scroll scrollbar-hide">
+            <div className="mx-auto flex max-w-[1600px] flex-col gap-8">
+              <div className="text-[#505050] prose mx-auto ">
+                {(content?.tremsAndConditions && (
+                  <PortableText
+                    value={content?.tremsAndConditions}
+                    components={components}
+                  />
+                )) ?? (
+                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates repudiandae magnam soluta. Ipsum ad perferendis libero officiis debitis aut beatae cupiditate quae? Magnam atque cupiditate error illum, ipsum maiores accusamus distinctio quibusdam. Alias repudiandae omnis nisi corporis facere dolore voluptate iusto aut et ea modi est similique nesciunt officia perspiciatis at, sed optio recusandae in ex quibusdam mollitia eos possimus nam. Ducimus consequuntur ipsum, illum accusantium, non laboriosam harum debitis a atque animi voluptas. Velit porro molestiae expedita odit. Blanditiis velit in sit voluptate id fugit odio nemo laboriosam porro tempora minima ex amet rem veritatis modi adipisci, ad iste quo ea quia incidunt accusantium! Consequuntur quisquam veritatis est eveniet rem perspiciatis suscipit obcaecati, adipisci, aspernatur culpa deleniti asperiores provident corrupti, possimus cumque nobis beatae quos nemo? Officia suscipit nobis illum vero, in cupiditate nostrum placeat ut saepe assumenda numquam? Officia beatae sed laudantium, saepe iure velit blanditiis autem aut dolore? Doloremque, libero commodi sapiente temporibus maxime ullam itaque iusto ab et modi vitae praesentium facilis magni quia quam veniam, necessitatibus aliquid saepe architecto aspernatur. Ad numquam est cum non minus ducimus, deserunt repellendus inventore eius vero neque eligendi perspiciatis quo fugit, exercitationem maiores iste molestiae at officiis facere doloremque.</p>
+                )}
+              </div>
+            </div>
+          </section>
+  );
 };
 
 const SignupCard: React.FC<SignupCardProps> = ({
@@ -19,6 +89,8 @@ const SignupCard: React.FC<SignupCardProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsAndConditions, setShowTermsAndConditions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupData, setSignupData] = useState({
     name: "",
@@ -56,6 +128,12 @@ const SignupCard: React.FC<SignupCardProps> = ({
     !signupData.confirmPassword
   ) {
     setError("Please fill in all the required fields.");
+    setIsSubmitting(false);
+    return;
+  }
+
+  if (!acceptedTerms) {
+    setError("Please accept the terms and conditions.");
     setIsSubmitting(false);
     return;
   }
@@ -116,8 +194,8 @@ const SignupCard: React.FC<SignupCardProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-[48px] border bg-[#FAF9F8] p-8 shadow-xl">
-        <div className="flex flex-col gap-4">
+      <div className="relative w-full max-w-md rounded-[48px] border bg-[#FAF9F8] px-8 py-4 shadow-xl">
+        <div className="flex flex-col gap-2">
           <div className="flex justify-between">
             {/* Header */}
             <div>
@@ -140,7 +218,7 @@ const SignupCard: React.FC<SignupCardProps> = ({
 
           {/* Form */}
           <form
-            className="mt-6 space-y-4"
+            className="mt-4 space-y-4"
             method="post"
             noValidate
             onSubmit={handleSubmit}
@@ -236,6 +314,41 @@ const SignupCard: React.FC<SignupCardProps> = ({
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+
+            {/* Terms and Conditions */}
+            <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm text-[#64748B]">
+            <input
+             name="acceptedTerms"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+             type="checkbox" className="rounded border-[#E2E8F0]" />
+             <p onClick={()=>setShowTermsAndConditions(!showTermsAndConditions)}>I agree to the terms and conditions</p>
+          </label>
+          </div>
+
+          <div className={`${showTermsAndConditions ? "block" : "hidden"} z-60 absolute top-2/3`}>
+            <div className="w-full flex justify-end">
+          <button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6 text-[#505050]"
+              onClick={() => setShowTermsAndConditions(false)}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        </div>
+            <TermsAndConditions />
+          </div>
 
             {/* Error Message */}
             {error && <p className="text-red-500">{error}</p>}

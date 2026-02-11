@@ -195,7 +195,7 @@ const error = useSelector(
                             </div>
                             <div className="flex gap-1 items-center">
                               <div className="rounded-full px-3 py-[2px] gap-[10px] border border-[#E2E8F0] bg-[#FAF9F8]">
-                                <p className="font-inter font-normal text-[12px] leading-[100%] tracking-normal text-[#505050]">
+                                <p className="font-inter font-normal text-[12px] leading-[100%] tracking-normal text-[#505050] shrink-0">
                                   {`${category?.threadCount || 0} Threads`}
                                 </p>
                               </div>

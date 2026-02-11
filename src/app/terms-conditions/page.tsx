@@ -29,7 +29,7 @@ const components: Partial<PortableTextReactComponents> = {
   },
 };
 
-const RefundPolicy = () => {
+const TermsConditions = () => {
   const [content, setContent] = useState<FooterContent | null>(null);
 
   useEffect(() => {
@@ -81,4 +81,4 @@ const RefundPolicy = () => {
   );
 };
 
-export default RefundPolicy;
+export default TermsConditions;
