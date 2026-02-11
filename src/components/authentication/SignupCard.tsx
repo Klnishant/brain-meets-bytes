@@ -64,7 +64,7 @@ const TermsAndConditions = () => {
       };
     }, []);
   return (
-    <section className="h-20 bg-[#FAF9F8] overflow-y-scroll scrollbar-hide">
+    <section className="h-40 bg-[#FAF9F8] overflow-y-scroll scrollbar-hide">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-8">
               <div className="text-[#505050] prose mx-auto ">
                 {(content?.forumTerms && (
@@ -128,6 +128,12 @@ const SignupCard: React.FC<SignupCardProps> = ({
     !signupData.confirmPassword
   ) {
     setError("Please fill in all the required fields.");
+    setIsSubmitting(false);
+    return;
+  }
+
+  if (!image) {
+    setError("Please upload an image.");
     setIsSubmitting(false);
     return;
   }
@@ -316,20 +322,20 @@ const SignupCard: React.FC<SignupCardProps> = ({
             </div>
 
             {/* Terms and Conditions */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-start gap-2">
             <label className="flex items-center gap-2 text-sm text-[#64748B]">
             <input
              name="acceptedTerms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
              type="checkbox" className="rounded border-[#E2E8F0]" />
-             <p onClick={()=>setShowTermsAndConditions(!showTermsAndConditions)}>I agree to the terms and conditions</p>
           </label>
+          <p onClick={()=>setShowTermsAndConditions(!showTermsAndConditions)} className="text-[#D62828] cursor-pointer">I agree to the terms and conditions</p>
           </div>
 
-          <div className={`${showTermsAndConditions ? "block" : "hidden"} z-60 absolute top-2/3`}>
+          <div className={`${showTermsAndConditions ? "block" : "hidden"} z-60 absolute top-1/2`}>
             <div className="w-full flex justify-end">
-          <button>
+          <button type="button">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"

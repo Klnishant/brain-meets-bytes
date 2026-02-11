@@ -15,7 +15,7 @@ import PollCard from "./PollCard";
 import MobileViewBar from "./MobileViewBar";
 import { getAuth } from "@/lib/getAuth";
 import { set } from "sanity";
-import { Loader } from "lucide-react";
+import { CircleUserRound, Loader } from "lucide-react";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 import { useSelector } from "react-redux";
 import { RootState } from "@/Redux/store";
@@ -582,11 +582,17 @@ const ForumsMainSection = () => {
             <div className="hidden  md:flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <div className="flex items-center gap-4">
                 <div className="h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-[#D62828] shrink-0">
-                  <img
-                    src={user?.ProfilePic || "/forum-user.png"}
+                  {
+                    user?.ProfilePic ? (
+                      <img
+                    src={user?.ProfilePic || "./forum-user.png"}
                     alt="Current user"
                     className="h-full w-full object-cover shrink-0"
                   />
+                    ) : (
+                      <CircleUserRound className="h-full w-full object-cover shrink-0 text-[#64748B]" />
+                    )
+                  }
                 </div>
                 <div
                   className={`${isComposerOpen ? "block" : "hidden"} flex justify-end w-full`}
