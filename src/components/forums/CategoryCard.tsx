@@ -189,7 +189,7 @@ const error = useSelector(
                         <div className="w-full">
                           <div className="w-full flex items-center justify-between gap-1">
                             <div className="">
-                              <h1 className="font-inter font-semibold text-[#023047] text-lg leading-7">
+                              <h1 className="font-inter font-semibold text-[#023047] text-lg leading-7 max-w-[300px]">
                                 {category?.title}
                               </h1>
                             </div>

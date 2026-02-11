@@ -414,10 +414,10 @@ const ForumsMainSection = () => {
 
     return threads.filter(
       (thread) =>
-        thread?.title.toLowerCase().includes(q) ||
-        thread?.user?.name.toLowerCase().includes(q) ||
+        thread?.title?.toLowerCase()?.includes(q) ||
+        thread?.user?.name?.toLowerCase()?.includes(q) ||
         thread?.categories?.some((category) =>
-          category?.title.toLowerCase().includes(q),
+          category?.title?.toLowerCase()?.includes(q),
         ),
     );
   };
