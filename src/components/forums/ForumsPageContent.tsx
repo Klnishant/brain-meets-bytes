@@ -642,7 +642,7 @@ const ForumsMainSection = () => {
                 <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex flex-wrap items-center gap-3">
                     {/* Image Upload */}
-                    <div className="flex items-center gap-4">
+                    <div className="hidden items-center gap-4">
                       <label
                         htmlFor="image-upload"
                         className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"

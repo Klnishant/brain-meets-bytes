@@ -222,7 +222,7 @@ const EditThread: React.FC<EditThreadProps> = ({
         />
 
         {/* Image Upload */}
-        <div className="flex items-center gap-4 mt-2">
+        {/* <div className="flex items-center gap-4 mt-2">
           <button
             type="button"
             onClick={handleClick}
@@ -244,7 +244,7 @@ const EditThread: React.FC<EditThreadProps> = ({
             className="hidden"
             onChange={handleImageChange}
           />
-        </div>
+        </div> */}
 
         {/* Image Preview */}
         <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
