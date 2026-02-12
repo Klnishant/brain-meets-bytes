@@ -7,48 +7,54 @@ import { useEffect, useState } from "react";
 import { TypedObject } from "sanity";
 
 type FooterContent = {
-    privacyPolicy: TypedObject[];
+  privacyPolicy: TypedObject[];
 };
 
 const components: Partial<PortableTextReactComponents> = {
   block: {
-    h2: ({ children }) => <h2 className="mt-4 mb-1 text-lg font-semibold">{children}</h2>,
-    normal: ({ children }) => <p className="mb-1 leading-relaxed ">{children}</p>,
+    h2: ({ children }) => (
+      <h2 className="mt-4 mb-1 text-lg font-semibold">{children}</h2>
+    ),
+    normal: ({ children }) => (
+      <p className="mb-1 leading-relaxed ">{children}</p>
+    ),
   },
   list: {
-    bullet: ({ children }) => <ul className="list-disc ml-5 space-y-1">{children}</ul>,
+    bullet: ({ children }) => (
+      <ul className="list-disc ml-5 space-y-1">{children}</ul>
+    ),
   },
   marks: {
     strong: ({ children }) => <strong>{children}</strong>,
   },
 };
 const RefundPolicy = () => {
-    const [content, setContent] = useState<FooterContent | null>(null);
-    
-      useEffect(() => {
-          let mounted = true;
-      
-          const load = async () => {
-            try {
-              const res = await fetch("/api/footer");
-              if (!res.ok) {
-                throw new Error("Failed to load articles");
-              }
-      
-              const data = (await res.json()) as FooterContent | null;
-              if (!mounted) return;
-              setContent(data);
-            } catch (e: any) {
-              if (!mounted) return;
-            }
-          };
-      
-          void load();
-      
-          return () => {
-            mounted = false;
-          };
-        }, []);
+  const [content, setContent] = useState<FooterContent | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const res = await fetch("/api/footer");
+        if (!res.ok) {
+          throw new Error("Failed to load articles");
+        }
+
+        const data = (await res.json()) as FooterContent | null;
+        if (!mounted) return;
+        setContent(data);
+      } catch (e: any) {
+        if (!mounted) return;
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
   return (
     <main className="min-h-screen bg-[#FAF9F8]">
       <Navbar />
@@ -59,9 +65,14 @@ const RefundPolicy = () => {
           </h1>
           <div className="text-[#505050] prose mx-auto p-6">
             {(content?.privacyPolicy && (
-              <PortableText value={content?.privacyPolicy } components={components} />
+              <PortableText
+                value={content?.privacyPolicy}
+                components={components}
+              />
             )) ?? (
-              <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Est aut eveniet quam adipisci perspiciatis nesciunt tempora minima, iste suscipit possimus non nulla voluptas fuga repellat voluptate sit officiis quae illum unde optio dolores quo nostrum? Earum cupiditate repellat quae odit architecto nesciunt magnam quibusdam? Quidem veniam ut enim voluptate veritatis. Cupiditate animi veniam explicabo assumenda dignissimos molestiae sint, a, temporibus dolores nihil natus non magni ad tempora, sapiente odio quia maiores odit ipsam! Culpa quis deserunt quidem accusantium fugiat consequatur quos suscipit, veniam rerum nam libero minima sit reprehenderit? Quae ipsam atque delectus doloribus saepe! A dignissimos laboriosam eveniet cupiditate doloremque quos illum dolore facilis, maxime magni accusantium voluptas perferendis iste quisquam enim inventore dolorem vitae vel ut. Laboriosam voluptas amet cum alias ipsum debitis illo pariatur unde vero quo, minus ducimus quam earum illum magnam nostrum repudiandae adipisci voluptatem delectus veritatis vel eligendi reiciendis. Quos, dolores distinctio. Asperiores, natus. Cumque eveniet ea veritatis consequuntur vero, amet, placeat quod earum libero rem aspernatur molestias blanditiis eaque harum quibusdam dicta assumenda fuga unde dolorum repellendus dolore, quo cupiditate? Fuga quae repudiandae tempora odit iusto commodi voluptas, nostrum ipsum nemo. Error perspiciatis saepe tenetur aperiam impedit ad aliquam accusantium distinctio autem ex!</p>
+              <div>
+                <h1>Loading...</h1>
+              </div>
             )}
           </div>
         </div>

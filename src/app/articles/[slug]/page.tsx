@@ -788,10 +788,10 @@ const ArticlePage = ({ params }: ArticlePageProps) => {
                   <h2 className="font-sora text-[32px] md:text-[36px] font-bold leading-[45px] text-[#000000]">
                     Related Articles &amp; Interviews
                   </h2>
-                  <p className="max-w-[700px] font-inter text-[16px] md:text-[18px] leading-[22px] text-[#505050]">
+                  {/* <p className="max-w-[700px] font-inter text-[16px] md:text-[18px] leading-[22px] text-[#505050]">
                     Nam vulputate faucibus urna non mollis. Vivamus a vulputate
                     turpis. Aenean efficitur aliquam dui a elementum.
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

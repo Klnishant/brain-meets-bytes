@@ -155,7 +155,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
           {podcastCount && podcastCount > 1 && (
             <>
               {
-                slug && token ? (
+                slug ? (
                 <button
                  onClick={()=> {
                 if (!isOlderThan7Days(date || "") && !user?.hasmembership) return;
@@ -169,7 +169,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
                 </button>
                 ) : (
                   <button
-                    onClick={() => dispatch(openLogIn())}
+                    // onClick={() => dispatch(openLogIn())}
                    className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
                     <span>Listen</span>
                     <span className="inline-flex items-center justify-center w-4 h-4">
@@ -341,7 +341,7 @@ const PodcastsMainSection = () => {
                   Sort by: {sortBy === "recent" ? "Recent" : "Oldest"}
                 </span>
               </button>
-              <button
+              {/* <button
                 type="button"
                 className="flex items-center justify-center gap-2.5 px-3 lg:px-8 w-[45px] lg:w-[149px] h-[36px] lg:h-[50px] md:h-[50px] md:w-[50px] text-[#023047] border border-[#023047] rounded-full"
                 onClick={() => setFilterOpen(true)}
@@ -350,7 +350,7 @@ const PodcastsMainSection = () => {
                   <img src="/filter 1.png" className="invert h-full w-full" />
                 </span>
                 <span className="hidden lg:block">Filters</span>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

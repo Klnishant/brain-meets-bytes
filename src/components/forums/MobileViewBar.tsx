@@ -9,6 +9,10 @@ import PollCard from "./PollCard";
 import UsersCard from "./UsersCard";
 import { set } from "sanity";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type User = {
   _id: string;
@@ -65,6 +69,14 @@ type Thread = {
   comments: Array<Comment>;
   likes: Array<Like>;
 };
+
+type Topic = {
+  _id: string;
+  title: string;
+  route: string;
+  isActive: boolean;
+  topicId: number;
+};
 type MobileViewBarProps = {
   className?: string;
   user: User | null;
@@ -80,7 +92,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const formRef = useRef<CreatThreadFormRef>(null);
-    const pollFormRef = useRef<CreatePollFormRef>(null);
+  const pollFormRef = useRef<CreatePollFormRef>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -96,9 +108,54 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
   const [isCreatingPoll, setIsCreatingPoll] = useState(false);
   const [isCreatePollOpen, setIsCreatePollOpen] = useState(false);
   const [isCreateThread, setIsCreateThread] = useState(false);
+  const [topics, setTopics] = useState<Topic[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [topicsCount, setTopicsCount] = useState(5);
+    const [token, setToken] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number | null>(null);
+    const [isLoadingTopics, setIsLoadingTopics] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
   const pathname = usePathname();
-    const isForumsPage = pathname === "/forums";
+  const isForumsPage = pathname === "/forums";
+
+  const dispatch = useDispatch<AppDispatch>();
+  const auth = useSelector((state: RootState) => state.auth);
+  
+    useEffect(() => {
+      setToken(auth?.auth?.token);
+      setUserId(auth?.auth?.userId);
+    }, [auth]);
+
+  const fetchTopics = async () => {
+      try {
+        setIsLoadingTopics(true);
+        setError(null);
+  
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}topics`);
+        if (!res.ok) {
+          throw new Error("Failed to load topics");
+        }
+  
+        const topicData = (await res.json())?.meta?.data as Topic[];
+  
+        setTopics(Array.isArray(topicData) ? topicData : []);
+        console.log(topicData);
+      } catch (e: any) {
+        setError(e?.message ?? "Failed to load topics");
+      } finally {
+        setIsLoadingTopics(false);
+      }
+    };
+    useEffect(() => {
+      fetchTopics();
+    }, [token]);
+
+    const visibleTopics = topics.slice(0, topicsCount);
+
+  const handleTopic = () => {
+    setTopicsCount(topicsCount + 5);
+  };
 
   const handleSearchInputChange = (searchText?: string) => {
     handleSearch(searchText!);
@@ -106,7 +163,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
 
   useEffect(() => {
     handleSearchInputChange(search);
-  },[search]);
+  }, [search]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -137,15 +194,15 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
   };
 
   const handleParentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (isComposerOpen) {
-        formRef.current?.submit(e);
-      }
-  
-      if (isPollOpen) {
-        pollFormRef.current?.submit(e);
-      }
-    };
+    e.preventDefault();
+    if (isComposerOpen) {
+      formRef.current?.submit(e);
+    }
+
+    if (isPollOpen) {
+      pollFormRef.current?.submit(e);
+    }
+  };
 
   return (
     <div>
@@ -184,27 +241,24 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           <div
             className={`${isComposerOpen ? "block" : "hidden"} flex justify-end w-full`}
           >
-            {
-              isCreateThread ? (
-                <button
-              onClick={() => setIsComposerOpen(false)}
-              className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-
-              ) : (
-                <button
-              onClick={() => {
-                setIsCreateThread(true)
-                setIsCreatePollOpen(false)
-              }}
-              className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
-            >
-              Create Thread
-            </button>
-              )
-            }
+            {isCreateThread ? (
+              <button
+                onClick={() => setIsComposerOpen(false)}
+                className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsCreateThread(true);
+                  setIsCreatePollOpen(false);
+                }}
+                className="rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm text-[#475569] hover:bg-gray-50"
+              >
+                Create Thread
+              </button>
+            )}
           </div>
           <div
             onClick={() => {
@@ -332,20 +386,20 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
 
             <div className="w-full flex items-center justify-end">
               <button
-              type="submit"
-              disabled={
-                isCreatingThread ||
-                isCreatingPoll ||
-                (!isComposerOpen && !isPollOpen)
-              }
-              className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
-            >
-              {!isCreatingThread ? (
-                "Publish"
-              ) : (
-                <Loader size={14} className="animate-spin" />
-              )}
-            </button>
+                type="submit"
+                disabled={
+                  isCreatingThread ||
+                  isCreatingPoll ||
+                  (!isComposerOpen && !isPollOpen)
+                }
+                className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
+              >
+                {!isCreatingThread ? (
+                  "Publish"
+                ) : (
+                  <Loader size={14} className="animate-spin" />
+                )}
+              </button>
             </div>
           </div>
         </form>
@@ -388,6 +442,41 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           </div>
         </div>
 
+        <div className={`${isTopicsOpen ? "block" : "hidden"} flex h-[222px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}>
+          <h3 className="font-sora text-[24px] font-semibold text-[#1E293B]">
+            Recommended Topics
+          </h3>
+          <div className="flex flex-col justify-between h-full overflow-x-auto scrollbar-hide">
+            {isLoadingTopics ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader size={24} className="animate-spin" color="black" />
+              </div>
+            ) : (
+              <div className="flex gap-2.5">
+                {/* topics list */}
+                {visibleTopics &&
+                  visibleTopics.map((topic) => (
+                    <Link
+                      key={topic._id}
+                      href={topic.route}
+                      className="flex w-fit items-center gap-2 px-4 py-2 rounded-full border border-[#E2E8F0] bg-[#FAF9F8]"
+                    >
+                      <p className="font-inter font-normal text-[#505050] text-sm leading-none">
+                        {topic.title}
+                      </p>
+                    </Link>
+                  ))}
+              </div>
+            )}
+            <button
+              onClick={handleTopic}
+              className="font-inter font-semibold text-[#D62828] text-base leading-[30px] tracking-normal w-full text-start"
+            >
+              See all Topics
+            </button>
+          </div>
+        </div>
+
         <div
           className={`${isUsersOpen ? "block" : "hidden"} flex h-[426px] flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5`}
         >
@@ -427,12 +516,17 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           Top Categories
         </button>
         <button
-          className="hidden"
-          onClick={() => setIsTopicsOpen(!isTopicsOpen)}
+          onClick={() => {
+            setIsTopicsOpen(!isTopicsOpen);
+            setIsCategoriesOpen(false);
+            setIsPollsOpen(false);
+            setIsUsersOpen(false);
+          }}
         >
           Recomended Topics
         </button>
         <button
+          className="hidden"
           onClick={() => {
             setIsUsersOpen(!isUsersOpen);
             setIsCategoriesOpen(false);
@@ -479,6 +573,10 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
 
           <button
             onClick={() => {
+              if(!token){
+                dispatch(openLogIn());
+                return
+              }
               setIsComposerOpen(!isComposerOpen);
               setIsSearchOpen(false);
               setIsMenuOpen(false);
@@ -488,17 +586,17 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
             <Plus size={"16px"} />
           </button>
           {/* Menu Button */}
-        <button
-          onClick={() => {
-            setIsMenuOpen(!isMenuOpen);
-            setIsSearchOpen(false);
-            setIsComposerOpen(false);
-          }}
-          className={`flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm ${isForumsPage ? "" : "w-full justify-center"}`}
-        >
-          <Menu size={"18px"} />
-          Menu
-        </button>
+          <button
+            onClick={() => {
+              setIsMenuOpen(!isMenuOpen);
+              setIsSearchOpen(false);
+              setIsComposerOpen(false);
+            }}
+            className={`flex items-center gap-2 bg-white text-[#0B2A3A] px-4 py-2 rounded-full font-semibold text-sm ${isForumsPage ? "" : "w-full justify-center"}`}
+          >
+            <Menu size={"18px"} />
+            Menu
+          </button>
         </div>
       </div>
     </div>

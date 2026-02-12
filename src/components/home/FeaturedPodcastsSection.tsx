@@ -151,7 +151,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
           {podcastCount && podcastCount > 1 && (
             <>
               {
-                slug && token ? (
+                slug ? (
                 <button
                  onClick={()=> {
                 if (!isOlderThan7Days(date || "") && !user?.hasmembership) return;
@@ -165,7 +165,7 @@ const PodcastCard = ({ podcast }: { podcast: Podcast }) => {
                 </button>
                 ) : (
                   <button
-                    onClick={() => dispatch(openLogIn())}
+                    // onClick={() => dispatch(openLogIn())}
                    className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-[#D62828] text-[14px] text-[#D62828] whitespace-nowrap">
                     <span>Listen</span>
                     <span className="inline-flex items-center justify-center w-4 h-4">

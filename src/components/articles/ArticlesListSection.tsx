@@ -167,7 +167,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
 
         {/* Footer CTA (Read more) */}
         <div className="w-fullmt-2 flex items-center justify-between">
-          {slug && token ? (
+          {slug ? (
             <button
               onClick={()=> {
                 if (!isOlderThan7Days(date || "") && !user?.hasmembership) return;
@@ -179,7 +179,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
             </button>
           ) : (
             <button 
-            onClick={() => dispatch(openLogIn())}
+            // onClick={() => dispatch(openLogIn())}
             className=" w-full md:w-auto inline-flex items-center gap-2 rounded-[36px] border border-[#D62828] px-6 py-2 text-[14px] font-normal text-[#D62828]">
               Read More
             </button>
@@ -348,7 +348,7 @@ const ArticlesListSection = () => {
               </button>
 
               {/* Filter button */}
-              <button
+              {/* <button
                 className="flex h-9 w-9 md:h-[50px] md:w-[149px] items-center justify-center gap-3 rounded-full bg-[#023047] md:px-8 text-[16px] text-white"
                 onClick={() => setFilterOpen(true)}
               >
@@ -358,7 +358,7 @@ const ArticlesListSection = () => {
                   className="h-3 w-3 md:h-[18px] md:w-[18px] object-contain"
                 />
                 <span className="font-sora hidden md:block">Filters</span>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

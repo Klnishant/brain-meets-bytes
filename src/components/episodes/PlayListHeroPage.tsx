@@ -1618,10 +1618,10 @@ const PlayListHeroPage = () => {
                 <h2 className="font-sora text-2xl md:text-3xl text-[#000000] lg:text-4xl font-bold">
                   <span>Related Podcasts</span>
                 </h2>
-                <p className="font-inter text-sm md:text-base text-[#505050]">
+                {/* <p className="font-inter text-sm md:text-base text-[#505050]">
                   Nam vulputate faucibus urna non mollis. Vivamus a vulputate
                   turpis. Aenean efficitur aliquam dui a elementum.
-                </p>
+                </p> */}
               </div>
             </div>
 

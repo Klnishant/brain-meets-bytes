@@ -28,17 +28,17 @@ const FALLBACK_APPROACH: ApproachContent = {
     {
       title: "Accessible to everyone",
       description: "Clear, engaging content you can actually apply.",
-      iconUrl: "./about-approach-accessible.png",
+      iconUrl: "./click 1.png",
     },
     {
       title: "Evidence-based exploration",
       description: "We verify facts — no hype, no misinformation.",
-      iconUrl: "./about-approach-evidence.png",
+      iconUrl: "./fingerprint 1.png",
     },
     {
       title: "Curated insights from every episode",
       description: "Key takeaways, resources, and actionable learnings.",
-      iconUrl: "./about-approach-insights.png",
+      iconUrl: "./idea 1.png",
     },
   ],
 };

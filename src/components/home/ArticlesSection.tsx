@@ -158,7 +158,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
         </p>
 
         <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
-          {slug && token ? (
+          {slug ? (
             <button
               onClick={()=> {
                 if (!isOlderThan7Days(date || "") && !user?.hasmembership) return;
@@ -170,7 +170,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
             </button>
           ) : (
             <button
-              onClick={() => dispatch(openLogIn())}
+              // onClick={() => dispatch(openLogIn())}
               disabled={(!isOlderThan7Days(date || "") && !user?.hasmembership) ? true : false}
               className="w-full inline-flex items-center justify-center px-8 py-3 rounded-full text-[16px] font-normal text-[#D62828] border border-[#D62828]"
             >

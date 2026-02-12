@@ -4,7 +4,7 @@ import { COLORS } from "@/lib/constants";
 import ForumsSection from "@/components/home/ForumsSection";
 import ThreadsCard from "./ThreadsCard";
 import CategoryCard from "./CategoryCard";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import UsersCard from "./UsersCard";
 import CreateThread, { CreatThreadFormRef } from "./CreateThread";
@@ -17,8 +17,9 @@ import { getAuth } from "@/lib/getAuth";
 import { set } from "sanity";
 import { CircleUserRound, Loader } from "lucide-react";
 import useInfiniteScroll from "react-infinite-scroll-hook";
-import { useSelector } from "react-redux";
-import { RootState } from "@/Redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/Redux/store";
+import { openLogIn } from "@/Redux/slices/LogInSlice";
 
 type Category = {
   _id: string;
@@ -99,7 +100,8 @@ type ForumHeroContent = {
 
 const FALL_BACK_CONTENT: ForumHeroContent = {
   heading: "Brain Meets Bytes Community",
-  description: "Breakthroughs don&apos;t happen alone. Connect with fellow listeners, researchers, and health enthusiasts exploring smarter brain health and longevity together.",
+  description:
+    "Breakthroughs don&apos;t happen alone. Connect with fellow listeners, researchers, and health enthusiasts exploring smarter brain health and longevity together.",
   authors: [
     {
       name: "Jerry#203",
@@ -119,7 +121,7 @@ const FALL_BACK_CONTENT: ForumHeroContent = {
   ],
   imageUrl: "./forum-bg.jpg",
   date: "",
-}
+};
 
 const ForumsHeroSection = () => {
   const [content, setContent] = useState<ForumHeroContent | null>(null);
@@ -209,60 +211,60 @@ const ForumsHeroSection = () => {
         </div>
 
         {/* Right: hero cards row */}
-        <div className="mt-8 flex w-full max-w-[824px] flex-row gap-6 overflow-x-auto pb-4 lg:mt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-          {/* Card 1 */}
-          {
-            content?.authors?.map((author, index) => (
-              <div
-                key={index}
-                className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow"
-              >
-                <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
-                  <img
-                    src={`${author.imageUrl}`}
-                    alt="Forum hero"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
-                <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
-                  <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
-                    {author?.content}
-                  </p>
-                  <p className="font-inter text-[14px] font-light leading-[24px] text-white">
-                    By {author?.name}
-                  </p>
-                </div>
-              </div>
-            )) ?? FALL_BACK_CONTENT.authors?.map((author, index) => (
-              <div
-                key={index}
-                className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow"
-              >
-                <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
-                  <img
-                    src={`${author.imageUrl}`}
-                    alt="Forum hero"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
-                <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
-                  <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
-                    {author?.content}
-                  </p>
-                  <p className="font-inter text-[14px] font-light leading-[24px] text-white">
-                    By {author?.name}
-                  </p>
-                </div>
-              </div>
-            ))
-             } 
+        {/* <div className="mt-8 flex w-full max-w-[824px] flex-row gap-6 overflow-x-auto pb-4 lg:mt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"> */}
+        {/* Card 1 */}
+        {
+          // content?.authors?.map((author, index) => (
+          //   <div
+          //     key={index}
+          //     className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow"
+          //   >
+          //     <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
+          //       <img
+          //         src={`${author.imageUrl}`}
+          //         alt="Forum hero"
+          //         className="h-full w-full object-cover"
+          //       />
+          //     </div>
+          //     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
+          //     <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+          //       <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
+          //         {author?.content}
+          //       </p>
+          //       <p className="font-inter text-[14px] font-light leading-[24px] text-white">
+          //         By {author?.name}
+          //       </p>
+          //     </div>
+          //   </div>
+          // )) ?? FALL_BACK_CONTENT.authors?.map((author, index) => (
+          //   <div
+          //     key={index}
+          //     className="relative h-[320px] w-[320px] flex-shrink-0 overflow-hidden rounded-[20px] border-2 border-[#64748B] bg-white shadow"
+          //   >
+          //     <div className="absolute -left-16 -top-1 h-[321px] w-[481px]">
+          //       <img
+          //         src={`${author.imageUrl}`}
+          //         alt="Forum hero"
+          //         className="h-full w-full object-cover"
+          //       />
+          //     </div>
+          //     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
+          //     <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+          //       <p className="line-clamp-2 font-inter text-[16px] font-semibold leading-[24px] text-white">
+          //         {author?.content}
+          //       </p>
+          //       <p className="font-inter text-[14px] font-light leading-[24px] text-white">
+          //         By {author?.name}
+          //       </p>
+          //     </div>
+          //   </div>
+          // ))
+        }
 
-          {/* Card 2 */}
+        {/* Card 2 */}
 
-          {/* Card 3 */}
-        </div>
+        {/* Card 3 */}
+        {/* </div> */}
       </div>
     </section>
   );
@@ -289,7 +291,9 @@ const ForumsMainSection = () => {
   const [hasnext, setHasNext] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-   const auth = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const auth = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     setToken(auth?.auth?.token);
@@ -323,17 +327,16 @@ const ForumsMainSection = () => {
       setLoading(true);
       setError(null);
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?page=${page}&limit=10`
+        `${process.env.NEXT_PUBLIC_API_URL}threads/FulldetailsofThreads?page=${page}&limit=10`,
       );
 
       if (!res.ok) throw new Error("Failed to load threads");
 
       const Res = await res.json();
       const data = Res?.data ?? [];
-      console.log("threads res:",Res);
-      
+      console.log("threads res:", Res);
 
-      console.log("Threads",data);
+      console.log("Threads", data);
 
       setThreads((prev) => [...prev, ...data]);
       setHasNext(page < Res?.meta?.totalPages);
@@ -582,17 +585,15 @@ const ForumsMainSection = () => {
             <div className="hidden  md:flex flex-col gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5">
               <div className="flex items-center gap-4">
                 <div className="h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-[#D62828] shrink-0">
-                  {
-                    user?.ProfilePic ? (
-                      <img
-                    src={user?.ProfilePic || "./forum-user.png"}
-                    alt="Current user"
-                    className="h-full w-full object-cover shrink-0"
-                  />
-                    ) : (
-                      <CircleUserRound className="h-full w-full object-cover shrink-0 text-[#64748B]" />
-                    )
-                  }
+                  {user?.ProfilePic ? (
+                    <img
+                      src={user?.ProfilePic || "./forum-user.png"}
+                      alt="Current user"
+                      className="h-full w-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <CircleUserRound className="h-full w-full object-cover shrink-0 text-[#64748B]" />
+                  )}
                 </div>
                 <div
                   className={`${isComposerOpen ? "block" : "hidden"} flex justify-end w-full`}
@@ -606,6 +607,10 @@ const ForumsMainSection = () => {
                 </div>
                 <div
                   onClick={() => {
+                    if (!token) {
+                      dispatch(openLogIn());
+                      return;
+                    }
                     setIsComposerOpen(true);
                     setIsPollOpen(false);
                   }}
@@ -678,7 +683,10 @@ const ForumsMainSection = () => {
                       </label>
                     </div>
                     {/* video Upload */}
-                    <div aria-disabled={true} className="hidden items-center gap-4">
+                    <div
+                      aria-disabled={true}
+                      className="hidden items-center gap-4"
+                    >
                       <label
                         htmlFor="video-upload"
                         className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
@@ -711,6 +719,10 @@ const ForumsMainSection = () => {
                     <button
                       type="button"
                       onClick={() => {
+                        if (!token) {
+                      dispatch(openLogIn());
+                      return;
+                    }
                         setIsPollOpen(!isPollOpen);
                         setIsComposerOpen(false);
                       }}
@@ -729,7 +741,9 @@ const ForumsMainSection = () => {
                     </button>
                   </div>
 
-                  <button
+                  {
+                    token ? (
+                      <button
                     type="submit"
                     disabled={
                       isCreatingThread ||
@@ -744,6 +758,24 @@ const ForumsMainSection = () => {
                       <Loader size={14} className="animate-spin" />
                     )}
                   </button>
+                    ) : (
+                      <button
+                    type="submit"
+                    onClick={
+                      ()=>{
+                        dispatch(openLogIn())
+                      }
+                    }
+                    className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
+                  >
+                    {!isCreatingThread ? (
+                      "Publish"
+                    ) : (
+                      <Loader size={14} className="animate-spin" />
+                    )}
+                  </button>
+                    )
+                  }
                 </div>
               </form>
               <div className="flex gap-3">
@@ -949,13 +981,12 @@ const ForumsMainSection = () => {
           </div>
         </div>
       </div>
-      <div className="lg:hidden fixed bottom-0 left-0 z-20 w-full flex justify-center bg-white shadow-md"
- >
+      <div className="lg:hidden fixed bottom-0 left-0 z-20 w-full flex justify-center bg-white shadow-md">
         <MobileViewBar
           user={user}
           onSuccess={onSuccess}
           handleSearch={handleSearch}
-         />
+        />
       </div>
     </section>
   );
