@@ -300,10 +300,10 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           />
         </div>
         <form noValidate onSubmit={handleParentSubmit}>
-          <div className="flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-3 w-full">
+          <div className="flex items-center justify-between border-t border-[#E2E8F0] pt-4 md:flex-row md:items-center md:justify-between w-full">
+            <div className="flex items-center w-full">
               {/* Image Upload */}
-              <div className="flex items-center gap-4">
+              {/* <div className="flex items-center gap-4">
                 <label
                   htmlFor="image-upload"
                   className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
@@ -331,9 +331,9 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
                     onChange={handleImageChange}
                   />
                 </label>
-              </div>
+              </div> */}
               {/* video Upload */}
-              <div aria-disabled={true} className="hidden items-center gap-4">
+              {/* <div aria-disabled={true} className="hidden items-center gap-4">
                 <label
                   htmlFor="video-upload"
                   className="cursor-pointer rounded-lg text-[#64748B] text-sm hover:bg-gray-50"
@@ -362,14 +362,14 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
                     onChange={handleVideoChange}
                   />
                 </label>
-              </div>
+              </div> */}
               <button
                 type="button"
                 onClick={() => {
                   setIsCreatePollOpen(!isCreatePollOpen);
                   setIsCreateThread(false);
                 }}
-                className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-6 py-2"
+                className="inline-flex items-center gap-2 rounded-[36px] border border-[#E2E8F0] bg-white px-2 py-1"
               >
                 <span className=" items-center justify-center ">
                   <img
@@ -384,7 +384,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
               </button>
             </div>
 
-            <div className="w-full flex items-center justify-end">
+            <div className="w-full flex items-center">
               <button
                 type="submit"
                 disabled={
@@ -392,7 +392,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
                   isCreatingPoll ||
                   (!isComposerOpen && !isPollOpen)
                 }
-                className="mt-2 flex h-[50px] w-[136px] items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
+                className=" flex px-2 py-1 items-center justify-center rounded-[34px] bg-[#023047] text-[16px] text-white md:mt-0"
               >
                 {!isCreatingThread ? (
                   "Publish"
@@ -547,7 +547,8 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           Poll
         </button>
       </div>
-      <div
+     <div className="w-full flex items-center justify-center">
+       <div
         className={`flex items-center justify-between h-[48px] w-[231px] gap-3 bg-[#023047] px-1.5 py-2 rounded-full ${className ?? ""}`}
       >
         {/* Icon Buttons */}
@@ -599,6 +600,7 @@ const MobileViewBar: React.FC<MobileViewBarProps> = ({
           </button>
         </div>
       </div>
+     </div>
     </div>
   );
 };

@@ -303,9 +303,9 @@ const ArticlesListSection = () => {
           </div>
 
           {/* Search + filter row */}
-          <div className="flex w-full max-w-[1601px] gap-4 md:gap-6 md:items-center md:justify-between">
+          <div className="flex w-full md:max-w-[1601px] gap-4 md:gap-6 md:items-center md:justify-between">
             {/* Search bar */}
-            <div className="flex w-full max-w-[700px] items-center justify-between gap-4 rounded-[42px] bg-[#E2E8F0] px-6 py-3">
+            <div className="flex w-full md:max-w-[700px] items-center justify-between gap-4 rounded-[42px] bg-[#E2E8F0] px-6 py-3">
               <input
                 type="text"
                 value={search}
@@ -322,14 +322,15 @@ const ArticlesListSection = () => {
                 style={{ backgroundColor: COLORS.brandRed }}
               >
                 <span className="relative block h-4 w-4">
-                  <span className="absolute inset-0 rounded-full border-2 border-white" />
-                  <span className="absolute right-0 top-1/2 h-[2px] w-2 -translate-y-1/2 rotate-45 transform bg-white" />
+                  {/* <span className="absolute inset-0 rounded-full border-2 border-white" />
+                  <span className="absolute right-0 top-1/2 h-[2px] w-2 -translate-y-1/2 rotate-45 transform bg-white" /> */}
+                  <img src="./search.png" alt="" />
                 </span>
               </button>
             </div>
 
             {/* Sort + Filter */}
-            <div className="flex w-full max-w-[401px] flex-row items-center gap-4 md:justify-end">
+            <div className="flex md:w-full md:max-w-[401px] flex-row items-center gap-4 md:justify-end">
               {/* Sort button */}
               <button
                 className="flex h-9 w-9 md:w-fit md:h-[50px] md:flex-1 items-center justify-center gap-3 rounded-full border border-[#023047] md:px-8 text-[16px] text-[#023047]"
